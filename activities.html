@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กิจกรรม & ข่าวสาร · MCCMU</title>
+<link rel="stylesheet" href="assets/mccmu.css">
+</head>
+<body data-page="activities">
+<div id="site-nav"></div>
+
+<section class="phero">
+  <div class="phero__pat"></div>
+  <div class="container">
+    <div class="crumbs"><a href="index.html">หน้าแรก</a><span>/</span><span>กิจกรรม & ข่าวสาร</span></div>
+    <span class="eyebrow">เกิดอะไรขึ้นบ้าง <span class="en">Activities & News</span></span>
+    <h1>กิจกรรมและข่าวสาร<br>ของชมรม</h1>
+    <p class="lead">ติดตามกิจกรรมที่กำลังจะมาถึง ย้อนดูสิ่งที่ผ่านมา
+      และไม่พลาดทุกข่าวสารสำคัญจากครอบครัวมุสลิม มช.</p>
+  </div>
+</section>
+
+<!-- featured upcoming -->
+<section class="section">
+  <div class="container">
+    <div class="row-head reveal" style="margin-bottom:36px">
+      <div class="s-head"><span class="eyebrow">ไฮไลต์ <span class="en">Featured</span></span>
+        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">กิจกรรมเด่นเร็ว ๆ นี้</h2></div>
+    </div>
+    <div class="feature-evt card reveal">
+      <div class="ph" data-label="โปสเตอร์งานต้อนรับน้องใหม่">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+      <div class="feature-evt__body">
+        <div class="evt__tags" style="display:flex;gap:8px;margin-bottom:14px">
+          <span class="chip chip--gold">ต้อนรับน้องใหม่</span><span class="chip">เปิดลงทะเบียน</span>
+        </div>
+        <h2 style="font-size:clamp(24px,3vw,34px)">เปิดบ้านต้อนรับน้องใหม่ ปี ’69</h2>
+        <p class="lead" style="margin:14px 0 20px">มาทำความรู้จักพี่ ๆ ในชมรม ร่วมกิจกรรมละลายพฤติกรรม
+          พร้อมรับคู่มือการใช้ชีวิตมุสลิมในรั้ว มช. — ฟรีตลอดงาน</p>
+        <div class="feature-evt__meta">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 9h18"/></svg> 28 มิถุนายน 2569</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> 13:00 น.</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg> ห้องกิจกรรม สำนักหอสมุด</span>
+        </div>
+        <div style="margin-top:24px"><a class="btn btn--primary" href="join.html">ลงทะเบียนร่วมงาน</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- filter tabs + grid -->
+<section class="section section--soft">
+  <div class="container">
+    <div class="s-head reveal"><span class="eyebrow">ปฏิทินกิจกรรม <span class="en">Upcoming</span></span>
+      <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">กิจกรรมที่กำลังจะมาถึง</h2></div>
+    <div class="tabs reveal" style="margin-top:28px" id="evtTabs">
+      <button class="tab active" data-f="all">ทั้งหมด</button>
+      <button class="tab" data-f="ศาสนา">ศาสนา</button>
+      <button class="tab" data-f="วิชาการ">วิชาการ</button>
+      <button class="tab" data-f="อาสา">อาสา/สังคม</button>
+    </div>
+    <div class="grid g-3 reveal" id="evtGrid">
+      <article class="card card--hover evt" data-cat="ศาสนา">
+        <div class="ph arch-sm" style="aspect-ratio:16/10" data-label="โปสเตอร์"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <div class="evt__body"><div class="evt__date"><span>21</span><small>มิ.ย.</small></div>
+          <div><span class="chip">ศาสนา</span><h3>ฮาลาเกาะฮ์ประจำสัปดาห์</h3><p class="muted">มัสยิดอัตตักวา · หลังมัฆริบ</p></div></div>
+      </article>
+      <article class="card card--hover evt" data-cat="ศาสนา">
+        <div class="ph arch-sm" style="aspect-ratio:16/10" data-label="โปสเตอร์"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <div class="evt__body"><div class="evt__date"><span>27</span><small>มิ.ย.</small></div>
+          <div><span class="chip">ศาสนา</span><h3>ละหมาดญุมอะห์ร่วมกัน</h3><p class="muted">มัสยิดช้างคลาน · 12:30 น.</p></div></div>
+      </article>
+      <article class="card card--hover evt" data-cat="วิชาการ">
+        <div class="ph arch-sm" style="aspect-ratio:16/10" data-label="โปสเตอร์"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <div class="evt__body"><div class="evt__date"><span>02</span><small>ก.ค.</small></div>
+          <div><span class="chip chip--gold">วิชาการ</span><h3>ติวรวมก่อนสอบกลางภาค</h3><p class="muted">ห้องสมุดคณะ · 17:00 น.</p></div></div>
+      </article>
+      <article class="card card--hover evt" data-cat="อาสา">
+        <div class="ph arch-sm" style="aspect-ratio:16/10" data-label="โปสเตอร์"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <div class="evt__body"><div class="evt__date"><span>05</span><small>ก.ค.</small></div>
+          <div><span class="chip">อาสา</span><h3>ค่ายอาสาพัฒนาชุมชน</h3><p class="muted">อ.แม่แตง · 2 วัน 1 คืน</p></div></div>
+      </article>
+      <article class="card card--hover evt" data-cat="อาสา">
+        <div class="ph arch-sm" style="aspect-ratio:16/10" data-label="โปสเตอร์"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <div class="evt__body"><div class="evt__date"><span>12</span><small>ก.ค.</small></div>
+          <div><span class="chip">สังคม</span><h3>เลี้ยงอาหารกลางวันเด็กกำพร้า</h3><p class="muted">มูลนิธิในเชียงใหม่</p></div></div>
+      </article>
+      <article class="card card--hover evt" data-cat="วิชาการ">
+        <div class="ph arch-sm" style="aspect-ratio:16/10" data-label="โปสเตอร์"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <div class="evt__body"><div class="evt__date"><span>18</span><small>ก.ค.</small></div>
+          <div><span class="chip chip--gold">วิชาการ</span><h3>เสวนา “ทำงานสายไหนดีในมุมมองอิสลาม”</h3><p class="muted">ออนไลน์ · Zoom</p></div></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- news -->
+<section class="section">
+  <div class="container">
+    <div class="row-head reveal" style="margin-bottom:36px">
+      <div class="s-head"><span class="eyebrow">ข่าวสาร <span class="en">Latest news</span></span>
+        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">อ่านข่าวล่าสุด</h2></div>
+    </div>
+    <div class="grid g-3 reveal">
+      <article class="card card--hover article">
+        <div class="ph arch-sm" data-label="ภาพข่าว"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5-5L5 19"/></svg></div>
+        <div class="article__body"><span class="chip">สรุปกิจกรรม</span>
+          <h3>ภาพบรรยากาศการละศีลอดร่วมกันเดือนรอมฎอน</h3>
+          <p>กว่า 80 ชีวิตมารวมตัวกันละศีลอด อ่านดุอาอ์ และละหมาดตะรอเวียฮ์ร่วมกัน</p>
+          <div class="article__meta"><span>8 เม.ย. 2569</span><span>·</span><span>อ่าน 3 นาที</span></div></div>
+      </article>
+      <article class="card card--hover article">
+        <div class="ph arch-sm" data-label="ภาพข่าว"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5-5L5 19"/></svg></div>
+        <div class="article__body"><span class="chip chip--gold">ประกาศ</span>
+          <h3>เปิดรับสมัครคณะกรรมการชมรมรุ่นใหม่</h3>
+          <p>ชวนน้อง ๆ ที่อยากมีส่วนร่วมพัฒนาชมรมมาร่วมเป็นทีมงานในปีการศึกษานี้</p>
+          <div class="article__meta"><span>1 มิ.ย. 2569</span><span>·</span><span>อ่าน 2 นาที</span></div></div>
+      </article>
+      <article class="card card--hover article">
+        <div class="ph arch-sm" data-label="ภาพข่าว"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5-5L5 19"/></svg></div>
+        <div class="article__body"><span class="chip">สรุปกิจกรรม</span>
+          <h3>ค่ายอาสาปลูกป่าและซ่อมมัสยิดชุมชน</h3>
+          <p>สมาชิกร่วมแรงร่วมใจพัฒนาพื้นที่และสร้างความสัมพันธ์กับชุมชนมุสลิมท้องถิ่น</p>
+          <div class="article__meta"><span>20 มี.ค. 2569</span><span>·</span><span>อ่าน 4 นาที</span></div></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<style>
+.feature-evt{ display:grid;grid-template-columns:1fr 1.1fr;overflow:hidden; }
+.feature-evt .ph{ min-height:340px; }
+.feature-evt__body{ padding:40px 44px; }
+.feature-evt__meta{ display:flex;flex-wrap:wrap;gap:18px;color:var(--ink-soft);font-size:14.5px; }
+.feature-evt__meta span{ display:flex;align-items:center;gap:8px; }
+.feature-evt__meta svg{ width:17px;height:17px;color:var(--grape-500); }
+.evt__body{ display:flex;gap:16px;padding:20px; }
+.evt__date{ flex-shrink:0;width:58px;height:58px;border-radius:14px;background:var(--grape-600);color:#fff;display:grid;place-items:center;text-align:center;line-height:1; }
+.evt__date span{ font-family:var(--font-display);font-size:22px;font-weight:700; } .evt__date small{ font-size:11px;opacity:.85; }
+.evt h3{ font-size:17px;margin:8px 0 5px;line-height:1.35; } .evt p{ font-size:14px; }
+.evt.hide{ display:none; }
+@media (max-width:820px){ .feature-evt{ grid-template-columns:1fr; } .feature-evt__body{ padding:30px 26px; } }
+</style>
+<script>
+(function(){
+  var tabs=document.getElementById('evtTabs');
+  var cards=[].slice.call(document.querySelectorAll('#evtGrid .evt'));
+  tabs.addEventListener('click',function(e){
+    var b=e.target.closest('.tab'); if(!b)return;
+    tabs.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+    b.classList.add('active');
+    var f=b.getAttribute('data-f');
+    cards.forEach(function(c){ c.classList.toggle('hide', f!=='all' && c.getAttribute('data-cat')!==f); });
+  });
+})();
+</script>
+<script src="assets/site.js"></script>
+</body>
+</html>

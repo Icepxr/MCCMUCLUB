@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมัครสมาชิก · MCCMU</title>
+<link rel="stylesheet" href="assets/mccmu.css">
+</head>
+<body data-page="join">
+<div id="site-nav"></div>
+
+<section class="phero">
+  <div class="phero__pat"></div>
+  <div class="container">
+    <div class="crumbs"><a href="index.html">หน้าแรก</a><span>/</span><span>สมัครสมาชิก</span></div>
+    <span class="eyebrow">มาเป็นครอบครัวเดียวกัน <span class="en">Join us</span></span>
+    <h1>สมัครสมาชิกชมรม</h1>
+    <p class="lead">ฟรี ไม่มีค่าใช้จ่าย เปิดรับนักศึกษาทุกชั้นปีและทุกคณะ
+      กรอกข้อมูลสั้น ๆ แล้วเราจะติดต่อกลับ إن شاء الله</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split" style="grid-template-columns:.85fr 1.15fr;align-items:start;gap:48px">
+    <!-- benefits -->
+    <div class="reveal">
+      <span class="eyebrow">ทำไมต้องสมัคร <span class="en">Benefits</span></span>
+      <h2 style="font-size:clamp(24px,3vw,32px);margin:12px 0 22px">สิ่งที่สมาชิกจะได้รับ</h2>
+      <ul class="flist">
+        <li><span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5"/></svg></span>
+          <div><h4>เครือข่ายพี่น้องมุสลิม</h4><p>รู้จักเพื่อนและพี่ ๆ จากหลากหลายคณะที่พร้อมดูแลกัน</p></div></li>
+        <li><span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h11a2 2 0 0 1 2 2v12a3 3 0 0 0-3-3H4z"/></svg></span>
+          <div><h4>ระบบพี่ดูแลน้อง</h4><p>มีพี่คอยให้คำปรึกษาเรื่องเรียนและการใช้ชีวิต</p></div></li>
+        <li><span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9l4.4-1.2z"/></svg></span>
+          <div><h4>กิจกรรมศาสนาสม่ำเสมอ</h4><p>ฮาลาเกาะฮ์ ละหมาดญะมาอะห์ และกิจกรรมรอมฎอน</p></div></li>
+        <li><span class="fic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span>
+          <div><h4>ข้อมูลฮาลาลและมัสยิด</h4><p>รู้แหล่งอาหารฮาลาลและที่ละหมาดรอบมหาวิทยาลัย</p></div></li>
+      </ul>
+      <div class="note" style="margin-top:24px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+        <p>ไม่ใช่มุสลิมก็สมัครได้ — เรายินดีต้อนรับทุกคนที่สนใจเรียนรู้และร่วมกิจกรรมกับเรา</p>
+      </div>
+    </div>
+
+    <!-- form -->
+    <div class="reveal">
+      <form class="card" id="joinForm" style="padding:34px" novalidate>
+        <h3 style="font-size:22px;margin-bottom:6px">แบบฟอร์มสมัครสมาชิก</h3>
+        <p class="muted" style="font-size:14.5px;margin-bottom:24px">ใช้เวลาไม่ถึง 2 นาที · <span class="req" style="color:#c026a3">*</span> จำเป็นต้องกรอก</p>
+        <div class="field-row">
+          <div class="field"><label>ชื่อ-นามสกุล <span class="req">*</span></label>
+            <input class="input" name="name" placeholder="เช่น อับดุลลอฮ์ ใจดี"></div>
+          <div class="field"><label>ชื่อเล่น</label>
+            <input class="input" name="nick" placeholder="เช่น ดุล"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>คณะ <span class="req">*</span></label>
+            <input class="input" name="faculty" placeholder="เช่น วิศวกรรมศาสตร์"></div>
+          <div class="field"><label>ชั้นปี <span class="req">*</span></label>
+            <select class="select" name="year">
+              <option value="">เลือกชั้นปี</option>
+              <option>ปี 1</option><option>ปี 2</option><option>ปี 3</option><option>ปี 4</option><option>ปีสูงกว่า / บัณฑิตศึกษา</option>
+            </select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>อีเมล <span class="req">*</span></label>
+            <input class="input" name="email" type="email" placeholder="you@cmu.ac.th"></div>
+          <div class="field"><label>เบอร์ / LINE ID <span class="req">*</span></label>
+            <input class="input" name="contact" placeholder="08x-xxx-xxxx หรือ LINE ID"></div>
+        </div>
+        <div class="field"><label>สนใจกิจกรรมด้านใดเป็นพิเศษ</label>
+          <div class="checks">
+            <label class="checkrow"><input type="checkbox" name="interest" value="ศาสนา"> ศาสนา (ฮาลาเกาะฮ์ / เรียนกุรอาน)</label>
+            <label class="checkrow"><input type="checkbox" name="interest" value="วิชาการ"> วิชาการ (ติว / แนะแนว)</label>
+            <label class="checkrow"><input type="checkbox" name="interest" value="อาสา"> อาสา / สังคม</label>
+            <label class="checkrow"><input type="checkbox" name="interest" value="สื่อ"> สื่อ / ออกแบบ / ถ่ายภาพ</label>
+          </div>
+        </div>
+        <div class="field"><label>ข้อความถึงชมรม (ถ้ามี)</label>
+          <textarea class="textarea" name="msg" placeholder="อยากบอกอะไรกับเราบ้าง..."></textarea></div>
+        <label class="checkrow" style="margin-bottom:20px"><input type="checkbox" name="consent"> ยินยอมให้ชมรมติดต่อกลับและเก็บข้อมูลเพื่อกิจกรรมของชมรม <span class="req">*</span></label>
+        <button type="submit" class="btn btn--primary" style="width:100%;padding:15px">ส่งใบสมัคร</button>
+      </form>
+
+      <!-- success -->
+      <div class="card" id="joinDone" style="padding:48px 34px;text-align:center;display:none">
+        <div class="done-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h3 style="font-size:24px;margin:20px 0 10px">ส่งใบสมัครเรียบร้อย!</h3>
+        <p class="muted" style="font-size:16px;max-width:380px;margin:0 auto 24px">ญะซากัลลอฮุ ค็อยรอน — ขอบคุณที่สมัคร
+          ทีมงานจะติดต่อกลับผ่านช่องทางที่ให้ไว้เร็ว ๆ นี้ إن شاء الله</p>
+        <a class="btn btn--ghost" href="index.html">กลับหน้าแรก</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<style>
+.checks{ display:grid;gap:10px;margin-top:4px; }
+.input.err,.select.err{ border-color:#e0488f;box-shadow:0 0 0 4px #fbe6f1; }
+.field .errmsg{ display:none;color:#c026a3;font-size:13px;margin-top:6px; }
+.field.show-err .errmsg{ display:block; }
+.done-check{ width:74px;height:74px;border-radius:50%;margin:0 auto;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--grape-600),var(--grape-400));color:#fff; }
+.done-check svg{ width:36px;height:36px; }
+</style>
+<script>
+(function(){
+  var form=document.getElementById('joinForm');
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var req=['name','faculty','year','email','contact'];
+    var ok=true;
+    req.forEach(function(n){
+      var el=form.elements[n]; var bad=!el.value.trim();
+      if(n==='email' && el.value.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(el.value)) bad=true;
+      el.classList.toggle('err',bad); if(bad)ok=false;
+    });
+    var consent=form.elements['consent'];
+    if(!consent.checked){ consent.parentElement.style.color='#c026a3'; ok=false; }
+    else consent.parentElement.style.color='';
+    if(!ok){ var f=form.querySelector('.err'); if(f)f.focus(); return; }
+    form.style.display='none';
+    var done=document.getElementById('joinDone'); done.style.display='block';
+    done.scrollIntoView?null:null; window.scrollTo({top:done.getBoundingClientRect().top+window.scrollY-120,behavior:'smooth'});
+  });
+  form.addEventListener('input',function(e){ if(e.target.classList)e.target.classList.remove('err'); });
+})();
+</script>
+<script src="assets/site.js"></script>
+</body>
+</html>

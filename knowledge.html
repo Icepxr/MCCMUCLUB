@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คลังความรู้ · MCCMU</title>
+<link rel="stylesheet" href="assets/mccmu.css">
+</head>
+<body data-page="knowledge">
+<div id="site-nav"></div>
+
+<section class="phero">
+  <div class="phero__pat"></div>
+  <div class="container">
+    <div class="crumbs"><a href="index.html">หน้าแรก</a><span>/</span><span>คลังความรู้</span></div>
+    <span class="eyebrow">เรียนรู้ไปด้วยกัน <span class="en">Knowledge</span></span>
+    <h1>คลังความรู้อิสลาม</h1>
+    <p class="lead">สรุปเนื้อหาบรรยาย ฮาลาเกาะฮ์ และสื่อการเรียนรู้ที่คัดสรรเพื่อชีวิตมุสลิมในมหาวิทยาลัย</p>
+  </div>
+</section>
+
+<!-- dua of the day -->
+<section class="section section--tight" style="padding-top:54px">
+  <div class="container">
+    <div class="dua reveal">
+      <div class="dua__pat"></div>
+      <div class="dua__in">
+        <span class="eyebrow" style="justify-content:center;color:var(--violet-200)">ดุอาอ์ประจำวัน <span class="en" style="color:var(--violet-300)">Dua of the day</span></span>
+        <p class="dua__ar">رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً</p>
+        <p class="dua__tr">"โอ้พระผู้อภิบาลของเรา โปรดประทานสิ่งดีงามแก่เราทั้งในโลกนี้และโลกหน้า"</p>
+        <span class="dua__src">อัลกุรอาน · ซูเราะฮ์ อัล-บะเกาะเราะฮ์ 2:201</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== LECTURE SUMMARIES ====================== -->
+<section class="section" id="sec-docs">
+  <div class="container">
+    <div class="row-head reveal">
+      <div class="s-head">
+        <span class="eyebrow">สรุปบรรยาย · ฮาลาเกาะฮ์ <span class="en">Lecture Notes</span></span>
+        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">ไฟล์สรุปเนื้อหา</h2>
+        <p class="lead" style="font-size:17px;margin-top:10px">ดาวน์โหลดและแชร์ต่อได้เลย — PDF อ่านบนมือถือ รูปภาพแชร์ผ่าน LINE</p>
+      </div>
+      <div id="docCount" class="count-badge"></div>
+    </div>
+
+    <!-- filter tabs -->
+    <div class="tabs reveal" id="docTabs" style="margin-top:30px">
+      <button class="tab active" data-f="all">ทั้งหมด</button>
+      <button class="tab" data-f="อิบาดะฮ์">อิบาดะฮ์</button>
+      <button class="tab" data-f="อาคิดะฮ์">อาคิดะฮ์</button>
+      <button class="tab" data-f="อัคลาก">อัคลาก</button>
+      <button class="tab" data-f="ฟิกฮ์">ฟิกฮ์</button>
+      <button class="tab" data-f="ประวัติ">ประวัติศาสตร์</button>
+      <button class="tab" data-f="อื่นๆ">อื่น ๆ</button>
+    </div>
+
+    <div class="grid g-3 reveal" id="docGrid" style="margin-top:26px"></div>
+
+    <div id="docEmpty" class="doc-empty" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <p>ยังไม่มีไฟล์ในหมวดนี้</p>
+    </div>
+
+    <div class="note reveal" style="margin-top:28px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+      <p>ไฟล์ทั้งหมดเก็บบน Google Drive ของชมรม สามารถดูออนไลน์หรือดาวน์โหลดได้ฟรี
+        หากพบปัญหาการเข้าถึงติดต่อกรรมการได้ที่ <a href="contact.html" style="color:var(--grape-600);font-weight:600">หน้าติดต่อ</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== ARTICLES ====================== -->
+<section class="section section--soft" id="sec-articles">
+  <div class="container">
+    <div class="s-head reveal">
+      <span class="eyebrow">บทความ <span class="en">Articles</span></span>
+      <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">เลือกอ่านตามความสนใจ</h2>
+    </div>
+
+    <div class="tabs reveal" style="margin-top:26px" id="kTabs">
+      <button class="tab active" data-f="all">ทั้งหมด</button>
+      <button class="tab" data-f="basic">หลักศรัทธา</button>
+      <button class="tab" data-f="life">ชีวิตนักศึกษา</button>
+      <button class="tab" data-f="worship">การปฏิบัติศาสนกิจ</button>
+      <button class="tab" data-f="media">สื่อ / วิดีโอ</button>
+    </div>
+
+    <div class="grid g-3 reveal" id="kGrid" style="margin-top:26px">
+      <article class="card card--hover article kitem" data-cat="basic">
+        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 5h11a2 2 0 0 1 2 2v12a3 3 0 0 0-3-3H4z"/><path d="M20 5h-1a2 2 0 0 0-2 2v12"/></svg></div>
+        <div class="article__body"><span class="chip">หลักศรัทธา</span><h3>รู้จักหลักศรัทธา 6 ประการเบื้องต้น</h3>
+          <p>ปูพื้นฐานความเชื่อในอิสลามแบบเข้าใจง่ายสำหรับผู้เริ่มต้น</p>
+          <div class="article__meta"><span>อ่าน 5 นาที</span></div></div>
+      </article>
+      <article class="card card--hover article kitem" data-cat="worship">
+        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="article__body"><span class="chip chip--gold">การปฏิบัติ</span><h3>ละหมาดอย่างไรเมื่อมีคลาสเรียนทั้งวัน</h3>
+          <p>เทคนิคจัดเวลาละหมาดให้ครบ 5 เวลาในตารางเรียนที่แน่น</p>
+          <div class="article__meta"><span>อ่าน 4 นาที</span></div></div>
+      </article>
+      <article class="card card--hover article kitem" data-cat="life">
+        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5"/></svg></div>
+        <div class="article__body"><span class="chip">ชีวิตนักศึกษา</span><h3>กินฮาลาลในเชียงใหม่ไม่ใช่เรื่องยาก</h3>
+          <p>รวมเคล็ดลับเลือกอาหารและร้านที่ปลอดภัยสำหรับมุสลิม</p>
+          <div class="article__meta"><span>อ่าน 6 นาที</span></div></div>
+      </article>
+      <article class="card card--hover article kitem" data-cat="worship">
+        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9z"/></svg></div>
+        <div class="article__body"><span class="chip chip--gold">การปฏิบัติ</span><h3>เตรียมตัวอย่างไรก่อนถึงเดือนรอมฎอน</h3>
+          <p>เช็กลิสต์เตรียมร่างกายและจิตใจสำหรับการถือศีลอด</p>
+          <div class="article__meta"><span>อ่าน 5 นาที</span></div></div>
+      </article>
+      <article class="card card--hover article kitem" data-cat="media">
+        <div class="ph arch-sm" data-label="วิดีโอ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></div>
+        <div class="article__body"><span class="chip">วิดีโอ</span><h3>คลิปสั้น: อ่านอัลฟาติฮะฮ์ให้ถูกต้อง</h3>
+          <p>ฝึกการออกเสียงและทัจวีดเบื้องต้นกับวิดีโอประกอบ</p>
+          <div class="article__meta"><span>ดู 8 นาที</span></div></div>
+      </article>
+      <article class="card card--hover article kitem" data-cat="life">
+        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/></svg></div>
+        <div class="article__body"><span class="chip">ชีวิตนักศึกษา</span><h3>ดูแลใจในวันที่คิดถึงบ้าน</h3>
+          <p>เมื่อการเรียนไกลบ้านทำให้เหนื่อย — มุมมองและกำลังใจจากพี่ ๆ</p>
+          <div class="article__meta"><span>อ่าน 4 นาที</span></div></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- quick resources -->
+<section class="section section--tight">
+  <div class="container">
+    <div class="s-head reveal"><span class="eyebrow">แหล่งข้อมูลแนะนำ <span class="en">Resources</span></span></div>
+    <div class="grid g-3 reveal" style="margin-top:26px">
+      <a class="card card--hover ctile" href="prayer.html">
+        <span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <div><h4>เวลาละหมาด</h4><p>ตารางเวลาละหมาดประจำวันของเชียงใหม่</p></div>
+      </a>
+      <a class="card card--hover ctile" href="halal-map.html">
+        <span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span>
+        <div><h4>แผนที่ฮาลาล</h4><p>ร้านอาหารและมัสยิดรอบมหาวิทยาลัย</p></div>
+      </a>
+      <a class="card card--hover ctile" href="contact.html">
+        <span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v14H4z"/><path d="M4 7l8 6 8-6"/></svg></span>
+        <div><h4>ถามคำถามศาสนา</h4><p>ส่งคำถามมาพูดคุยกับพี่ ๆ ในชมรม</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== LIGHTBOX ====================== -->
+<div id="lightbox" class="lb" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ">
+  <button class="lb__close" id="lbClose" aria-label="ปิด">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <div class="lb__wrap">
+    <img id="lbImg" src="" alt="">
+    <div class="lb__info">
+      <p id="lbTitle"></p>
+      <a id="lbDownload" href="#" class="btn btn--gold btn--sm" style="margin-top:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        ดาวน์โหลด
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- card template (hidden) -->
+<template id="tplDoc">
+  <div class="doc-card card card--hover">
+    <div class="doc-card__thumb">
+      <!-- filled by JS -->
+    </div>
+    <div class="doc-card__body">
+      <span class="chip doc-chip"></span>
+      <h3 class="doc-title"></h3>
+      <div class="doc-meta">
+        <span class="doc-date"></span>
+        <span class="doc-session"></span>
+      </div>
+      <div class="doc-actions">
+        <a class="btn btn--primary doc-open" target="_blank" rel="noopener">เปิดอ่าน</a>
+        <a class="btn btn--ghost doc-dl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>โหลด
+        </a>
+      </div>
+    </div>
+  </div>
+</template>
+
+<div id="site-footer"></div>
+
+<!-- ====================== STYLES ====================== -->
+<style>
+/* dua */
+.dua{position:relative;overflow:hidden;border-radius:var(--radius-lg);
+  background:radial-gradient(120% 160% at 80% 0%,#4c1d95,#2a0f5c 60%,#1b0b3b);color:#fff;
+  padding:46px 50px;text-align:center;}
+.dua__pat{position:absolute;inset:0;color:#fff;opacity:.05;background-image:var(--khatam-url);background-size:120px;}
+.dua__in{position:relative;max-width:720px;margin-inline:auto;}
+.dua__ar{font-size:clamp(26px,4.4vw,40px);color:var(--gold-soft);direction:rtl;line-height:1.6;margin:20px 0 16px;font-family:'Anuphan',serif;}
+.dua__tr{font-size:clamp(17px,2.2vw,21px);color:#e7ddfb;line-height:1.6;}
+.dua__src{display:inline-block;margin-top:16px;font-size:13px;color:var(--violet-300);letter-spacing:.05em;}
+
+/* row-head */
+.row-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
+.count-badge{font-family:var(--font-display);font-size:14px;color:var(--muted);align-self:flex-end;padding-bottom:4px;}
+
+/* doc card */
+.doc-card{overflow:hidden;display:flex;flex-direction:column;}
+
+.doc-card__thumb{
+  position:relative;aspect-ratio:16/9;overflow:hidden;
+  display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--grape-700),var(--grape-500));
+  flex-shrink:0;
+}
+.doc-card__thumb.is-img{background:var(--lilac-100);}
+.doc-card__thumb.is-img img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  transition:transform .3s ease;
+}
+.doc-card:hover .doc-card__thumb.is-img img{transform:scale(1.04);}
+
+/* PDF icon */
+.pdf-icon-wrap{display:grid;place-items:center;gap:8px;}
+.pdf-icon-wrap svg{width:52px;height:52px;color:rgba(255,255,255,.7);}
+.pdf-label{font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--gold-soft);text-transform:uppercase;}
+
+/* type badge */
+.type-badge{
+  position:absolute;top:10px;right:10px;
+  padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  backdrop-filter:blur(6px);
+}
+.type-badge.pdf{background:rgba(231,176,8,.22);color:var(--gold-soft);border:1px solid rgba(231,176,8,.35);}
+.type-badge.img{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);}
+
+/* overlay */
+.doc-overlay{
+  position:absolute;inset:0;background:rgba(26,9,60,.5);opacity:0;
+  transition:opacity .2s;display:grid;place-items:center;cursor:pointer;
+}
+.doc-card:hover .doc-overlay{opacity:1;}
+.doc-overlay svg{width:40px;height:40px;color:#fff;}
+
+/* card body */
+.doc-card__body{padding:20px 20px 22px;display:flex;flex-direction:column;flex:1;}
+.doc-card__body .chip{align-self:flex-start;margin-bottom:10px;}
+.doc-card__body h3{font-size:17px;line-height:1.3;margin-bottom:6px;flex:1;}
+.doc-meta{display:flex;gap:12px;font-size:13px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap;}
+.doc-actions{display:flex;gap:9px;margin-top:auto;}
+.doc-actions .btn{flex:1;font-size:13.5px;padding:10px 14px;justify-content:center;}
+
+/* empty */
+.doc-empty{text-align:center;padding:64px 20px;color:var(--muted);}
+.doc-empty svg{width:52px;height:52px;margin:0 auto 14px;display:block;color:var(--violet-200);}
+.doc-empty p{font-size:15px;}
+
+/* article filter */
+.kitem.hide{display:none;}
+
+/* lightbox */
+.lb{
+  position:fixed;inset:0;z-index:200;background:rgba(17,7,40,.92);
+  display:grid;place-items:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .22s;
+  backdrop-filter:blur(8px);
+}
+.lb.open{opacity:1;pointer-events:auto;}
+.lb__close{
+  position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);
+  cursor:pointer;display:grid;place-items:center;color:#fff;transition:background .15s;
+}
+.lb__close:hover{background:rgba(255,255,255,.2);}
+.lb__close svg{width:22px;height:22px;}
+.lb__wrap{max-width:900px;width:100%;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.lb__wrap img{max-height:80vh;max-width:100%;border-radius:16px;box-shadow:0 40px 80px rgba(0,0,0,.6);}
+.lb__info{text-align:center;}
+.lb__info p{color:#e7ddfb;font-size:15px;}
+
+@media(max-width:640px){
+  .dua{padding:32px 22px;}
+  .doc-actions{flex-direction:column;}
+  .lb__wrap img{max-height:65vh;}
+}
+</style>
+
+<!-- ====================== SCRIPT ====================== -->
+<script>
+/*
+ * ══════════════════════════════════════════════════════
+ * 📁 ข้อมูลสรุปบรรยาย — แก้ไขที่นี่เพื่อเพิ่มไฟล์ใหม่
+ *
+ * วิธีเอา FILE_ID จาก Google Drive:
+ *   1. อัปโหลดไฟล์ → คลิกขวา → "Get link" → Anyone with link
+ *   2. URL: https://drive.google.com/file/d/FILE_ID/view
+ *   3. copy แค่ส่วน FILE_ID มาใส่ด้านล่าง
+ *
+ * type : 'pdf' | 'img'
+ * ══════════════════════════════════════════════════════
+ */
+var DOCS = [
+  {
+    type: 'pdf',
+    title: 'สรุปฮาลาเกาะฮ์: ความหมายและความสำคัญของการละหมาด',
+    cat: 'อิบาดะฮ์', session: 'ครั้งที่ 1', date: '14 มิ.ย. 2569',
+    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
+  },
+  {
+    type: 'img',
+    title: 'อินโฟกราฟิก: เสาหลักของอิสลาม 5 ประการ',
+    cat: 'อาคิดะฮ์', session: 'ครั้งที่ 2', date: '21 มิ.ย. 2569',
+    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
+  },
+  {
+    type: 'pdf',
+    title: 'สรุปบรรยาย: หลักอาคิดะฮ์เบื้องต้น — ตอนที่ 1',
+    cat: 'อาคิดะฮ์', session: 'ครั้งที่ 3', date: '28 มิ.ย. 2569',
+    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
+  },
+  {
+    type: 'img',
+    title: 'สรุปภาพ: อัคลากของมุสลิมที่ดี',
+    cat: 'อัคลาก', session: 'ครั้งที่ 4', date: '5 ก.ค. 2569',
+    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
+  },
+  {
+    type: 'pdf',
+    title: 'สรุปบรรยาย: ฟิกฮ์การทำความสะอาด (ตะฮาเราะฮ์)',
+    cat: 'ฟิกฮ์', session: 'ครั้งที่ 5', date: '12 ก.ค. 2569',
+    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
+  },
+  {
+    type: 'img',
+    title: 'ไทม์ไลน์ประวัติศาสตร์อิสลาม: จากการเผยแผ่สู่ยุคทอง',
+    cat: 'ประวัติ', session: 'ครั้งที่ 6', date: '19 ก.ค. 2569',
+    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
+  }
+];
+
+/* derive URLs from fileId */
+function driveView(id)     { return 'https://drive.google.com/file/d/' + id + '/preview'; }
+function driveDownload(id) { return 'https://drive.google.com/uc?export=download&id=' + id; }
+function driveImg(id)      { return 'https://drive.google.com/uc?export=view&id=' + id; }
+
+/* ── build one card using DOM (no unsafe innerHTML) ── */
+function buildCard(d) {
+  var tpl  = document.getElementById('tplDoc');
+  var node = tpl.content.cloneNode(true);
+  var card = node.querySelector('.doc-card');
+  card.setAttribute('data-cat', d.cat);
+
+  var thumb = card.querySelector('.doc-card__thumb');
+
+  /* overlay button */
+  var overlay = document.createElement('div');
+  overlay.className = 'doc-overlay';
+  var eyeSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  eyeSvg.setAttribute('viewBox','0 0 24 24');
+  eyeSvg.setAttribute('fill','none');
+  eyeSvg.setAttribute('stroke','currentColor');
+  eyeSvg.setAttribute('stroke-width','1.8');
+
+  if (d.type === 'pdf') {
+    /* PDF thumb */
+    var iconWrap = document.createElement('div');
+    iconWrap.className = 'pdf-icon-wrap';
+    var pdfSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    pdfSvg.setAttribute('viewBox','0 0 24 24');
+    pdfSvg.setAttribute('fill','none');
+    pdfSvg.setAttribute('stroke','currentColor');
+    pdfSvg.setAttribute('stroke-width','1.4');
+    pdfSvg.innerHTML = '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-width="1.6"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/>';
+    var pdfLbl = document.createElement('span');
+    pdfLbl.className = 'pdf-label';
+    pdfLbl.textContent = 'PDF Document';
+    iconWrap.appendChild(pdfSvg);
+    iconWrap.appendChild(pdfLbl);
+    thumb.appendChild(iconWrap);
+
+    eyeSvg.innerHTML = '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>';
+    overlay.addEventListener('click', function(){ window.open(driveView(d.fileId), '_blank', 'noopener'); });
+
+    /* open button → Drive preview */
+    var openBtn = card.querySelector('.doc-open');
+    openBtn.href = driveView(d.fileId);
+    openBtn.textContent = 'เปิดอ่าน';
+
+  } else {
+    /* Image thumb */
+    thumb.classList.add('is-img');
+    var img = document.createElement('img');
+    img.src = driveImg(d.fileId);
+    img.alt = d.title;
+    img.loading = 'lazy';
+    thumb.appendChild(img);
+
+    eyeSvg.innerHTML = '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>';
+    overlay.addEventListener('click', function(){ openLightbox(d.fileId, d.title); });
+
+    /* open button → lightbox */
+    var openBtn = card.querySelector('.doc-open');
+    openBtn.removeAttribute('href');
+    openBtn.tagName === 'A' && (function(){
+      var btn = document.createElement('button');
+      btn.className = openBtn.className;
+      btn.textContent = 'ดูรูป';
+      btn.addEventListener('click', function(){ openLightbox(d.fileId, d.title); });
+      openBtn.replaceWith(btn);
+    })();
+  }
+
+  overlay.appendChild(eyeSvg);
+  thumb.appendChild(overlay);
+
+  /* type badge */
+  var badge = document.createElement('span');
+  badge.className = 'type-badge ' + d.type;
+  badge.textContent = d.type === 'pdf' ? 'PDF' : 'รูปภาพ';
+  thumb.appendChild(badge);
+
+  /* text fields */
+  card.querySelector('.doc-chip').textContent    = d.cat;
+  card.querySelector('.doc-title').textContent   = d.title;
+  card.querySelector('.doc-date').textContent    = d.date;
+  card.querySelector('.doc-session').textContent = d.session;
+
+  /* download button */
+  card.querySelector('.doc-dl').href = driveDownload(d.fileId);
+
+  return node;
+}
+
+/* ── render grid ── */
+(function(){
+  var grid    = document.getElementById('docGrid');
+  var tabs    = document.getElementById('docTabs');
+  var empty   = document.getElementById('docEmpty');
+  var countEl = document.getElementById('docCount');
+
+  function render(filter) {
+    var filtered = filter === 'all' ? DOCS : DOCS.filter(function(d){ return d.cat === filter; });
+    countEl.textContent = filtered.length + ' ไฟล์';
+    while (grid.firstChild) grid.removeChild(grid.firstChild);
+    if (filtered.length === 0) {
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      filtered.forEach(function(d){ grid.appendChild(buildCard(d)); });
+    }
+  }
+
+  render('all');
+
+  tabs.addEventListener('click', function(e){
+    var b = e.target.closest('.tab');
+    if (!b) return;
+    tabs.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    b.classList.add('active');
+    render(b.getAttribute('data-f'));
+  });
+})();
+
+/* ── article tabs ── */
+(function(){
+  var tabs  = document.getElementById('kTabs');
+  var cards = Array.from(document.querySelectorAll('#kGrid .kitem'));
+  tabs.addEventListener('click', function(e){
+    var b = e.target.closest('.tab');
+    if (!b) return;
+    tabs.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    b.classList.add('active');
+    var f = b.getAttribute('data-f');
+    cards.forEach(function(c){
+      c.classList.toggle('hide', f !== 'all' && c.getAttribute('data-cat') !== f);
+    });
+  });
+})();
+
+/* ── lightbox ── */
+var lb    = document.getElementById('lightbox');
+var lbImg = document.getElementById('lbImg');
+var lbTxt = document.getElementById('lbTitle');
+var lbDl  = document.getElementById('lbDownload');
+
+function openLightbox(fileId, title) {
+  lbImg.src = driveImg(fileId);
+  lbImg.alt = title;
+  lbTxt.textContent = title;
+  lbDl.href = driveDownload(fileId);
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(function(){ lbImg.src = ''; }, 300);
+}
+
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+lb.addEventListener('click', function(e){ if (e.target === lb) closeLightbox(); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeLightbox(); });
+</script>
+<script src="assets/site.js"></script>
+</body>
+</html>
