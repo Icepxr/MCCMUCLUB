@@ -38,41 +38,43 @@ MCCMU.get = function (sheet, params) {
    • stale-while-revalidate: ถ้าหมดอายุ ใช้ของเก่าทันที แล้วรีเฟรชเบื้องหลัง
    ทุก getX ด้านล่างอ่านจากก้อนนี้ (กรองฝั่ง client) — ไม่ยิงสดรายอัน
    ══════════════════════════════════════════════════════════════════ */
+/* โหลด ?sheet=all แบบ cache มี TTL (เร็ว + ไม่ยิง request ทุกครั้งที่รีโหลด)
+   • cache ยังสด (< TTL) → ใช้เลย ไม่ยิง network
+   • cache หมดอายุ/ไม่มี → ดึงใหม่ (โชว์ skeleton ระหว่างรอ) แล้ววาดด้วยข้อมูลใหม่ทั้งชุด
+   ไม่มีการ "วาดของเก่าแล้วค่อยสลับ" จึงไม่เกิดปัญหารูป/ข้อมูลค้าง
+   อยากบังคับโหลดใหม่ทันที: เรียก MCCMU.refresh() หรือเปิดด้วย ?fresh */
 var LS_KEY = 'mccmu_all_v1';
-var LS_TTL = 10 * 60 * 1000; // 10 นาที
-
-function _readLS() {
-  try {
-    var raw = window.localStorage.getItem(LS_KEY);
-    if (!raw) return null;
-    var o = JSON.parse(raw);
-    return (o && o.data) ? o : null;
-  } catch (e) { return null; }
-}
-function _writeLS(data) {
-  try {
-    window.localStorage.setItem(LS_KEY, JSON.stringify({ t: Date.now(), data: data }));
-  } catch (e) {}
-}
-function _fetchAll() {
-  return MCCMU.get('all').then(function (data) { _writeLS(data); return data; });
-}
-function _refreshAll() {
-  _fetchAll().then(function (data) {
-    MCCMU._allPromise = Promise.resolve(data); // อัปเดต cache ในหน่วยความจำรอบหน้า
-  }).catch(function () {});
-}
+var LS_TTL = 10 * 60 * 1000; // 10 นาที (ปรับได้)
 
 MCCMU._loadAll = function () {
   if (MCCMU._allPromise) return MCCMU._allPromise;
-  var stored = _readLS();
-  if (stored) {
-    MCCMU._allPromise = Promise.resolve(stored.data);
-    _refreshAll(); // โชว์ cache ทันที แต่ดึงสดเบื้องหลังเสมอ → รีเฟรชรอบหน้าได้ของล่าสุด
-  } else {
-    MCCMU._allPromise = _fetchAll();
+
+  var bypass = /[?&#]fresh\b/.test(location.search + location.hash);
+  if (!bypass) {
+    try {
+      var raw = window.localStorage.getItem(LS_KEY);
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && o.data && (Date.now() - o.t) < LS_TTL) {
+          MCCMU._allPromise = Promise.resolve(o.data); // cache สด → ไม่ยิง request
+          return MCCMU._allPromise;
+        }
+      }
+    } catch (e) {}
   }
+
+  MCCMU._allPromise = MCCMU.get('all').then(function (data) {
+    try { window.localStorage.setItem(LS_KEY, JSON.stringify({ t: Date.now(), data: data })); } catch (e) {}
+    return data;
+  });
   return MCCMU._allPromise;
+};
+
+/* ล้าง cache ฝั่งเบราว์เซอร์แล้วโหลดใหม่ (ใช้ตอนเพิ่งแก้ข้อมูลในชีตแล้วอยากเห็นทันที) */
+MCCMU.refresh = function () {
+  try { window.localStorage.removeItem(LS_KEY); } catch (e) {}
+  MCCMU._allPromise = null;
+  location.reload();
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -135,16 +137,18 @@ function _el(tag, cls, text) {
 function _fillImg(ph, url, alt) {
   if (!ph || !url || !/^https:\/\//.test(url)) return;
   var img = new Image();
-  img.loading = 'lazy';
+  img.referrerPolicy = 'no-referrer';   // จำเป็นสำหรับรูป Google Drive (กัน Referer block)
   img.alt = alt || '';
   var triedAlt = false;
+  /* หมายเหตุ: ห้ามใส่ img.loading='lazy' ที่นี่ — img สร้างนอก DOM แล้วรอ onload ค่อย append
+     ถ้า lazy เบราว์เซอร์จะเลื่อนการโหลด → onload ไม่ยิง → รูปไม่ขึ้น */
   img.onload = function () { ph.classList.add('has-img'); ph.appendChild(img); };
   img.onerror = function () {
-    /* lh3 โหลดไม่ได้ → ลอง thumbnail endpoint อีกแบบหนึ่งครั้ง */
+    /* รูปหลักโหลดไม่ได้ → ลองอีก endpoint หนึ่งครั้ง (ดึง id แล้วสลับไป lh3) */
     if (!triedAlt) {
       triedAlt = true;
-      var m = url.match(/lh3\.googleusercontent\.com\/d\/([-\w]+)/);
-      if (m) { img.src = 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1600'; return; }
+      var m = url.match(/[-\w]{25,}/);
+      if (m) { img.src = 'https://lh3.googleusercontent.com/d/' + m[0] + '=w1600'; return; }
     }
     /* ยังไม่ได้ → คง placeholder เดิม */
   };
@@ -390,6 +394,7 @@ MCCMU.renderGallery = function (gridSel, tabsSel) {
     var p = cur.photos[cur.i]; if (!p) return;
     _clear(lbImg);
     var im = new Image();
+    im.referrerPolicy = 'no-referrer';
     im.src = p.image_url || p.thumb_url; im.alt = cur.title;
     im.style.cssText = 'width:100%;height:100%;object-fit:contain';
     lbImg.classList.add('has-img');
@@ -618,8 +623,9 @@ MCCMU.applySettings = function () {
     if (s.club_line) document.querySelectorAll('a[aria-label="LINE"]').forEach(function (a) {
       if (!/^https?:/.test(a.getAttribute('href') || '')) a.textContent = s.club_line;
     });
-    /* โลโก้แบรนด์ จาก backend (ถ้าตั้ง logo_id) */
+    /* โลโก้แบรนด์ จาก backend (ถ้าตั้ง logo_id) — รูป Drive ต้องตั้ง no-referrer */
     if (s.logo_url) document.querySelectorAll('.brand__logo, .footer__brand img').forEach(function (img) {
+      img.referrerPolicy = 'no-referrer';
       img.src = s.logo_url;
     });
     MCCMU._settings = s;

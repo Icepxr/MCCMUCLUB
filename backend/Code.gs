@@ -126,7 +126,8 @@ function byStatus(items, status) {
 function driveImg(id, size) {
   id = extractDriveId(id);
   if (!id) return '';
-  return 'https://lh3.googleusercontent.com/d/' + id + '=w' + (size || 1600);
+  // ใช้ endpoint thumbnail (เสถียรกว่า lh3) — ใช้ได้กับไฟล์ที่แชร์ "Anyone with the link"
+  return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + (size || 1600);
 }
 function drivePreview(id) {
   id = extractDriveId(id);

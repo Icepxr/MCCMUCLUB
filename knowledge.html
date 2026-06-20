@@ -70,12 +70,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <p>ยังไม่มีไฟล์ในหมวดนี้</p>
     </div>
-
-    <div class="note reveal" style="margin-top:28px">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
-      <p>ไฟล์ทั้งหมดเก็บบน Google Drive ของชมรม สามารถดูออนไลน์หรือดาวน์โหลดได้ฟรี
-        หากพบปัญหาการเข้าถึงติดต่อกรรมการได้ที่ <a href="about.html#contact" style="color:var(--grape-600);font-weight:600">หน้าติดต่อ</a></p>
-    </div>
   </div>
 </section>
 
@@ -287,9 +281,9 @@ function _docThai(d){
 function _docId(s)         { s=(s||'').toString().trim(); var m=s.match(/[-\w]{25,}/); return m?m[0]:s; }
 function driveView(id)     { return 'https://drive.google.com/file/d/' + _docId(id) + '/preview'; }
 function driveDownload(id) { return 'https://drive.google.com/uc?export=download&id=' + _docId(id); }
-function driveImg(id)      { return 'https://lh3.googleusercontent.com/d/' + _docId(id) + '=w1600'; }
-function driveThumb(id)    { return 'https://lh3.googleusercontent.com/d/' + _docId(id) + '=w800'; }
-function driveThumbAlt(id) { return 'https://drive.google.com/thumbnail?id=' + _docId(id) + '&sz=w800'; }
+function driveImg(id)      { return 'https://drive.google.com/thumbnail?id=' + _docId(id) + '&sz=w1600'; }
+function driveThumb(id)    { return 'https://drive.google.com/thumbnail?id=' + _docId(id) + '&sz=w800'; }
+function driveThumbAlt(id) { return 'https://lh3.googleusercontent.com/d/' + _docId(id) + '=w800'; }
 
 function _svgEl(tag, attrs, parent){
   var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -324,6 +318,7 @@ function buildCard(d) {
   var thumb = card.querySelector('.doc-card__thumb');
   thumb.classList.add('is-img');
   var img = document.createElement('img');
+  img.referrerPolicy = 'no-referrer';   // จำเป็นสำหรับรูป Google Drive
   img.src = driveThumb(d.fileId);
   img.alt = d.title;
   img.loading = 'lazy';
