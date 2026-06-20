@@ -25,8 +25,9 @@
     <div class="dua reveal">
       <div class="dua__pat"></div>
       <div class="dua__in">
-        <span class="eyebrow" style="justify-content:center;color:var(--violet-200)">ดุอาอ์ประจำวัน <span class="en" style="color:var(--violet-300)">Dua of the day</span></span>
+        <span class="eyebrow" style="justify-content:center">ดุอาอ์ประจำวัน <span class="en">Dua of the day</span></span>
         <p class="dua__ar">رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً</p>
+        <div class="dua__ornament">✦</div>
         <p class="dua__tr">"โอ้พระผู้อภิบาลของเรา โปรดประทานสิ่งดีงามแก่เราทั้งในโลกนี้และโลกหน้า"</p>
         <span class="dua__src">อัลกุรอาน · ซูเราะฮ์ อัล-บะเกาะเราะฮ์ 2:201</span>
       </div>
@@ -39,25 +40,31 @@
   <div class="container">
     <div class="row-head reveal">
       <div class="s-head">
-        <span class="eyebrow">สรุปบรรยาย · ฮาลาเกาะฮ์ <span class="en">Lecture Notes</span></span>
-        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">ไฟล์สรุปเนื้อหา</h2>
-        <p class="lead" style="font-size:17px;margin-top:10px">ดาวน์โหลดและแชร์ต่อได้เลย — PDF อ่านบนมือถือ รูปภาพแชร์ผ่าน LINE</p>
+        <span class="eyebrow">สรุปเนื้อหา · ฮาลาเกาะฮ์ <span class="en">Lecture Notes</span></span>
+        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">คลังความรู้ศาสนา</h2>
+        <p class="lead" style="font-size:17px;margin-top:10px">ดาวน์โหลดและแชร์ต่อได้เลย — PDF อ่านบนมือถือ </p>
+        <p class="doc-sort-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          เพิ่มล่าสุดก่อน
+        </p>
       </div>
-      <div id="docCount" class="count-badge"></div>
+      <div style="display:flex;align-items:center;gap:16px;flex-shrink:0">
+        <div id="docCount" class="count-badge"></div>
+        <div class="carousel__nav">
+          <button class="carousel__btn" id="docPrev" type="button" aria-label="ก่อนหน้า">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="carousel__btn" id="docNext" type="button" aria-label="ถัดไป">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- filter tabs -->
-    <div class="tabs reveal" id="docTabs" style="margin-top:30px">
-      <button class="tab active" data-f="all">ทั้งหมด</button>
-      <button class="tab" data-f="อิบาดะฮ์">อิบาดะฮ์</button>
-      <button class="tab" data-f="อาคิดะฮ์">อาคิดะฮ์</button>
-      <button class="tab" data-f="อัคลาก">อัคลาก</button>
-      <button class="tab" data-f="ฟิกฮ์">ฟิกฮ์</button>
-      <button class="tab" data-f="ประวัติ">ประวัติศาสตร์</button>
-      <button class="tab" data-f="อื่นๆ">อื่น ๆ</button>
+    <!-- carousel -->
+    <div class="carousel doc-carousel reveal" style="margin-top:26px">
+      <div class="carousel__track" id="docGrid"></div>
     </div>
-
-    <div class="grid g-3 reveal" id="docGrid" style="margin-top:26px"></div>
 
     <div id="docEmpty" class="doc-empty" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -67,74 +74,17 @@
     <div class="note reveal" style="margin-top:28px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
       <p>ไฟล์ทั้งหมดเก็บบน Google Drive ของชมรม สามารถดูออนไลน์หรือดาวน์โหลดได้ฟรี
-        หากพบปัญหาการเข้าถึงติดต่อกรรมการได้ที่ <a href="contact.html" style="color:var(--grape-600);font-weight:600">หน้าติดต่อ</a></p>
-    </div>
-  </div>
-</section>
-
-<!-- ====================== ARTICLES ====================== -->
-<section class="section section--soft" id="sec-articles">
-  <div class="container">
-    <div class="s-head reveal">
-      <span class="eyebrow">บทความ <span class="en">Articles</span></span>
-      <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">เลือกอ่านตามความสนใจ</h2>
-    </div>
-
-    <div class="tabs reveal" style="margin-top:26px" id="kTabs">
-      <button class="tab active" data-f="all">ทั้งหมด</button>
-      <button class="tab" data-f="basic">หลักศรัทธา</button>
-      <button class="tab" data-f="life">ชีวิตนักศึกษา</button>
-      <button class="tab" data-f="worship">การปฏิบัติศาสนกิจ</button>
-      <button class="tab" data-f="media">สื่อ / วิดีโอ</button>
-    </div>
-
-    <div class="grid g-3 reveal" id="kGrid" style="margin-top:26px">
-      <article class="card card--hover article kitem" data-cat="basic">
-        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 5h11a2 2 0 0 1 2 2v12a3 3 0 0 0-3-3H4z"/><path d="M20 5h-1a2 2 0 0 0-2 2v12"/></svg></div>
-        <div class="article__body"><span class="chip">หลักศรัทธา</span><h3>รู้จักหลักศรัทธา 6 ประการเบื้องต้น</h3>
-          <p>ปูพื้นฐานความเชื่อในอิสลามแบบเข้าใจง่ายสำหรับผู้เริ่มต้น</p>
-          <div class="article__meta"><span>อ่าน 5 นาที</span></div></div>
-      </article>
-      <article class="card card--hover article kitem" data-cat="worship">
-        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-        <div class="article__body"><span class="chip chip--gold">การปฏิบัติ</span><h3>ละหมาดอย่างไรเมื่อมีคลาสเรียนทั้งวัน</h3>
-          <p>เทคนิคจัดเวลาละหมาดให้ครบ 5 เวลาในตารางเรียนที่แน่น</p>
-          <div class="article__meta"><span>อ่าน 4 นาที</span></div></div>
-      </article>
-      <article class="card card--hover article kitem" data-cat="life">
-        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5"/></svg></div>
-        <div class="article__body"><span class="chip">ชีวิตนักศึกษา</span><h3>กินฮาลาลในเชียงใหม่ไม่ใช่เรื่องยาก</h3>
-          <p>รวมเคล็ดลับเลือกอาหารและร้านที่ปลอดภัยสำหรับมุสลิม</p>
-          <div class="article__meta"><span>อ่าน 6 นาที</span></div></div>
-      </article>
-      <article class="card card--hover article kitem" data-cat="worship">
-        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l1.6 4.8L18 9l-4.4 1.2L12 15l-1.6-4.8L6 9z"/></svg></div>
-        <div class="article__body"><span class="chip chip--gold">การปฏิบัติ</span><h3>เตรียมตัวอย่างไรก่อนถึงเดือนรอมฎอน</h3>
-          <p>เช็กลิสต์เตรียมร่างกายและจิตใจสำหรับการถือศีลอด</p>
-          <div class="article__meta"><span>อ่าน 5 นาที</span></div></div>
-      </article>
-      <article class="card card--hover article kitem" data-cat="media">
-        <div class="ph arch-sm" data-label="วิดีโอ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg></div>
-        <div class="article__body"><span class="chip">วิดีโอ</span><h3>คลิปสั้น: อ่านอัลฟาติฮะฮ์ให้ถูกต้อง</h3>
-          <p>ฝึกการออกเสียงและทัจวีดเบื้องต้นกับวิดีโอประกอบ</p>
-          <div class="article__meta"><span>ดู 8 นาที</span></div></div>
-      </article>
-      <article class="card card--hover article kitem" data-cat="life">
-        <div class="ph arch-sm" data-label="ภาพประกอบ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/></svg></div>
-        <div class="article__body"><span class="chip">ชีวิตนักศึกษา</span><h3>ดูแลใจในวันที่คิดถึงบ้าน</h3>
-          <p>เมื่อการเรียนไกลบ้านทำให้เหนื่อย — มุมมองและกำลังใจจากพี่ ๆ</p>
-          <div class="article__meta"><span>อ่าน 4 นาที</span></div></div>
-      </article>
+        หากพบปัญหาการเข้าถึงติดต่อกรรมการได้ที่ <a href="about.html#contact" style="color:var(--grape-600);font-weight:600">หน้าติดต่อ</a></p>
     </div>
   </div>
 </section>
 
 <!-- quick resources -->
-<section class="section section--tight">
+<section class="section section--soft section--tight">
   <div class="container">
     <div class="s-head reveal"><span class="eyebrow">แหล่งข้อมูลแนะนำ <span class="en">Resources</span></span></div>
     <div class="grid g-3 reveal" style="margin-top:26px">
-      <a class="card card--hover ctile" href="prayer.html">
+      <a class="card card--hover ctile" href="index.html#prayer">
         <span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
         <div><h4>เวลาละหมาด</h4><p>ตารางเวลาละหมาดประจำวันของเชียงใหม่</p></div>
       </a>
@@ -142,7 +92,7 @@
         <span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span>
         <div><h4>แผนที่ฮาลาล</h4><p>ร้านอาหารและมัสยิดรอบมหาวิทยาลัย</p></div>
       </a>
-      <a class="card card--hover ctile" href="contact.html">
+      <a class="card card--hover ctile" href="about.html#contact">
         <span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v14H4z"/><path d="M4 7l8 6 8-6"/></svg></span>
         <div><h4>ถามคำถามศาสนา</h4><p>ส่งคำถามมาพูดคุยกับพี่ ๆ ในชมรม</p></div>
       </a>
@@ -156,7 +106,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
   </button>
   <div class="lb__wrap">
-    <img id="lbImg" src="" alt="">
+    <div id="lbStage" class="lb__stage"></div>
     <div class="lb__info">
       <p id="lbTitle"></p>
       <a id="lbDownload" href="#" class="btn btn--gold btn--sm" style="margin-top:12px">
@@ -174,14 +124,16 @@
       <!-- filled by JS -->
     </div>
     <div class="doc-card__body">
-      <span class="chip doc-chip"></span>
       <h3 class="doc-title"></h3>
       <div class="doc-meta">
         <span class="doc-date"></span>
         <span class="doc-session"></span>
       </div>
       <div class="doc-actions">
-        <a class="btn btn--primary doc-open" target="_blank" rel="noopener">เปิดอ่าน</a>
+        <button class="btn btn--primary doc-open" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="width:16px;height:16px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="doc-open-lbl">พรีวิว</span>
+        </button>
         <a class="btn btn--ghost doc-dl">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>โหลด
         </a>
@@ -194,25 +146,55 @@
 
 <!-- ====================== STYLES ====================== -->
 <style>
-/* dua */
-.dua{position:relative;overflow:hidden;border-radius:var(--radius-lg);
-  background:radial-gradient(120% 160% at 80% 0%,#4c1d95,#2a0f5c 60%,#1b0b3b);color:#fff;
-  padding:46px 50px;text-align:center;}
-.dua__pat{position:absolute;inset:0;color:#fff;opacity:.05;background-image:var(--khatam-url);background-size:120px;}
-.dua__in{position:relative;max-width:720px;margin-inline:auto;}
-.dua__ar{font-size:clamp(26px,4.4vw,40px);color:var(--gold-soft);direction:rtl;line-height:1.6;margin:20px 0 16px;font-family:'Anuphan',serif;}
-.dua__tr{font-size:clamp(17px,2.2vw,21px);color:#e7ddfb;line-height:1.6;}
-.dua__src{display:inline-block;margin-top:16px;font-size:13px;color:var(--violet-300);letter-spacing:.05em;}
+/* dua — redesign: light elegant card */
+.dua{
+  position:relative;overflow:hidden;border-radius:var(--radius-lg);
+  background:#fff;
+  border:1px solid var(--violet-200);
+  padding:52px 56px;text-align:center;
+  box-shadow:0 24px 64px -32px rgba(43,15,92,.12);
+}
+.dua::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 100% 55% at 50% 0%,rgba(139,92,246,.07),transparent 65%),
+    radial-gradient(ellipse 60% 40% at 50% 100%,rgba(231,176,8,.05),transparent 60%);
+}
+.dua__pat{position:absolute;inset:0;color:var(--grape-600);opacity:.04;background-image:var(--khatam-url);background-size:140px;}
+.dua__in{position:relative;max-width:700px;margin-inline:auto;}
+.dua__ar{
+  font-size:clamp(28px,4.6vw,44px);
+  color:var(--grape-800);
+  direction:rtl;line-height:1.7;
+  margin:22px 0 0;
+  font-family:'Anuphan',serif;
+  letter-spacing:.02em;
+}
+/* gold ornament divider */
+.dua__ornament{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin:22px 0;color:var(--gold);font-size:12px;
+}
+.dua__ornament::before,.dua__ornament::after{
+  content:"";flex:1;max-width:90px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(231,176,8,.6));
+}
+.dua__ornament::after{background:linear-gradient(90deg,rgba(231,176,8,.6),transparent);}
+.dua__tr{font-size:clamp(16px,2vw,19px);color:var(--ink-soft);line-height:1.75;max-width:560px;margin-inline:auto;}
+.dua__src{display:inline-block;margin-top:14px;font-size:13px;color:var(--muted);letter-spacing:.06em;}
 
 /* row-head */
 .row-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
 .count-badge{font-family:var(--font-display);font-size:14px;color:var(--muted);align-self:flex-end;padding-bottom:4px;}
+.doc-sort-hint{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;color:var(--muted);font-family:var(--font-display);}
 
-/* doc card */
+/* doc card (carousel size — 4 per row) */
+.doc-carousel .carousel__track > .doc-card{
+  flex:0 0 auto;width:270px;scroll-snap-align:start;
+}
 .doc-card{overflow:hidden;display:flex;flex-direction:column;}
-
 .doc-card__thumb{
-  position:relative;aspect-ratio:16/9;overflow:hidden;
+  position:relative;aspect-ratio:3/4;overflow:hidden;
   display:grid;place-items:center;
   background:linear-gradient(140deg,var(--grape-700),var(--grape-500));
   flex-shrink:0;
@@ -226,13 +208,13 @@
 
 /* PDF icon */
 .pdf-icon-wrap{display:grid;place-items:center;gap:8px;}
-.pdf-icon-wrap svg{width:52px;height:52px;color:rgba(255,255,255,.7);}
+.pdf-icon-wrap svg{width:40px;height:40px;color:rgba(255,255,255,.7);}
 .pdf-label{font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--gold-soft);text-transform:uppercase;}
 
 /* type badge */
 .type-badge{
-  position:absolute;top:10px;right:10px;
-  padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  position:absolute;top:8px;right:8px;
+  padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   backdrop-filter:blur(6px);
 }
 .type-badge.pdf{background:rgba(231,176,8,.22);color:var(--gold-soft);border:1px solid rgba(231,176,8,.35);}
@@ -244,23 +226,20 @@
   transition:opacity .2s;display:grid;place-items:center;cursor:pointer;
 }
 .doc-card:hover .doc-overlay{opacity:1;}
-.doc-overlay svg{width:40px;height:40px;color:#fff;}
+.doc-overlay svg{width:34px;height:34px;color:#fff;}
 
 /* card body */
-.doc-card__body{padding:20px 20px 22px;display:flex;flex-direction:column;flex:1;}
-.doc-card__body .chip{align-self:flex-start;margin-bottom:10px;}
-.doc-card__body h3{font-size:17px;line-height:1.3;margin-bottom:6px;flex:1;}
-.doc-meta{display:flex;gap:12px;font-size:13px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap;}
-.doc-actions{display:flex;gap:9px;margin-top:auto;}
-.doc-actions .btn{flex:1;font-size:13.5px;padding:10px 14px;justify-content:center;}
+.doc-card__body{padding:14px 14px 16px;display:flex;flex-direction:column;flex:1;}
+.doc-card__body .chip{align-self:flex-start;margin-bottom:8px;font-size:11.5px;}
+.doc-card__body h3{font-size:14.5px;line-height:1.3;margin-bottom:6px;flex:1;}
+.doc-meta{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted);margin-bottom:12px;}
+.doc-actions{display:flex;gap:7px;margin-top:auto;}
+.doc-actions .btn{flex:1;font-size:12px;padding:8px 10px;justify-content:center;}
 
 /* empty */
 .doc-empty{text-align:center;padding:64px 20px;color:var(--muted);}
 .doc-empty svg{width:52px;height:52px;margin:0 auto 14px;display:block;color:var(--violet-200);}
 .doc-empty p{font-size:15px;}
-
-/* article filter */
-.kitem.hide{display:none;}
 
 /* lightbox */
 .lb{
@@ -277,233 +256,209 @@
 }
 .lb__close:hover{background:rgba(255,255,255,.2);}
 .lb__close svg{width:22px;height:22px;}
-.lb__wrap{max-width:900px;width:100%;display:flex;flex-direction:column;align-items:center;gap:16px;}
-.lb__wrap img{max-height:80vh;max-width:100%;border-radius:16px;box-shadow:0 40px 80px rgba(0,0,0,.6);}
+.lb__wrap{max-width:960px;width:100%;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.lb__stage{width:100%;display:flex;justify-content:center;}
+.lb__stage img{max-height:80vh;max-width:100%;border-radius:16px;box-shadow:0 40px 80px rgba(0,0,0,.6);}
+.lb__frame{width:100%;height:82vh;border:0;border-radius:16px;background:#fff;box-shadow:0 40px 80px rgba(0,0,0,.6);}
 .lb__info{text-align:center;}
 .lb__info p{color:#e7ddfb;font-size:15px;}
 
 @media(max-width:640px){
   .dua{padding:32px 22px;}
   .doc-actions{flex-direction:column;}
-  .lb__wrap img{max-height:65vh;}
+  .lb__stage img{max-height:65vh;}
+  .lb__frame{height:72vh;}
+  .doc-carousel .carousel__track > .doc-card{width:180px;}
 }
 </style>
 
 <!-- ====================== SCRIPT ====================== -->
+<script src="assets/api.js"></script>
 <script>
-/*
- * ══════════════════════════════════════════════════════
- * 📁 ข้อมูลสรุปบรรยาย — แก้ไขที่นี่เพื่อเพิ่มไฟล์ใหม่
- *
- * วิธีเอา FILE_ID จาก Google Drive:
- *   1. อัปโหลดไฟล์ → คลิกขวา → "Get link" → Anyone with link
- *   2. URL: https://drive.google.com/file/d/FILE_ID/view
- *   3. copy แค่ส่วน FILE_ID มาใส่ด้านล่าง
- *
- * type : 'pdf' | 'img'
- * ══════════════════════════════════════════════════════
- */
-var DOCS = [
-  {
-    type: 'pdf',
-    title: 'สรุปฮาลาเกาะฮ์: ความหมายและความสำคัญของการละหมาด',
-    cat: 'อิบาดะฮ์', session: 'ครั้งที่ 1', date: '14 มิ.ย. 2569',
-    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
-  },
-  {
-    type: 'img',
-    title: 'อินโฟกราฟิก: เสาหลักของอิสลาม 5 ประการ',
-    cat: 'อาคิดะฮ์', session: 'ครั้งที่ 2', date: '21 มิ.ย. 2569',
-    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
-  },
-  {
-    type: 'pdf',
-    title: 'สรุปบรรยาย: หลักอาคิดะฮ์เบื้องต้น — ตอนที่ 1',
-    cat: 'อาคิดะฮ์', session: 'ครั้งที่ 3', date: '28 มิ.ย. 2569',
-    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
-  },
-  {
-    type: 'img',
-    title: 'สรุปภาพ: อัคลากของมุสลิมที่ดี',
-    cat: 'อัคลาก', session: 'ครั้งที่ 4', date: '5 ก.ค. 2569',
-    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
-  },
-  {
-    type: 'pdf',
-    title: 'สรุปบรรยาย: ฟิกฮ์การทำความสะอาด (ตะฮาเราะฮ์)',
-    cat: 'ฟิกฮ์', session: 'ครั้งที่ 5', date: '12 ก.ค. 2569',
-    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
-  },
-  {
-    type: 'img',
-    title: 'ไทม์ไลน์ประวัติศาสตร์อิสลาม: จากการเผยแผ่สู่ยุคทอง',
-    cat: 'ประวัติ', session: 'ครั้งที่ 6', date: '19 ก.ค. 2569',
-    fileId: 'REPLACE_WITH_GOOGLE_DRIVE_FILE_ID'
-  }
-];
+var DOCS = [];
 
-/* derive URLs from fileId */
-function driveView(id)     { return 'https://drive.google.com/file/d/' + id + '/preview'; }
-function driveDownload(id) { return 'https://drive.google.com/uc?export=download&id=' + id; }
-function driveImg(id)      { return 'https://drive.google.com/uc?export=view&id=' + id; }
+function _docThai(d){
+  if(!d) return '';
+  var m=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  var dt=new Date(d); if(isNaN(dt)) return d;
+  return dt.getDate()+' '+m[dt.getMonth()]+' '+(dt.getFullYear()+543);
+}
 
-/* ── build one card using DOM (no unsafe innerHTML) ── */
+function _docId(s)         { s=(s||'').toString().trim(); var m=s.match(/[-\w]{25,}/); return m?m[0]:s; }
+function driveView(id)     { return 'https://drive.google.com/file/d/' + _docId(id) + '/preview'; }
+function driveDownload(id) { return 'https://drive.google.com/uc?export=download&id=' + _docId(id); }
+function driveImg(id)      { return 'https://lh3.googleusercontent.com/d/' + _docId(id) + '=w1600'; }
+function driveThumb(id)    { return 'https://lh3.googleusercontent.com/d/' + _docId(id) + '=w800'; }
+function driveThumbAlt(id) { return 'https://drive.google.com/thumbnail?id=' + _docId(id) + '&sz=w800'; }
+
+function _svgEl(tag, attrs, parent){
+  var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  if (attrs) Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function _iconSvg(strokeW){
+  return _svgEl('svg', { viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', 'stroke-width': strokeW || '1.8' });
+}
+
+function _thumbFallback(){
+  var wrap = document.createElement('div');
+  wrap.className = 'pdf-icon-wrap';
+  var svg = _iconSvg('1.4');
+  _svgEl('path', { d:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'stroke-width':'1.6' }, svg);
+  _svgEl('polyline', { points:'14 2 14 8 20 8' }, svg);
+  _svgEl('line', { x1:8, y1:13, x2:16, y2:13 }, svg);
+  _svgEl('line', { x1:8, y1:17, x2:16, y2:17 }, svg);
+  var lbl = document.createElement('span');
+  lbl.className = 'pdf-label';
+  lbl.textContent = 'ไฟล์เอกสาร';
+  wrap.appendChild(svg); wrap.appendChild(lbl);
+  return wrap;
+}
+
 function buildCard(d) {
   var tpl  = document.getElementById('tplDoc');
   var node = tpl.content.cloneNode(true);
   var card = node.querySelector('.doc-card');
-  card.setAttribute('data-cat', d.cat);
 
   var thumb = card.querySelector('.doc-card__thumb');
+  thumb.classList.add('is-img');
+  var img = document.createElement('img');
+  img.src = driveThumb(d.fileId);
+  img.alt = d.title;
+  img.loading = 'lazy';
+  var triedAlt = false;
+  img.onerror = function(){
+    if (!triedAlt) { triedAlt = true; img.src = driveThumbAlt(d.fileId); return; }
+    thumb.classList.remove('is-img');
+    img.remove();
+    thumb.insertBefore(_thumbFallback(), thumb.firstChild);
+  };
+  thumb.appendChild(img);
 
-  /* overlay button */
   var overlay = document.createElement('div');
   overlay.className = 'doc-overlay';
-  var eyeSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-  eyeSvg.setAttribute('viewBox','0 0 24 24');
-  eyeSvg.setAttribute('fill','none');
-  eyeSvg.setAttribute('stroke','currentColor');
-  eyeSvg.setAttribute('stroke-width','1.8');
-
-  if (d.type === 'pdf') {
-    /* PDF thumb */
-    var iconWrap = document.createElement('div');
-    iconWrap.className = 'pdf-icon-wrap';
-    var pdfSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-    pdfSvg.setAttribute('viewBox','0 0 24 24');
-    pdfSvg.setAttribute('fill','none');
-    pdfSvg.setAttribute('stroke','currentColor');
-    pdfSvg.setAttribute('stroke-width','1.4');
-    pdfSvg.innerHTML = '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-width="1.6"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="10" y2="9"/>';
-    var pdfLbl = document.createElement('span');
-    pdfLbl.className = 'pdf-label';
-    pdfLbl.textContent = 'PDF Document';
-    iconWrap.appendChild(pdfSvg);
-    iconWrap.appendChild(pdfLbl);
-    thumb.appendChild(iconWrap);
-
-    eyeSvg.innerHTML = '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>';
-    overlay.addEventListener('click', function(){ window.open(driveView(d.fileId), '_blank', 'noopener'); });
-
-    /* open button → Drive preview */
-    var openBtn = card.querySelector('.doc-open');
-    openBtn.href = driveView(d.fileId);
-    openBtn.textContent = 'เปิดอ่าน';
-
-  } else {
-    /* Image thumb */
-    thumb.classList.add('is-img');
-    var img = document.createElement('img');
-    img.src = driveImg(d.fileId);
-    img.alt = d.title;
-    img.loading = 'lazy';
-    thumb.appendChild(img);
-
-    eyeSvg.innerHTML = '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>';
-    overlay.addEventListener('click', function(){ openLightbox(d.fileId, d.title); });
-
-    /* open button → lightbox */
-    var openBtn = card.querySelector('.doc-open');
-    openBtn.removeAttribute('href');
-    openBtn.tagName === 'A' && (function(){
-      var btn = document.createElement('button');
-      btn.className = openBtn.className;
-      btn.textContent = 'ดูรูป';
-      btn.addEventListener('click', function(){ openLightbox(d.fileId, d.title); });
-      openBtn.replaceWith(btn);
-    })();
-  }
-
+  var eyeSvg = _iconSvg('1.8');
+  _svgEl('path',   { d:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z' }, eyeSvg);
+  _svgEl('circle', { cx:12, cy:12, r:3 }, eyeSvg);
   overlay.appendChild(eyeSvg);
+  overlay.addEventListener('click', function(){ openPreview(d); });
   thumb.appendChild(overlay);
 
-  /* type badge */
-  var badge = document.createElement('span');
-  badge.className = 'type-badge ' + d.type;
-  badge.textContent = d.type === 'pdf' ? 'PDF' : 'รูปภาพ';
-  thumb.appendChild(badge);
-
-  /* text fields */
-  card.querySelector('.doc-chip').textContent    = d.cat;
   card.querySelector('.doc-title').textContent   = d.title;
   card.querySelector('.doc-date').textContent    = d.date;
-  card.querySelector('.doc-session').textContent = d.session;
+  card.querySelector('.doc-session').textContent = d.description;  // คำอธิบายสั้น
 
-  /* download button */
+  card.querySelector('.doc-open').addEventListener('click', function(){ openPreview(d); });
   card.querySelector('.doc-dl').href = driveDownload(d.fileId);
 
   return node;
 }
 
-/* ── render grid ── */
+/* ── carousel nav + auto-scroll ── */
 (function(){
-  var grid    = document.getElementById('docGrid');
-  var tabs    = document.getElementById('docTabs');
-  var empty   = document.getElementById('docEmpty');
-  var countEl = document.getElementById('docCount');
+  var track   = document.getElementById('docGrid');
+  var prevBtn = document.getElementById('docPrev');
+  var nextBtn = document.getElementById('docNext');
+  var STEP    = 288; /* 270px card + 18px gap */
+  var timer;
 
-  function render(filter) {
-    var filtered = filter === 'all' ? DOCS : DOCS.filter(function(d){ return d.cat === filter; });
-    countEl.textContent = filtered.length + ' ไฟล์';
-    while (grid.firstChild) grid.removeChild(grid.firstChild);
-    if (filtered.length === 0) {
-      empty.style.display = 'block';
+  function advance(){
+    var max = track.scrollWidth - track.clientWidth;
+    if(max <= 0) return;
+    if(track.scrollLeft >= max - 4){
+      track.scrollTo({ left:0, behavior:'smooth' });
     } else {
-      empty.style.display = 'none';
-      filtered.forEach(function(d){ grid.appendChild(buildCard(d)); });
+      track.scrollBy({ left: STEP * 2, behavior:'smooth' });
     }
   }
 
-  render('all');
+  function startAuto(){ clearInterval(timer); timer = setInterval(advance, 3500); }
+  function stopAuto() { clearInterval(timer); }
 
-  tabs.addEventListener('click', function(e){
-    var b = e.target.closest('.tab');
-    if (!b) return;
-    tabs.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
-    b.classList.add('active');
-    render(b.getAttribute('data-f'));
+  prevBtn.addEventListener('click', function(){
+    stopAuto();
+    track.scrollBy({ left: -STEP * 2, behavior:'smooth' });
+    startAuto();
   });
+  nextBtn.addEventListener('click', function(){
+    stopAuto();
+    advance();
+    startAuto();
+  });
+
+  track.addEventListener('mouseenter', stopAuto);
+  track.addEventListener('mouseleave', startAuto);
+  track.addEventListener('touchstart',  stopAuto,  { passive:true });
+  track.addEventListener('touchend',    startAuto, { passive:true });
+
+  window._docCarousel = { start: startAuto, stop: stopAuto };
 })();
 
-/* ── article tabs ── */
+/* ── render grid → carousel ── */
 (function(){
-  var tabs  = document.getElementById('kTabs');
-  var cards = Array.from(document.querySelectorAll('#kGrid .kitem'));
-  tabs.addEventListener('click', function(e){
-    var b = e.target.closest('.tab');
-    if (!b) return;
-    tabs.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
-    b.classList.add('active');
-    var f = b.getAttribute('data-f');
-    cards.forEach(function(c){
-      c.classList.toggle('hide', f !== 'all' && c.getAttribute('data-cat') !== f);
+  var track   = document.getElementById('docGrid');
+  var empty   = document.getElementById('docEmpty');
+  var countEl = document.getElementById('docCount');
+
+  function render(){
+    countEl.textContent = DOCS.length + ' ไฟล์';
+    while(track.firstChild) track.removeChild(track.firstChild);
+    if(DOCS.length === 0){
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      DOCS.forEach(function(d){ track.appendChild(buildCard(d)); });
+    }
+    track.scrollTo({ left:0, behavior:'instant' });
+    if(window._docCarousel){ window._docCarousel.stop(); window._docCarousel.start(); }
+  }
+
+  countEl.textContent = 'กำลังโหลด…';
+
+  MCCMU.getDocs().then(function(items){
+    DOCS = items.map(function(d){
+      return { title: d.title, description: d.description || '',
+               date: _docThai(d.date), fileId: d.file_id };
     });
+    render();
+  }).catch(function(err){
+    console.error('[MCCMU] docs:', err);
+    countEl.textContent = '';
+    empty.style.display = 'block';
   });
 })();
 
 /* ── lightbox ── */
-var lb    = document.getElementById('lightbox');
-var lbImg = document.getElementById('lbImg');
-var lbTxt = document.getElementById('lbTitle');
-var lbDl  = document.getElementById('lbDownload');
+var lb      = document.getElementById('lightbox');
+var lbStage = document.getElementById('lbStage');
+var lbTxt   = document.getElementById('lbTitle');
+var lbDl    = document.getElementById('lbDownload');
 
-function openLightbox(fileId, title) {
-  lbImg.src = driveImg(fileId);
-  lbImg.alt = title;
-  lbTxt.textContent = title;
-  lbDl.href = driveDownload(fileId);
+function openPreview(d){
+  lbStage.replaceChildren();
+  /* ใช้ Drive preview ได้ทั้ง PDF และรูป (ไม่ต้องรู้ type) */
+  var ifr = document.createElement('iframe');
+  ifr.className = 'lb__frame';
+  ifr.src = driveView(d.fileId);
+  ifr.title = d.title;
+  ifr.loading = 'lazy';
+  ifr.setAttribute('allowfullscreen','');
+  lbStage.appendChild(ifr);
+  lbTxt.textContent = d.title;
+  lbDl.href = driveDownload(d.fileId);
   lb.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-function closeLightbox() {
+function closeLightbox(){
   lb.classList.remove('open');
   document.body.style.overflow = '';
-  setTimeout(function(){ lbImg.src = ''; }, 300);
+  setTimeout(function(){ lbStage.replaceChildren(); }, 300);
 }
 
 document.getElementById('lbClose').addEventListener('click', closeLightbox);
-lb.addEventListener('click', function(e){ if (e.target === lb) closeLightbox(); });
-document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeLightbox(); });
+lb.addEventListener('click', function(e){ if(e.target === lb) closeLightbox(); });
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeLightbox(); });
 </script>
 <script src="assets/site.js"></script>
 </body>

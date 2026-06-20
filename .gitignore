@@ -1,0 +1,18 @@
+# System
+.DS_Store
+Thumbs.db
+.thumbnail
+
+# Uploads (temp files from Cowork)
+uploads/
+
+# Screenshots (dev reference only)
+screenshots/
+
+# Editor
+.vscode/
+.idea/
+
+# Env / secrets (อย่า commit ค่า API key)
+.env
+*.env

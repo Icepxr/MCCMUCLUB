@@ -17,17 +17,14 @@
   var current = document.body.getAttribute('data-page') || '';
 
   var links = [
-    { id:'home',      th:'หน้าแรก',        en:'Home',       href:'index.html' },
-    { id:'about',     th:'เกี่ยวกับชมรม',   en:'About',      href:'about.html' },
-    { id:'activities',th:'กิจกรรม',         en:'Activities', href:'activities.html' },
-    { id:'prayer',    th:'เวลาละหมาด',      en:'Prayer',     href:'prayer.html' },
-    { id:'halal',     th:'ฮาลาล & มัสยิด',  en:'Halal Map',  href:'halal-map.html' },
-    { id:'knowledge', th:'คลังความรู้',      en:'Knowledge',  href:'knowledge.html' },
-    { id:'gallery',   th:'ภาพถ่าย',         en:'Gallery',    href:'gallery.html' },
-    { id:'contact',   th:'ติดต่อ',          en:'Contact',    href:'contact.html' }
+    { id:'home',      th:'หน้าแรก',              en:'Home',       href:'index.html' },
+    { id:'activities',th:'กิจกรรม',              en:'Activities', href:'activities.html' },
+    { id:'halal',     th:'สถานที่ & อาหารฮาลาล',  en:'Halal Map',  href:'halal-map.html' },
+    { id:'knowledge', th:'คลังความรู้',            en:'Knowledge',  href:'knowledge.html' },
+    { id:'about',     th:'เกี่ยวกับเรา',           en:'About',      href:'about.html' }
   ];
 
-  var logo = P + 'assets/logo.png';
+  var logo = P + 'assets/logo_white_bc.png';
 
   /* ---------- NAV ---------- */
   var navLinks = links.map(function (l) {
@@ -37,13 +34,13 @@
   var nav =
     '<header class="nav"><div class="container nav__in">' +
       '<a class="brand" href="' + P + 'index.html" aria-label="MCCMU home">' +
-        '<img class="brand__logo" src="' + logo + '" alt="MCCMU logo">' +
-        '<span class="brand__txt"><span class="brand__th">ชมรมมุสลิม มช.</span>' +
-        '<span class="brand__en">CMU Muslim Club</span></span>' +
+        '<span class="brand__logo-wrap"><img class="brand__logo" src="' + logo + '" alt="MCCMU logo"></span>' +
+        '<span class="brand__txt"><span class="brand__th">˚𝜗𝜚˚ชมรมมุสลิม</span>' +
+        '<span class="brand__en">มหาวิทยาลัยเชียงใหม่ MCCMU</span></span>' +
       '</a>' +
       '<nav class="nav__links">' + navLinks + '</nav>' +
-      '<div class="nav__cta"><a class="btn btn--primary btn--sm" href="' + P + 'join.html">สมัครสมาชิก</a></div>' +
-      '<button class="nav__burger" aria-label="เมนู" id="mccBurger">' +
+      '<div class="nav__cta"><a class="btn btn--primary btn--sm" href="' + P + 'about.html#contact">ติดต่อเรา</a></div>' +
+      '<button class="nav__burger" aria-label="เมนู" aria-expanded="false" aria-controls="mccDrawer" id="mccBurger">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>' +
       '</button>' +
     '</div></header>' +
@@ -51,7 +48,7 @@
       links.map(function (l) {
         return '<a href="' + P + l.href + '">' + l.th + ' <span class="en">' + l.en + '</span></a>';
       }).join('') +
-      '<a href="' + P + 'join.html" style="color:var(--grape-600);font-weight:600">สมัครสมาชิก <span class="en">Join us</span></a>' +
+      '<a href="' + P + 'about.html#contact" style="color:var(--grape-600);font-weight:600">ติดต่อเรา <span class="en">Contact</span></a>' +
     '</div>';
 
   /* ---------- FOOTER ---------- */
@@ -72,23 +69,23 @@
           '<p>ชมรมมุสลิมมหาวิทยาลัยเชียงใหม่ — บ้านของพี่น้องมุสลิม ' +
           'พื้นที่แห่งการเรียนรู้ มิตรภาพ และการเติบโตทางจิตวิญญาณในรั้วมหาวิทยาลัย</p>' +
           '<div class="footer__social">' +
-            '<a href="#" aria-label="Facebook">' + sicon(ic.fb) + '</a>' +
-            '<a href="#" aria-label="Instagram">' + sicon(ic.ig) + '</a>' +
-            '<a href="#" aria-label="LINE">' + sicon(ic.line) + '</a>' +
-            '<a href="#" aria-label="YouTube">' + sicon(ic.yt) + '</a>' +
+            '<a href="https://www.facebook.com/MuslimClubCMU" target="_blank" rel="noopener" aria-label="Facebook">' + sicon(ic.fb) + '</a>' +
+            '<a href="https://www.instagram.com/muslimclub.cmu" target="_blank" rel="noopener" aria-label="Instagram">' + sicon(ic.ig) + '</a>' +
+            '<a href="https://www.youtube.com/@muslimcmu" target="_blank" rel="noopener" aria-label="YouTube">' + sicon(ic.yt) + '</a>' +
           '</div>' +
         '</div>' +
         '<div class="footer__col"><h4>เมนู</h4>' +
-          '<a href="' + P + 'about.html">เกี่ยวกับชมรม</a>' +
-          '<a href="' + P + 'activities.html">กิจกรรม & ข่าวสาร</a>' +
-          '<a href="' + P + 'prayer.html">เวลาละหมาด</a>' +
-          '<a href="' + P + 'gallery.html">อัลบัมภาพถ่าย</a>' +
-        '</div>' +
-        '<div class="footer__col"><h4>บริการ</h4>' +
-          '<a href="' + P + 'halal-map.html">ร้านอาหารฮาลาล</a>' +
-          '<a href="' + P + 'halal-map.html">แผนที่มัสยิด</a>' +
+          '<a href="' + P + 'index.html">หน้าแรก</a>' +
+          '<a href="' + P + 'activities.html">กิจกรรม</a>' +
+          '<a href="' + P + 'halal-map.html">สถานที่ & อาหารฮาลาล</a>' +
           '<a href="' + P + 'knowledge.html">คลังความรู้</a>' +
-          '<a href="' + P + 'join.html">สมัครสมาชิก</a>' +
+          '<a href="' + P + 'about.html">เกี่ยวกับเรา</a>' +
+        '</div>' +
+        '<div class="footer__col"><h4>เนื้อหา</h4>' +
+          '<a href="' + P + 'activities.html#gallery">อัลบัมภาพกิจกรรม</a>' +
+          '<a href="' + P + 'index.html#prayer">เวลาละหมาดวันนี้</a>' +
+          '<a href="' + P + 'halal-map.html">แผนที่ฮาลาล & มัสยิด</a>' +
+          '<a href="' + P + 'about.html#contact">ติดต่อเรา</a>' +
         '</div>' +
         '<div class="footer__col"><h4>ติดต่อเรา</h4>' +
           '<p style="margin-bottom:10px">มหาวิทยาลัยเชียงใหม่<br>239 ถ.ห้วยแก้ว ต.สุเทพ<br>อ.เมือง จ.เชียงใหม่ 50200</p>' +
@@ -111,7 +108,15 @@
   var burger = document.getElementById('mccBurger');
   var drawer = document.getElementById('mccDrawer');
   if (burger && drawer) {
-    burger.addEventListener('click', function () { drawer.classList.toggle('open'); });
+    burger.addEventListener('click', function () {
+      var open = drawer.classList.toggle('open');
+      burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    drawer.addEventListener('click', function (e) {
+      if (!e.target.closest('a')) return;
+      drawer.classList.remove('open');
+      burger.setAttribute('aria-expanded', 'false');
+    });
   }
 
   // reveal on scroll
