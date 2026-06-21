@@ -549,10 +549,14 @@ body[data-page="about"]      .phero::after{ background-image:url('photo/hero-abo
 .tl-item p{ color:var(--ink-soft);font-size:15px; }
 
 /* team / member */
+/* คณะกรรมการ — การ์ดใหญ่แบบเดิม แต่เป็นแถวเดียวเลื่อนได้ (จำกัดแถว + ปุ่มเลื่อน) */
 .member{ text-align:center; }
 .member .ph{ aspect-ratio:1;border-radius:20px;margin-bottom:14px; }
 .member h4{ font-size:17px; }
 .member span{ font-size:13.5px;color:var(--grape-500);font-weight:500; }
+.member p{ font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.4; }
+.carousel__track > .member{ flex:0 0 auto;width:210px;scroll-snap-align:start; }
+@media (max-width:560px){ .carousel__track > .member{ width:160px; } }
 
 /* prayer table */
 .ptable{ width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden; }

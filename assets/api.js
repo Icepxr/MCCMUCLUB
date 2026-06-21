@@ -477,6 +477,7 @@ MCCMU.renderMembers = function (gridSel) {
       if (d.description) m.appendChild(_el('p', 'muted', d.description));
       grid.appendChild(m);
     });
+    _initCarousel(grid, { prev: '#memberPrev', next: '#memberNext' }); // แถวเดียว + ปุ่มเลื่อน
   }).catch(function (err) { console.error('[MCCMU] members:', err); });
 };
 
