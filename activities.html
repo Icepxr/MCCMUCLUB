@@ -72,10 +72,18 @@
 <!-- ====================== GALLERY (ยุบจากหน้าอัลบัมภาพเดิม) ====================== -->
 <section class="section section--soft" id="gallery" style="padding-top:54px">
   <div class="container">
-    <div class="s-head reveal"><span class="eyebrow">ความทรงจำของเรา <span class="en">Gallery</span></span>
-      <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">อัลบัมภาพกิจกรรม</h2>
-      <p class="lead" style="margin-top:12px">บรรยากาศจริงจากกิจกรรมที่สมาชิกช่วยกันสร้างตลอดปี — คลิกที่อัลบัมเพื่อดูภาพทั้งหมด</p></div>
-    <div class="grid g-3 reveal" id="gal" style="margin-top:32px"></div>
+    <div class="row-head reveal" style="align-items:flex-start">
+      <div class="s-head"><span class="eyebrow">ความทรงจำของเรา <span class="en">Gallery</span></span>
+        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">อัลบัมภาพกิจกรรม</h2>
+        <p class="lead" style="margin-top:12px;max-width:560px">บรรยากาศจริงจากกิจกรรมที่สมาชิกช่วยกันสร้างตลอดปี — คลิกที่อัลบัมเพื่อดูภาพทั้งหมด</p></div>
+      <div class="carousel__nav">
+        <button class="carousel__btn" id="galPrev" type="button" aria-label="ก่อนหน้า">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="carousel__btn" id="galNext" type="button" aria-label="ถัดไป">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+    <div class="carousel reveal" style="margin-top:24px"><div class="carousel__track" id="gal"></div></div>
   </div>
 </section>
 

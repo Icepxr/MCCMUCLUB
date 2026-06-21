@@ -681,6 +681,7 @@ body[data-page="about"]      .phero::after{ background-image:url('photo/hero-abo
 }
 .carousel__track::-webkit-scrollbar{ display:none; }
 .carousel__track > .poster-card{ flex:0 0 auto;width:270px;scroll-snap-align:start; }
+.carousel__track > .gtile{ flex:0 0 auto;width:320px;scroll-snap-align:start; }
 .carousel__nav{ display:flex;gap:10px;flex-shrink:0; }
 .carousel__btn{
   width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:#fff;
@@ -688,4 +689,4 @@ body[data-page="about"]      .phero::after{ background-image:url('photo/hero-abo
 }
 .carousel__btn svg{ width:18px;height:18px; }
 .carousel__btn:hover{ border-color:var(--violet-300);color:var(--grape-600);transform:translateY(-2px);box-shadow:var(--shadow); }
-@media (max-width:560px){ .carousel__track > .poster-card{ width:190px; } }
+@media (max-width:560px){ .carousel__track > .poster-card{ width:190px; } .carousel__track > .gtile{ width:240px; } }

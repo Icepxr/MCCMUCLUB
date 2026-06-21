@@ -444,6 +444,7 @@ MCCMU.renderGallery = function (gridSel, tabsSel) {
   MCCMU.getAlbums().then(function (items) {
     albums = items;
     paint(albums);
+    _initCarousel(grid, { prev: '#galPrev', next: '#galNext' }); // แถวเดียว + ปุ่มเลื่อน
     if (tabs) tabs.addEventListener('click', function (e) {
       var b = e.target.closest('.tab'); if (!b) return;
       tabs.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
@@ -683,7 +684,7 @@ function _initCarousel(track, opts) {
   var paused = false, timer = null, resumeT = null;
 
   function stepPx() {
-    var card = track.querySelector('.poster-card');
+    var card = track.firstElementChild;   // รองรับทั้ง .poster-card และ .gtile
     if (!card) return 220;
     var cs = getComputedStyle(track);
     var gap = parseInt(cs.columnGap || cs.gap, 10) || 18;
