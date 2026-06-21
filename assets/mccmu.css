@@ -238,14 +238,11 @@ p{margin:0;}
 }
 /* รูปวิว (หอนาฬิกา มช.) ฝั่งขวา เฟดจางหายไปทางซ้าย + เคลือบโทนม่วงให้เข้าธีม/กลบรอยแตก */
 .hero__photo{
-  position:absolute;top:0;right:0;bottom:0;width:62%;z-index:0;pointer-events:none;
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+  /* เต็มกว้าง โชว์หอนาฬิกา+โลโก้ในรูป · ซ้ายวอชลาเวนเดอร์ให้อ่านง่าย ขวาเปิดให้เห็นภาพ */
   background:
-    linear-gradient(rgba(124,58,237,.32), rgba(59,21,120,.40)),
-    url('view.png') center 30%/cover no-repeat;
-  filter:saturate(.7);
-  opacity:.65;
-  -webkit-mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.5) 36%, #000 70%);
-          mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.5) 36%, #000 70%);
+    linear-gradient(90deg, rgba(248,246,255,.99) 0%, rgba(248,246,255,.90) 40%, rgba(248,246,255,.2) 68%, rgba(248,246,255,0) 100%),
+    url('view.jpg') center 20%/cover no-repeat;
 }
 .hero::after{
   content:"";position:absolute;left:0;right:0;bottom:-1px;height:90px;
@@ -402,9 +399,10 @@ p{margin:0;}
   .hero{padding:58px 0 74px;}
   .hero__in,.home-intro,.story-band__in{grid-template-columns:1fr;}
   /* จอแคบ: รูปวิวเต็มกว้าง เฟดจากบนลงล่างแทน */
-  .hero__photo{width:100%;opacity:.4;
-    -webkit-mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.55) 32%, #000 70%);
-            mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.55) 32%, #000 70%);}
+  .hero__photo{
+    background:
+      linear-gradient(180deg, rgba(248,246,255,.5) 0%, rgba(248,246,255,.9) 60%, var(--paper) 100%),
+      url('view.jpg') center 26%/cover no-repeat;}
   .hero__media{order:-1;min-height:auto;}
   .hero__card{width:min(100%,360px);transform:none;}
   .hero__badge{left:22px;bottom:22px;}
@@ -694,3 +692,54 @@ body[data-page="about"]      .phero::after{ background-image:url('photo/hero-abo
 .carousel__btn svg{ width:18px;height:18px; }
 .carousel__btn:hover{ border-color:var(--violet-300);color:var(--grape-600);transform:translateY(-2px);box-shadow:var(--shadow); }
 @media (max-width:560px){ .carousel__track > .poster-card{ width:190px; } .carousel__track > .gtile{ width:240px; } }
+
+/* ===========================================================================
+   RESPONSIVE LAYER — รองรับ iPad / phone ครอบคลุม
+   (nav เป็น burger ที่ ≤980 อยู่แล้ว · บล็อกนี้ต่อท้ายเพื่อทับค่าตามจำเป็น)
+   =========================================================================== */
+img, iframe, svg, video{ max-width:100%; }          /* กันล้นแนวนอนทุกหน้า */
+
+/* iPad landscape / จอกลาง (≤1024) */
+@media (max-width:1024px){
+  .section{ padding:74px 0; }
+  .section--tight{ padding:52px 0; }
+}
+
+/* iPad portrait / แท็บเล็ต (≤768) */
+@media (max-width:768px){
+  .container{ padding-inline:22px; }
+  .section{ padding:60px 0; }
+  .section--tight{ padding:44px 0; }
+  body[data-page] .phero{ padding:60px 0 54px; }
+  /* รูป accent หัวข้อหน้าย่อย → เต็มกว้าง (เดิม 54% ฝั่งขวา) จะได้ไม่แหว่งบนจอแคบ */
+  body[data-page="activities"] .phero::after,
+  body[data-page="halal"] .phero::after,
+  body[data-page="knowledge"] .phero::after,
+  body[data-page="about"] .phero::after{ width:100%; }
+}
+
+/* มือถือ (≤600) */
+@media (max-width:600px){
+  .container{ padding-inline:18px; }
+  .section{ padding:46px 0; }
+  .section--tight{ padding:34px 0; }
+  body[data-page] .phero{ padding:46px 0 40px;border-radius:0 0 22px 22px; }
+  .hero{ padding:38px 0 50px; }
+  .hero__lead{ font-size:16px;margin-top:16px; }
+  .hero__cta{ width:100%; }
+  .hero__cta .btn{ flex:1 1 160px;justify-content:center; }
+  .hero__meta{ gap:16px;margin-top:28px; }
+  .hero__meta strong{ font-size:24px; }
+  .row-head{ align-items:flex-start;gap:14px; }
+  .feature-evt__body{ padding:24px 20px; }
+  .pstrip__in{ gap:14px;padding:16px 0; }
+}
+
+/* มือถือเล็ก (≤400) */
+@media (max-width:400px){
+  .container{ padding-inline:14px; }
+  .hero h1{ font-size:clamp(26px,9vw,38px); }
+  .carousel__track > .poster-card{ width:160px; }
+  .carousel__track > .gtile{ width:200px; }
+  .carousel__track > .member{ width:146px; }
+}
