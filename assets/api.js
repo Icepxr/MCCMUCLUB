@@ -649,13 +649,6 @@ MCCMU.renderContactMap = function () {
   }).catch(function () {});
 };
 
-/* ── ภาพหมู่หน้า About (#aboutHero) — ดึงจาก settings: ใส่ about_hero_id (ลิงก์ Drive) ในชีต ── */
-MCCMU.renderAboutHero = function () {
-  var box = document.getElementById('aboutHero'); if (!box) return;
-  MCCMU.getSettings().then(function (s) {
-    if (s.about_hero_url) _fillImg(box, s.about_hero_url, 'ภาพหมู่สมาชิกชมรม');
-  }).catch(function () {});
-};
 
 /* ── กิจกรรมที่ผ่านมา แบบ carousel เลื่อนได้ (ปุ่ม + เลื่อนอัตโนมัติ) ──
    การ์ดเล็ก 4:5 · ดึงกิจกรรมวันที่ < วันนี้ ใหม่สุดก่อน ── */
@@ -744,7 +737,6 @@ MCCMU.init = function () {
     /* knowledge: หน้ามี renderer ของตัวเอง (template+lightbox) ดึงผ่าน MCCMU.getDocs() */
     case 'about':
       MCCMU.renderMembers('#boardGrid');
-      MCCMU.renderAboutHero();
       MCCMU.renderContactMap();
       break;
     case 'halal':

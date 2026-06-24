@@ -11,19 +11,24 @@
 <body data-page="home">
 <div id="site-nav"></div>
 
-<section class="hero">
+<section class="hero hero--cine">
   <div class="hero__photo" aria-hidden="true"></div>
-  <div class="hero__pat" aria-hidden="true"></div>
+  <div class="hero__scrim" aria-hidden="true"></div>
+  <!-- ป้ายแบรนด์ลอยมุมบนขวา -->
+  <div class="hero__badge">
+    <img src="assets/logo_mark.png" alt="">
+    <span><strong>ชมรมมุสลิม มช.</strong><small>เรียนรู้ · ดูแล · เติบโต</small></span>
+  </div>
   <div class="container hero__in">
     <div class="hero__copy">
       <span class="eyebrow">السلام عليكم · MCCMU</span>
-      <h1>พื้นที่ของนักศึกษามุสลิมในมหาวิทยาลัยเชียงใหม่</h1>
+      <h1>พื้นที่ของนักศึกษามุสลิม<br>ในมหาวิทยาลัยเชียงใหม่</h1>
       <p class="hero__lead">เชื่อมพี่น้องใหม่กับชุมชนที่ช่วยกันดูแลเรื่องละหมาด อาหารฮาลาล การเรียน
         และกิจกรรมที่ทำให้ชีวิตในรั้ว มช. ง่ายขึ้น</p>
       <div class="hero__cta">
-        <a class="btn btn--primary" href="activities.html">ดูกิจกรรมล่าสุด
+        <a class="btn btn--gold" href="activities.html">ดูกิจกรรมล่าสุด
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-        <a class="btn btn--ghost" href="about.html">รู้จักชมรม</a>
+        <a class="btn btn--light" href="about.html">รู้จักชมรม</a>
       </div>
       <div class="hero__meta">
         <div><strong>120+</strong><span>สมาชิกปัจจุบัน</span></div>
@@ -31,37 +36,6 @@
         <div><strong>15</strong><span>คณะที่มีสมาชิก</span></div>
         <div class="vr"></div>
         <div><strong>20+</strong><span>กิจกรรม / ปี</span></div>
-      </div>
-    </div>
-    <div class="hero__media">
-      <div class="hero__card hero__card--mihrab">
-        <span class="hero__brush hero__brush--1" aria-hidden="true"></span>
-        <span class="hero__brush hero__brush--2" aria-hidden="true"></span>
-        <!-- โลโก้ชมรม (อัตราส่วน 4:5) — วางไฟล์ที่ assets/club-logo.png -->
-        <img class="hero__logo-img" src="assets/club-logo.png"
-             alt="โลโก้ชมรมนักศึกษามุสลิม มหาวิทยาลัยเชียงใหม่ · Muslim Club, Chiang Mai University"
-             width="2079" height="2600">
-        <!-- ทรงมิห์รอบ: clipPath (objectBoundingBox = scale ตามการ์ด) + เส้นขอบทอง -->
-        <svg class="hero__arch-outline" viewBox="0 0 80 100" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <clipPath id="mihrabClip" clipPathUnits="objectBoundingBox">
-              <path d="M.05,.98 L.05,.42 Q.05,.12 .5,.045 Q.95,.12 .95,.42 L.95,.98 Q.95,1 .925,1 L.075,1 Q.05,1 .05,.98 Z"/>
-            </clipPath>
-            <linearGradient id="archGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#F4D679"/>
-              <stop offset=".5" stop-color="#8B5CF6"/>
-              <stop offset="1" stop-color="#7C3AED"/>
-            </linearGradient>
-          </defs>
-          <!-- เงานุ่มด้านในขอบ → เพิ่มมิติให้ดูเป็นชั้น -->
-          <path class="hero__arch-glow" d="M4,98 L4,42 Q4,12 40,4.5 Q76,12 76,42 L76,98 Q76,100 74,100 L6,100 Q4,100 4,98 Z" fill="none" vector-effect="non-scaling-stroke"/>
-          <!-- เส้นขอบหลัก ไล่เฉดทอง→ม่วง ล้อสีโลโก้ -->
-          <path class="hero__arch-stroke" d="M4,98 L4,42 Q4,12 40,4.5 Q76,12 76,42 L76,98 Q76,100 74,100 L6,100 Q4,100 4,98 Z" fill="none" vector-effect="non-scaling-stroke"/>
-        </svg>
-      </div>
-      <div class="hero__badge">
-        <img src="assets/logo_mark.png" alt="">
-        <span><strong>ชมรมมุสลิม มช.</strong><small>เรียนรู้ · ดูแล · เติบโต</small></span>
       </div>
     </div>
   </div>
@@ -82,7 +56,7 @@
   <div class="container">
     <div class="s-head reveal" style="margin-bottom:30px">
       <span class="eyebrow">ไฮไลต์ <span class="en">Featured</span></span>
-      <h2>กิจกรรมเด่นเร็ว ๆ นี้</h2>
+      <h2 style="margin-top: 10px;">กิจกรรมเด่นเร็ว ๆ นี้</h2>
     </div>
     <div class="feature-evt card reveal" id="homeFeatured">
       <div class="ph" data-label="โปสเตอร์กิจกรรมเด่น ·">
@@ -108,7 +82,7 @@
   <div class="container">
     <div class="s-head center reveal">
       <span class="eyebrow">บริการของชมรม <span class="en">Quick links</span></span>
-      <h2>ทางลัดไปยังสิ่งที่ใช้บ่อย</h2>
+      <h2 style="margin-top: 10px;">ทางลัดไปยังสิ่งที่ใช้บ่อย</h2>
     </div>
     <div class="grid g-4 svc" style="margin-top:46px">
       <a class="card card--hover svc__card svc__card--prayer reveal" href="#prayer">

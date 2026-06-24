@@ -72,7 +72,6 @@
 | `club_instagram` | ลิงก์ Instagram |
 | `club_youtube` | ลิงก์ YouTube |
 | `club_line` | LINE id/ลิงก์ (เว้นว่างได้) |
-| `about_hero_id` | Drive id/ลิงก์ ภาพหมู่ในส่วน "จุดเริ่มต้น" หน้า About |
 | `map_embed_url` | iframe src แผนที่ที่ตั้งชมรม (หน้า About) |
 | `halal_map_url` | iframe src แผนที่รวมฮาลาล/มัสยิด (ด้านบนหน้า halal · ทำจาก Google My Maps → Embed) |
 | `prayer_method` | เลขวิธีคำนวณเวลาละหมาด (Aladhan · default 2 = ISNA) |
