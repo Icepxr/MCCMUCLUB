@@ -494,6 +494,23 @@ MCCMU.renderMembers = function (gridSel) {
 
 /* ── ร้านฮาลาล / มัสยิด (หน้า halal-map #placeGrid) ── */
 var _PLACE_TYPEMAP = { 'ร้านอาหาร': 'food', 'มัสยิด': 'masjid', 'ห้องละหมาด': 'masjid' };
+var _PLACE_ICONS = {
+  masjid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.8 1.9 2.8 3.3 2.8 4.8A2.8 2.8 0 0 1 12 9.6 2.8 2.8 0 0 1 9.2 6.8C9.2 5.3 10.2 3.9 12 2Z"/><path d="M4 21v-6.5a8 8 0 0 1 16 0V21"/><path d="M3.5 21h17"/><path d="M9.5 21v-2.5a2.5 2.5 0 0 1 5 0V21"/></svg>',
+  food:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v6a2.5 2.5 0 0 0 5 0V3M7.5 3v18"/><path d="M17.5 3c-1.7 0-3 2.2-3 5s1.3 4 3 4v9"/></svg>'
+};
+/* แปลง markup คงที่ -> SVG node (เลี่ยง innerHTML) */
+function _svgNode(markup) {
+  return new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
+}
+/* badge เล็กแบบ glass วางมุมการ์ด */
+function _placeBadge(d) {
+  var type = _PLACE_TYPEMAP[d.type] || 'food';
+  var isFood = d.type === 'ร้านอาหาร';
+  var b = _el('span', 'place__badge' + (isFood ? ' place__badge--gold' : ''));
+  b.appendChild(_svgNode(_PLACE_ICONS[type] || _PLACE_ICONS.food));   // SVG คงที่ ไม่ใช่ข้อมูลผู้ใช้
+  b.appendChild(document.createTextNode(isFood ? 'อาหารฮาลาล' : (d.type || '')));
+  return b;
+}
 
 /* สร้าง src แผนที่ Google แบบฝัง (ไม่ต้องใช้ API key) จากพิกัด/ชื่อสถานที่ */
 function _gmapEmbedSrc(d) {
@@ -524,11 +541,12 @@ function _placeCard(d) {
     ifr.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
     ifr.setAttribute('allowfullscreen', '');
     media.appendChild(ifr);
+    media.appendChild(_placeBadge(d));   // badge เล็ก มุมบนซ้ายของแผนที่
     card.appendChild(media);
   }
 
   var body = _el('div', 'place__body');
-  body.appendChild(_el('span', d.type === 'ร้านอาหาร' ? 'chip chip--gold' : 'chip', d.type === 'ร้านอาหาร' ? 'ฮาลาล' : d.type));
+  if (!embed) body.appendChild(_placeBadge(d));   // fallback: ไม่มีแผนที่ -> วาง badge ในเนื้อหา
   body.appendChild(_el('h3', null, d.name || ''));
   if (d.description) body.appendChild(_el('p', 'muted', d.description));
 
