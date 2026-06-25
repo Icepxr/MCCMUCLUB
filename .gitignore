@@ -16,3 +16,8 @@ screenshots/
 # Env / secrets (อย่า commit ค่า API key)
 .env
 *.env
+
+# Raw/unoptimized photo dumps — commit only optimized hero-*.jpg
+assets/photo/*
+!assets/photo/hero-*.jpg
+assets/view2.jpg
