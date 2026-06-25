@@ -12,24 +12,35 @@
 
 var MCCMU = window.MCCMU || {};
 
-/* 🔧 ตั้งค่า — วาง Web App URL ที่ deploy แล้วตรงนี้ */
-MCCMU.API_URL = 'https://script.google.com/macros/s/AKfycbyS8PY6nJ4FmFYf4KS8chC4Jej3bZEnA5yPupDw0FvFavoWe1h5q1hJ1VuE_Ga-yKx5Ag/exec';
+/* 🔧 ตั้งค่า — Web App URL ของ Apps Script (ตรง · ใช้เป็น fallback + ตอนเปิดแบบ file://) */
+MCCMU.API_URL  = 'https://script.google.com/macros/s/AKfycbyS8PY6nJ4FmFYf4KS8chC4Jej3bZEnA5yPupDw0FvFavoWe1h5q1hJ1VuE_Ga-yKx5Ag/exec';
+/* proxy edge-cached บน Cloudflare Pages (functions/data.js) — ใช้ตอนเสิร์ฟผ่านโฮสต์ */
+MCCMU.PROXY_URL = '/data';
 
-/* ── core fetch (ใช้ตรงสำหรับ albums + fallback) ── */
+function _query(sheet, params) {
+  var qs = '?sheet=' + encodeURIComponent(sheet);
+  if (params) Object.keys(params).forEach(function (k) {
+    if (params[k] !== '' && params[k] != null)
+      qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  });
+  return qs;
+}
+function _handle(r) {
+  if (!r.ok) throw new Error('http ' + r.status);
+  return r.json().then(function (json) {
+    if (!json.ok) throw new Error(json.error || 'API error');
+    return json.data;
+  });
+}
+
+/* ── core fetch ── ยิงผ่าน proxy edge-cache ก่อน (บนโฮสต์), ล่ม → fallback ยิง Apps Script ตรง ── */
 MCCMU.get = function (sheet, params) {
-  var url = MCCMU.API_URL + '?sheet=' + encodeURIComponent(sheet);
-  if (params) {
-    Object.keys(params).forEach(function (k) {
-      if (params[k] !== '' && params[k] != null)
-        url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-    });
-  }
-  return fetch(url)
-    .then(function (r) { return r.json(); })
-    .then(function (json) {
-      if (!json.ok) throw new Error(json.error || 'API error');
-      return json.data;
-    });
+  var qs = _query(sheet, params);
+  var onHost = (location.protocol === 'http:' || location.protocol === 'https:');
+  if (!onHost) return fetch(MCCMU.API_URL + qs).then(_handle);   // file:// → ตรง
+  return fetch(MCCMU.PROXY_URL + qs).then(_handle).catch(function () {
+    return fetch(MCCMU.API_URL + qs).then(_handle);              // proxy ไม่พร้อม → ตรง
+  });
 };
 
 /* ══════════════════════════════════════════════════════════════════

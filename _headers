@@ -1,0 +1,20 @@
+# Cloudflare Pages — cache headers
+# HTML: ให้ revalidate ทุกครั้ง (ได้ของใหม่ทันทีหลัง deploy) แต่ใช้ 304 เลยเร็ว
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# CSS/JS: cache 1 ชม. (อัปเดตกระจายภายใน 1 ชม. · edge ถูก purge ตอน deploy อยู่แล้ว)
+/assets/*.css
+  Cache-Control: public, max-age=3600
+/assets/*.js
+  Cache-Control: public, max-age=3600
+
+# รูป/ฟอนต์: cache 1 วัน
+/assets/*.png
+  Cache-Control: public, max-age=86400
+/assets/*.jpg
+  Cache-Control: public, max-age=86400
+/assets/*.svg
+  Cache-Control: public, max-age=86400
+/assets/photo/*
+  Cache-Control: public, max-age=86400
