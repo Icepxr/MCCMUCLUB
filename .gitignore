@@ -13,6 +13,9 @@ screenshots/
 .vscode/
 .idea/
 
+# Vercel
+.vercel
+
 # Env / secrets (อย่า commit ค่า API key)
 .env
 *.env
