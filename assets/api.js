@@ -273,7 +273,105 @@ MCCMU.renderPosters = function (sel, opts) {
   });
 };
 
-/* ── กิจกรรมเด่น (หน้า activities #featuredEvt) — เลือกแถว featured=yes ล่าสุด ── */
+/* ── กิจกรรมเด่น — เติมข้อมูลลงการ์ด 1 ใบ (ใช้ทั้งหน้า home และ activities) ── */
+function _fillFeatCard(box, d, today) {
+  function setTxt(name, val) {
+    var t = box.querySelector('[data-feat="' + name + '"]');
+    if (t && val) t.textContent = val;
+  }
+  setTxt('title', d.title_th);
+  setTxt('description', d.description);
+  setTxt('date', _thaiDate(d.date));
+  setTxt('location', d.location);
+  /* ลูกเล่น: ป้ายวันที่บนโปสเตอร์ + ชิปบอกวัน (วันนี้/พรุ่งนี้/วัน...นี้/เร็ว ๆ นี้) */
+  if (d.date) {
+    var ev = new Date(d.date); ev.setHours(0, 0, 0, 0);
+    var diff = Math.round((ev - today) / 86400000);
+    var cd = box.querySelector('[data-feat="countdown"]');
+    if (cd) {
+      var thDay = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสฯ','ศุกร์','เสาร์'];
+      var lbl = diff === 0 ? 'วันนี้'
+              : diff === 1 ? 'พรุ่งนี้'
+              : (diff > 1 && diff <= 7) ? 'วัน' + thDay[ev.getDay()] + 'นี้'
+              : diff > 7 ? 'เร็ว ๆ นี้' : '';
+      if (lbl) {
+        cd.hidden = false;
+        if (diff <= 1) cd.classList.add('is-today');
+        var bEl = cd.querySelector('b'); if (bEl) bEl.textContent = lbl;
+      }
+    }
+    var badge = box.querySelector('.feat-date');
+    if (badge) {
+      var mth = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      badge.hidden = false;
+      var bd = badge.querySelector('strong'); if (bd) bd.textContent = ('0' + ev.getDate()).slice(-2);
+      var bm = badge.querySelector('small');  if (bm) bm.textContent = mth[ev.getMonth()];
+    }
+  }
+  /* สคีมาใหม่ไม่มี category/time → ซ่อน placeholder ที่ฝังในหน้า */
+  var cc = box.querySelector('[data-feat="category"]'); if (cc) cc.style.display = 'none';
+  var tt = box.querySelector('[data-feat="time"]'); if (tt && tt.parentElement) tt.parentElement.style.display = 'none';
+  if (d.image_url) _fillImg(box.querySelector('.ph'), d.image_url, d.title_th);
+}
+
+/* สไลเดอร์กิจกรรมเด่น: จุดบอกตำแหน่ง + ลูกศร + เลื่อนอัตโนมัติ (แสดงเมื่อมี >1 ใบ) */
+function _initFeatSlider(track, n) {
+  var slider = track.closest('.feat-slider'); if (!slider) return;
+  var nav = slider.querySelector('.feat-slider__nav');
+  if (n <= 1) { if (nav) nav.hidden = true; return; }
+  if (nav) nav.hidden = false;
+
+  var dotsWrap = slider.querySelector('.feat-dots');
+  var prev = slider.querySelector('[data-feat-nav="prev"]');
+  var next = slider.querySelector('[data-feat-nav="next"]');
+  var idx = 0, paused = false, resumeT = null, dots = [];
+
+  if (dotsWrap) {
+    _clear(dotsWrap);
+    for (var i = 0; i < n; i++) (function (i) {
+      var b = _el('button', i === 0 ? 'is-active' : null);
+      b.type = 'button';
+      b.setAttribute('aria-label', 'กิจกรรมเด่นที่ ' + (i + 1));
+      b.addEventListener('click', function () { goTo(i); nudge(); });
+      dotsWrap.appendChild(b); dots.push(b);
+    })(i);
+  }
+
+  function offsetOf(i) { return track.children[i].offsetLeft - track.children[0].offsetLeft; }
+  function goTo(i) {
+    idx = (i + n) % n;
+    track.scrollTo({ left: offsetOf(idx), behavior: 'smooth' });
+    setDots(idx);
+  }
+  function setDots(i) {
+    dots.forEach(function (d, k) { d.classList.toggle('is-active', k === i); });
+  }
+  /* sync จุดตอนผู้ใช้ปัดเอง */
+  var tick = false;
+  track.addEventListener('scroll', function () {
+    if (tick) return; tick = true;
+    requestAnimationFrame(function () {
+      tick = false;
+      var step = offsetOf(1) || 1;
+      var i = Math.max(0, Math.min(n - 1, Math.round(track.scrollLeft / step)));
+      if (i !== idx) { idx = i; setDots(i); }
+    });
+  }, { passive: true });
+
+  if (prev) prev.addEventListener('click', function () { goTo(idx - 1); nudge(); });
+  if (next) next.addEventListener('click', function () { goTo(idx + 1); nudge(); });
+
+  function nudge() { paused = true; clearTimeout(resumeT); resumeT = setTimeout(function () { paused = false; }, 8000); }
+  track.addEventListener('pointerdown', nudge, { passive: true });
+  slider.addEventListener('mouseenter', function () { paused = true; });
+  slider.addEventListener('mouseleave', function () { paused = false; });
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    setInterval(function () { if (!paused) goTo(idx + 1); }, 6500);
+}
+
+/* ── กิจกรรมเด่น — featured=yes ที่ยังไม่ถึงวันงานทั้งหมด (สูงสุด 5)
+   มี >1 → แสดงเป็นสไลด์เลื่อนได้ (ต้องมี wrapper .feat-slider ในหน้า เช่น home) ── */
 MCCMU.renderFeatured = function (sel) {
   var box = _q(sel); if (!box) return;
   MCCMU.getActivities({}).then(function (items) {
@@ -284,20 +382,23 @@ MCCMU.renderFeatured = function (sel) {
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var upcoming = pool.filter(function (d) { return d.date && new Date(d.date) >= today; })
                        .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-    var d = upcoming.length ? upcoming[0] : pool[pool.length - 1]; // ใกล้สุดที่ยังไม่ถึง, ไม่งั้นล่าสุด
-    if (!d) return;
-    function setTxt(name, val) {
-      var t = box.querySelector('[data-feat="' + name + '"]');
-      if (t && val) t.textContent = val;
+    var list = upcoming.length ? upcoming.slice(0, 5)
+             : (pool.length ? [pool[pool.length - 1]] : []); // ไม่มีงานล่วงหน้า → ใบล่าสุดใบเดียว
+    if (!list.length) return;
+
+    /* มีหลายใบ + หน้ามีสไลเดอร์ → โคลนการ์ดเปล่าเป็นสไลด์เพิ่มก่อนเติมข้อมูล */
+    var track = box.closest('.feat-slider__track');
+    var cards = [box];
+    if (track && list.length > 1) {
+      for (var i = 1; i < list.length; i++) {
+        var c = box.cloneNode(true);
+        c.removeAttribute('id');
+        track.appendChild(c);
+        cards.push(c);
+      }
     }
-    setTxt('title', d.title_th);
-    setTxt('description', d.description);
-    setTxt('date', _thaiDate(d.date));
-    setTxt('location', d.location);
-    /* สคีมาใหม่ไม่มี category/time → ซ่อน placeholder ที่ฝังในหน้า */
-    var cc = box.querySelector('[data-feat="category"]'); if (cc) cc.style.display = 'none';
-    var tt = box.querySelector('[data-feat="time"]'); if (tt && tt.parentElement) tt.parentElement.style.display = 'none';
-    if (d.image_url) _fillImg(box.querySelector('.ph'), d.image_url, d.title_th);
+    cards.forEach(function (card, i) { _fillFeatCard(card, list[i], today); });
+    if (track) _initFeatSlider(track, cards.length);
   }).catch(function (err) { console.error('[MCCMU] featured:', err); });
 };
 
@@ -492,7 +593,7 @@ MCCMU.renderMembers = function (gridSel) {
   }).catch(function (err) { console.error('[MCCMU] members:', err); });
 };
 
-/* ── ร้านฮาลาล / มัสยิด (หน้า halal-map #placeGrid) ── */
+/* ── ร้านฮาลาล / มัสยิด (หน้า halal-map · carousel #foodTrack / #masjidTrack) ── */
 var _PLACE_TYPEMAP = { 'ร้านอาหาร': 'food', 'มัสยิด': 'masjid', 'ห้องละหมาด': 'masjid' };
 var _PLACE_ICONS = {
   masjid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1.8 1.9 2.8 3.3 2.8 4.8A2.8 2.8 0 0 1 12 9.6 2.8 2.8 0 0 1 9.2 6.8C9.2 5.3 10.2 3.9 12 2Z"/><path d="M4 21v-6.5a8 8 0 0 1 16 0V21"/><path d="M3.5 21h17"/><path d="M9.5 21v-2.5a2.5 2.5 0 0 1 5 0V21"/></svg>',
@@ -578,33 +679,46 @@ MCCMU.renderHalalMap = function () {
     fill(s.halal_map_url && /^https:\/\//.test(s.halal_map_url) ? s.halal_map_url : def);
   }).catch(function () { fill(def); });
 };
-MCCMU.renderPlaces = function (gridSel, tabsSel) {
-  var grid = _q(gridSel); if (!grid) return;
-  var all = [];
-  function paint(list) {
-    _clear(grid);
-    if (!list.length) return _emptyMsg(grid, 'ยังไม่มีข้อมูลในหมวดนี้');
-    list.forEach(function (d) { grid.appendChild(_placeCard(d)); });
-  }
-  _skeleton(grid, 4, function () {
-    var c = _el('article', 'card place');
-    c.appendChild(_phWithImg('place__media skel'));
-    return c;
-  });
-  MCCMU.getPlaces().then(function (items) {
-    all = items;
-    paint(all);
-    var tabs = tabsSel && _q(tabsSel);
-    if (tabs) tabs.addEventListener('click', function (e) {
-      var b = e.target.closest('.tab'); if (!b) return;
-      tabs.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
-      b.classList.add('active');
-      var f = b.getAttribute('data-f');
-      paint(f === 'all' ? all : all.filter(function (d) { return (_PLACE_TYPEMAP[d.type] || 'food') === f; }));
+/* แยกเป็น 2 โซน (ร้านอาหาร / มัสยิด) แบบ carousel เลื่อนข้าง + ป้ายจำนวน */
+MCCMU.renderPlaces = function () {
+  var foodTrack   = document.getElementById('foodTrack');
+  var masjidTrack = document.getElementById('masjidTrack');
+  if (!foodTrack && !masjidTrack) return;
+
+  function skel(track) {
+    if (!track) return;
+    _skeleton(track, 3, function () {
+      var c = _el('article', 'card place place--v');
+      c.appendChild(_phWithImg('place__media skel', '16/10'));
+      return c;
     });
+  }
+  skel(foodTrack); skel(masjidTrack);
+
+  function fill(track, list, countId, nav) {
+    if (!track) return;
+    var count = document.getElementById(countId);
+    if (count) count.textContent = list.length ? list.length + ' แห่ง' : '';
+    if (!list.length) return _emptyMsg(track, 'ยังไม่มีข้อมูลในหมวดนี้ — แนะนำเข้ามาได้เลย!');
+    _clear(track);
+    list.forEach(function (d) {
+      var c = _placeCard(d);
+      c.classList.add('place--v');
+      track.appendChild(c);
+    });
+    _initCarousel(track, nav);
+  }
+
+  MCCMU.getPlaces().then(function (items) {
+    function ofType(t) {
+      return items.filter(function (d) { return (_PLACE_TYPEMAP[d.type] || 'food') === t; });
+    }
+    fill(foodTrack,   ofType('food'),   'foodCount',   { prev: '#foodPrev',   next: '#foodNext' });
+    fill(masjidTrack, ofType('masjid'), 'masjidCount', { prev: '#masjidPrev', next: '#masjidNext' });
   }).catch(function (err) {
     console.error('[MCCMU] places:', err);
-    _emptyMsg(grid, 'ไม่สามารถโหลดข้อมูลสถานที่ได้');
+    if (foodTrack)   _emptyMsg(foodTrack,   'ไม่สามารถโหลดข้อมูลได้ในขณะนี้');
+    if (masjidTrack) _emptyMsg(masjidTrack, 'ไม่สามารถโหลดข้อมูลได้ในขณะนี้');
   });
 };
 
@@ -770,7 +884,7 @@ MCCMU.init = function () {
       break;
     case 'halal':
       MCCMU.renderHalalMap();
-      MCCMU.renderPlaces('#placeGrid', '#placeTabs');
+      MCCMU.renderPlaces(); // 2 carousel: #foodTrack / #masjidTrack
       break;
   }
 };

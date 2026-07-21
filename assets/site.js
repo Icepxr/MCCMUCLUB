@@ -119,9 +119,67 @@
     });
   }
 
+  // back-to-top — ปุ่มลอยกลับขึ้นบน โผล่เมื่อเลื่อนลงลึก (ช่วยหน้าที่รายการยาว)
+  var toTop = document.createElement('button');
+  toTop.className = 'to-top';
+  toTop.type = 'button';
+  toTop.setAttribute('aria-label', 'กลับขึ้นด้านบน');
+  (function () { // สร้างไอคอนลูกศรด้วย DOM API (เลี่ยง innerHTML)
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    var path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', 'M12 19V5M5 12l7-7 7 7');
+    svg.appendChild(path);
+    toTop.appendChild(svg);
+  })();
+  toTop.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.body.appendChild(toTop);
+  var toTopTick = false;
+  window.addEventListener('scroll', function () {
+    if (toTopTick) return;
+    toTopTick = true;
+    requestAnimationFrame(function () {
+      toTop.classList.toggle('show', window.scrollY > 600);
+      toTopTick = false;
+    });
+  }, { passive: true });
+
   // reveal on scroll
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
   document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+
+  // count-up — ตัวเลขสถิติ (120+, 15, 20+) วิ่งขึ้นเมื่อเลื่อนมาเห็น
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) {
+    var nio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        nio.unobserve(e.target);
+        var el = e.target;
+        var m = (el.textContent || '').trim().match(/^(\d+)(.*)$/);
+        if (!m) return;
+        var target = +m[1], suffix = m[2] || '';
+        var t0 = null, DUR = 1100;
+        function frame(ts) {
+          if (!t0) t0 = ts;
+          var p = Math.min((ts - t0) / DUR, 1);
+          p = 1 - Math.pow(1 - p, 3); // ease-out
+          el.textContent = Math.round(target * p) + suffix;
+          if (p < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      });
+    }, { threshold: 0.6 });
+    document.querySelectorAll('.hero__meta strong, .stat strong').forEach(function (el) { nio.observe(el); });
+  }
 })();

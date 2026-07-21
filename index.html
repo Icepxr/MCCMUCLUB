@@ -58,20 +58,37 @@
       <span class="eyebrow">ไฮไลต์ <span class="en">Featured</span></span>
       <h2 style="margin-top: 10px;">กิจกรรมเด่นเร็ว ๆ นี้</h2>
     </div>
-    <div class="feature-evt card reveal" id="homeFeatured">
-      <div class="ph" data-label="โปสเตอร์กิจกรรมเด่น ·">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+    <!-- มี featured หลายรายการ → api.js โคลนการ์ดเป็นสไลด์เพิ่มใน track นี้ -->
+    <div class="feat-slider reveal">
+      <div class="feat-slider__track">
+    <div class="feature-evt card" id="homeFeatured">
+      <div class="ph" data-label="กำลังโหลดโปสเตอร์…">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+        <span class="feat-date" hidden><strong></strong><small></small></span></div>
       <div class="feature-evt__body">
-        <div class="evt__tags" style="display:flex;gap:8px;margin-bottom:14px">
+        <div class="evt__tags" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
           <span class="chip chip--gold" data-feat="category">หมวดกิจกรรม</span>
+          <span class="chip feat-count" data-feat="countdown" hidden><i class="pulse-dot"></i><b></b></span>
         </div>
-        <h2 style="font-size:clamp(24px,3vw,34px)" data-feat="title">Loading please wait...</h2>
-        <p class="lead" style="margin:14px 0 20px" data-feat="description">Loading please wait...</p>
+        <h2 style="font-size:clamp(24px,3vw,34px)" data-feat="title">กำลังโหลดกิจกรรม…</h2>
+        <p class="lead" style="margin:14px 0 20px" data-feat="description">รอสักครู่ กำลังดึงข้อมูลกิจกรรมล่าสุด</p>
         <div class="feature-evt__meta">
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 9h18"/></svg> <span data-feat="date">วันที่จัดงาน</span></span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> <span data-feat="time">เวลา</span></span>
-          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg> <span data-feat="location">สถานที่</span></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 9h18"/></svg> <span data-feat="date">—</span></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> <span data-feat="time">—</span></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg> <span data-feat="location">—</span></span>
         </div>
+        <a class="btn btn--primary btn--sm" href="activities.html" style="margin-top:24px">ดูกิจกรรมทั้งหมด
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+      </div>
+      <!-- แถบควบคุมสไลด์ (โชว์อัตโนมัติเมื่อมีกิจกรรมเด่นมากกว่า 1) -->
+      <div class="feat-slider__nav" hidden>
+        <button class="carousel__btn" data-feat-nav="prev" type="button" aria-label="ก่อนหน้า">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <div class="feat-dots"></div>
+        <button class="carousel__btn" data-feat-nav="next" type="button" aria-label="ถัดไป">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
     </div>
   </div>
@@ -139,5 +156,6 @@
 </script>
 <script src="assets/api.js"></script>
 <script src="assets/site.js"></script>
+<script src="assets/i18n.js"></script>
 </body>
 </html>

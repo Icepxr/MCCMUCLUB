@@ -112,6 +112,8 @@
 
 <!-- ====================== ติดต่อเรา (ยุบจากหน้า contact เดิม) ====================== -->
 <section class="section section--soft" id="contact" style="padding-bottom:90px">
+  <span class="donate-blob contact-blob--1" aria-hidden="true"></span>
+  <span class="donate-blob contact-blob--2" aria-hidden="true"></span>
   <div class="container">
     <div class="s-head center reveal">
       <span class="eyebrow" style="justify-content:center">เราพร้อมรับฟัง <span class="en">Contact</span></span>
@@ -119,16 +121,16 @@
       <p class="lead">มีคำถาม ข้อเสนอแนะ หรืออยากร่วมงานกับเรา? ทักมาได้เลยทุกช่องทาง</p>
     </div>
     <div class="grid g-3 reveal" style="margin-top:40px">
-      <div class="card ctile"><span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v14H4z"/><path d="M4 7l8 6 8-6"/></svg></span>
-        <div><h4>อีเมล</h4><a href="mailto:muslimclub@cmu.ac.th">muslimclub@cmu.ac.th</a></div></div>
-      <div class="card ctile"><span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3C7 3 3 6.3 3 10.5c0 3.7 3.3 6.8 7.8 7.4.4.3.3 1 .2 1.5l-.1.6c-.1.4.2.8.7.6 2-.7 5.6-3.2 7.2-5.3.8-1 1.2-2.1 1.2-3.4C20 6.3 16 3 12 3z"/></svg></span>
-        <div><h4>LINE Official</h4><a href="#" aria-label="LINE">@mccmu</a></div></div>
+      <div class="card ctile"><span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor"/></svg></span>
+        <div><h4>Instagram</h4><a href="https://www.instagram.com/muslimclub.cmu" target="_blank" rel="noopener" aria-label="Instagram">@muslimclub.cmu</a></div></div>
+      <div class="card ctile"><span class="ctile__ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 9h3l.5-3H14V4.5C14 3.6 14.3 3 15.7 3H17V.2C16.6.1 15.5 0 14.3 0 11.8 0 10 1.5 10 4.3V6H7v3h3v9h4z"/></svg></span>
+        <div><h4>Facebook</h4><a href="https://www.facebook.com/MuslimClubCMU" target="_blank" rel="noopener" aria-label="Facebook">MuslimClubCMU</a></div></div>
       <div class="card ctile"><span class="ctile__ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span>
         <div><h4>ที่ตั้ง</h4><p>มหาวิทยาลัยเชียงใหม่ · 239 ถ.ห้วยแก้ว ต.สุเทพ อ.เมือง จ.เชียงใหม่ 50200</p></div></div>
     </div>
     <div class="card reveal" style="padding:8px;margin-top:18px">
       <!-- แผนที่ที่ตั้ง: ฝังจากชีต settings (map_embed_url) — assets/api.js renderContactMap -->
-      <div class="mapph" id="contactMap" style="min-height:260px" data-label="แผนที่ที่ตั้งชมรม · ชีต settings (map_embed_url)">
+      <div class="mapph" id="contactMap" style="min-height:260px" data-label="แผนที่ที่ตั้งชมรม">
         <div class="mappin" style="left:50%;top:50%"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#fff"/></svg></div>
         <span class="map-note" style="position:absolute;right:14px;bottom:12px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.8);padding:4px 10px;border-radius:8px">มหาวิทยาลัยเชียงใหม่</span>
       </div>
@@ -144,8 +146,31 @@
 <div id="site-footer"></div>
 
 <style>
-.soc{ width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--lilac-100);color:var(--grape-600);transition:.15s; }
-.soc:hover{ background:var(--grape-600);color:#fff; } .soc svg{ width:19px;height:19px; }
+.soc{ width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--lilac-100);color:var(--grape-600);transition:.18s; }
+.soc:hover{ background:var(--grape-600);color:#fff;transform:translateY(-3px) rotate(-5deg);box-shadow:0 12px 24px -12px rgba(124,58,237,.6); }
+.soc svg{ width:19px;height:19px; }
+
+/* ── ลูกเล่นบล็อกติดต่อเรา ── */
+#contact{ position:relative;overflow:hidden; }
+#contact .container{ position:relative;z-index:1; }
+.contact-blob--1{ width:340px;height:340px;background:var(--violet-300);opacity:.45;top:-70px;right:-70px; }
+.contact-blob--2{ width:300px;height:300px;background:var(--gold-soft);opacity:.35;bottom:-90px;left:-70px; }
+/* การ์ดช่องทาง: ยกตัว + ไอคอนกลายเป็น gradient ม่วง เอียงนิด ๆ ตอน hover */
+#contact .ctile{ transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+#contact .ctile:hover{ transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--violet-200); }
+#contact .ctile__ic{ transition:background .25s ease, color .25s ease, transform .25s ease; }
+#contact .ctile:hover .ctile__ic{
+  background:linear-gradient(135deg,var(--grape-600),var(--grape-400));color:#fff;
+  transform:rotate(-6deg) scale(1.08);
+}
+#contact .ctile a{ transition:color .15s; }
+#contact .ctile a:hover{ color:var(--grape-600); }
+/* การ์ดแผนที่: ขอบเรืองม่วงตอน hover */
+#contact .card:has(.mapph){ transition:box-shadow .25s ease, border-color .25s ease; }
+#contact .card:has(.mapph):hover{ border-color:var(--violet-300);box-shadow:0 24px 60px -32px rgba(124,58,237,.5); }
+@media (prefers-reduced-motion:reduce){
+  .soc, #contact .ctile, #contact .ctile__ic{ transition:none; }
+}
 
 /* แผง timeline ในบล็อก story */
 .story-panel{
@@ -202,6 +227,7 @@
 </style>
 <script src="assets/api.js"></script>
 <script src="assets/site.js"></script>
+<script src="assets/i18n.js"></script>
 <script>
 (function(){
   var btn=document.getElementById('copyAcct'); if(!btn) return;
