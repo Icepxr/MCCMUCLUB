@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drive Image Test</title>
+<style>
+  body{font-family:system-ui,'Anuphan',sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#211B33;}
+  h1{font-size:20px;} .id{font-size:13px;color:#7A7290;word-break:break-all;}
+  .test{border:1px solid #e3ddf2;border-radius:12px;padding:14px;margin:16px 0;}
+  .test h2{font-size:15px;margin:0 0 8px;}
+  .test code{font-size:12px;background:#f5f3ff;padding:2px 6px;border-radius:6px;word-break:break-all;}
+  .frame{margin-top:10px;min-height:120px;background:#f5f3ff;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .frame img{max-width:100%;max-height:300px;display:block;}
+  .status{font-size:13px;font-weight:700;margin-top:8px;}
+  .ok{color:#1e7a5f;} .fail{color:#c0392b;}
+</style>
+</head>
+<body>
+  <h1>ทดสอบแสดงรูปจาก Google Drive</h1>
+  <p class="id">file id: <strong>1OPeE26Z4LSjCHebe6tTY-Nr4J2Fk_iY7</strong></p>
+  <p style="font-size:14px;color:#4A4360">เปิดไฟล์นี้ในเบราว์เซอร์ (ดับเบิลคลิก) แล้วดูว่าวิธีไหนขึ้นรูป ✅ / ไม่ขึ้น ❌
+    — ลองเปิดใน <b>Incognito</b> ด้วย (ทดสอบว่าแชร์สาธารณะจริงไหม โดยไม่ใช้สิทธิ์บัญชีคุณ)</p>
+
+  <div class="test">
+    <h2>วิธี 1 · thumbnail + no-referrer</h2>
+    <code>drive.google.com/thumbnail?id=ID&amp;sz=w1200</code>
+    <div class="frame"><img referrerpolicy="no-referrer"
+      src="https://drive.google.com/thumbnail?id=1OPeE26Z4LSjCHebe6tTY-Nr4J2Fk_iY7&sz=w1200"
+      onload="s(this,1,true)" onerror="s(this,1,false)"></div>
+    <div class="status" id="st1">กำลังโหลด…</div>
+  </div>
+
+  <div class="test">
+    <h2>วิธี 2 · lh3 + no-referrer</h2>
+    <code>lh3.googleusercontent.com/d/ID=w1200</code>
+    <div class="frame"><img referrerpolicy="no-referrer"
+      src="https://lh3.googleusercontent.com/d/1OPeE26Z4LSjCHebe6tTY-Nr4J2Fk_iY7=w1200"
+      onload="s(this,2,true)" onerror="s(this,2,false)"></div>
+    <div class="status" id="st2">กำลังโหลด…</div>
+  </div>
+
+  <div class="test">
+    <h2>วิธี 3 · thumbnail (ไม่มี no-referrer)</h2>
+    <code>drive.google.com/thumbnail?id=ID&amp;sz=w1200</code>
+    <div class="frame"><img
+      src="https://drive.google.com/thumbnail?id=1OPeE26Z4LSjCHebe6tTY-Nr4J2Fk_iY7&sz=w1200"
+      onload="s(this,3,true)" onerror="s(this,3,false)"></div>
+    <div class="status" id="st3">กำลังโหลด…</div>
+  </div>
+
+<script>
+function s(img, n, ok){
+  var el = document.getElementById('st'+n);
+  if(ok && img.naturalWidth > 1){
+    el.textContent = '✅ ขึ้นรูป (' + img.naturalWidth + '×' + img.naturalHeight + ')';
+    el.className = 'status ok';
+  } else {
+    el.textContent = '❌ ไม่ขึ้น (โหลดไม่ได้ / ไฟล์ไม่สาธารณะ)';
+    el.className = 'status fail';
+  }
+}
+</script>
+</body>
+</html>
