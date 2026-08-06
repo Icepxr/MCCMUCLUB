@@ -237,9 +237,19 @@ function _docThai(d){
 function _docId(s)         { s=(s||'').toString().trim(); var m=s.match(/[-\w]{25,}/); return m?m[0]:s; }
 function driveView(id)     { return 'https://drive.google.com/file/d/' + _docId(id) + '/preview'; }
 function driveDownload(id) { return 'https://drive.google.com/uc?export=download&id=' + _docId(id); }
+/* ขนาด thumbnail ที่ขอจาก Drive — ขอให้พอดีกับการ์ดจริง ไม่ขอเผื่อ
+   การ์ดกว้าง 270px (จอปกติ) / 180px (มือถือ ≤640px) · เผื่อจอ retina ไม่เกิน 2 เท่า
+   สำคัญ: thumbnail ของ PDF/สไลด์ Drive ส่งกลับมาเป็น PNG ซึ่งใหญ่กว่า JPEG หลายเท่า
+   ขอ w800 ทั้ง 14 ใบ = ~7 MB, ขอตามขนาดจริง = ~2-3.7 MB */
+var THUMB_W = (function () {
+  var card = (window.innerWidth <= 640) ? 180 : 270;
+  var dpr  = Math.min(window.devicePixelRatio || 1, 2);
+  return Math.ceil(card * dpr / 40) * 40;   // ปัดขึ้นทีละ 40 ให้ URL ซ้ำกันได้ (cache ดีขึ้น)
+})();
+
 function driveImg(id)      { return 'https://drive.google.com/thumbnail?id=' + _docId(id) + '&sz=w1600'; }
-function driveThumb(id)    { return 'https://drive.google.com/thumbnail?id=' + _docId(id) + '&sz=w800'; }
-function driveThumbAlt(id) { return 'https://lh3.googleusercontent.com/d/' + _docId(id) + '=w800'; }
+function driveThumb(id)    { return 'https://drive.google.com/thumbnail?id=' + _docId(id) + '&sz=w' + THUMB_W; }
+function driveThumbAlt(id) { return 'https://lh3.googleusercontent.com/d/' + _docId(id) + '=w' + THUMB_W; }
 
 function _svgEl(tag, attrs, parent){
   var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
