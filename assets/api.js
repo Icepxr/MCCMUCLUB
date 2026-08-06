@@ -811,13 +811,21 @@ MCCMU.applySettings = function () {
   }).catch(function (err) { console.error('[MCCMU] settings:', err); });
 };
 
+/* แผนที่สำรอง — ใช้เมื่อยังไม่ได้ตั้ง map_embed_url ในชีต
+   พิกัดมาจากที่อยู่ที่แสดงอยู่บนหน้า contact อยู่แล้ว (ไม่ได้ตั้งขึ้นเอง)
+   ตั้งค่า map_embed_url ในชีตเมื่อไหร่ ค่านั้นจะถูกใช้แทนทันที */
+MCCMU.MAP_FALLBACK = 'https://www.google.com/maps?q=' +
+  encodeURIComponent('มหาวิทยาลัยเชียงใหม่ 239 ถนนห้วยแก้ว ตำบลสุเทพ อำเภอเมือง เชียงใหม่ 50200') +
+  '&output=embed';
+
 /* ── แผนที่ที่ตั้ง(หน้า about · settings map_embed_url → ฝัง iframe ใน #contactMap) ── */
 MCCMU.renderContactMap = function () {
   var box = document.getElementById('contactMap');
   if (!box) return;
   MCCMU.getSettings().then(function (s) {
     var url = s.map_embed_url;
-    if (!url || !/^https:\/\//.test(url)) return;
+    /* ชีตยังว่าง → ใช้แผนที่สำรอง จะได้ไม่ค้างเป็นตารางเปล่า */
+    if (!url || !/^https:\/\//.test(url)) url = MCCMU.MAP_FALLBACK;
     var ifr = document.createElement('iframe');
     ifr.src = url; ifr.loading = 'lazy'; ifr.title = 'แผนที่ที่ตั้งชมรม';
     ifr.style.cssText = 'width:100%;height:100%;min-height:260px;border:0;border-radius:12px';
