@@ -6,7 +6,15 @@
 <link rel="icon" type="image/png" href="assets/logo_white_bc.png">
 <link rel="apple-touch-icon" href="assets/logo_white_bc.png">
 <title>เกี่ยวกับชมรม · MCCMU</title>
+<!-- เปิดคอนเนกชันล่วงหน้าไปยังปลายทางที่ต้องยิงแน่ ๆ (ตัดเวลา DNS+TLS ~200-400ms) -->
+<link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin>
+<link rel="preconnect" href="https://drive.google.com" crossorigin>
+<link rel="dns-prefetch" href="https://script.google.com">
 <link rel="stylesheet" href="assets/mccmu.css">
+<!-- โหลดสคริปต์แบบ defer: ไม่บล็อกการวาดหน้า และรันตามลำดับก่อน DOMContentLoaded -->
+<script src="assets/site.js" defer></script>
+<script src="assets/api.js" defer></script>
+<script src="assets/i18n.js" defer></script>
 </head>
 <body data-page="about">
 <div id="site-nav"></div>
@@ -225,9 +233,6 @@
 .donate-card__note{ font-size:13px;color:var(--muted);margin-top:18px; }
 .donate-card__note a{ color:var(--grape-600);font-weight:600; }
 </style>
-<script src="assets/api.js"></script>
-<script src="assets/site.js"></script>
-<script src="assets/i18n.js"></script>
 <script>
 (function(){
   var btn=document.getElementById('copyAcct'); if(!btn) return;

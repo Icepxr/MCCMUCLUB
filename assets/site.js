@@ -119,6 +119,35 @@
     });
   }
 
+  /* ---------- prefetch หน้าถัดไปตอนชี้เมาส์/แตะค้าง ----------
+     ผู้ใช้ยังไม่ทันคลิก เบราว์เซอร์ก็ดึง HTML ของหน้านั้นไว้ก่อนแล้ว
+     → กดเมนูแล้วขึ้นแทบทันที (แต่ละหน้าถูก prefetch ครั้งเดียว) */
+  (function () {
+    var done = {};
+    var slow = navigator.connection &&
+      (navigator.connection.saveData || /2g/.test(navigator.connection.effectiveType || ''));
+    if (slow) return;                       // เน็ตช้า/ประหยัดดาต้า → ไม่ต้อง prefetch
+
+    function prefetch(href) {
+      if (!href || done[href]) return;
+      done[href] = 1;
+      var l = document.createElement('link');
+      l.rel = 'prefetch';
+      l.as = 'document';
+      l.href = href;
+      document.head.appendChild(l);
+    }
+    function onHover(e) {
+      var a = e.target.closest && e.target.closest('.nav__links a, .drawer a, .nav__cta a');
+      if (!a) return;
+      var u = new URL(a.href, location.href);
+      if (u.origin !== location.origin) return;
+      prefetch(u.pathname + u.search);
+    }
+    document.addEventListener('mouseover', onHover, { passive: true });
+    document.addEventListener('touchstart', onHover, { passive: true });
+  })();
+
   // back-to-top — ปุ่มลอยกลับขึ้นบน โผล่เมื่อเลื่อนลงลึก (ช่วยหน้าที่รายการยาว)
   var toTop = document.createElement('button');
   toTop.className = 'to-top';

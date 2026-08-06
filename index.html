@@ -6,7 +6,17 @@
 <link rel="icon" type="image/png" href="assets/logo_white_bc.png">
 <link rel="apple-touch-icon" href="assets/logo_white_bc.png">
 <title>ชมรมมุสลิม มช. · MCCMU</title>
+<!-- เปิดคอนเนกชันล่วงหน้าไปยังปลายทางที่ต้องยิงแน่ ๆ (ตัดเวลา DNS+TLS ~200-400ms) -->
+<link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin>
+<link rel="preconnect" href="https://drive.google.com" crossorigin>
+<link rel="dns-prefetch" href="https://script.google.com">
+<!-- รูป hero เป็น background-image ใน css (ถูกค้นพบช้า) → บอกเบราว์เซอร์ให้โหลดล่วงหน้า -->
+<link rel="preload" as="image" href="assets/view.jpg" fetchpriority="high">
 <link rel="stylesheet" href="assets/mccmu.css">
+<!-- โหลดสคริปต์แบบ defer: ไม่บล็อกการวาดหน้า และรันตามลำดับก่อน DOMContentLoaded -->
+<script src="assets/site.js" defer></script>
+<script src="assets/api.js" defer></script>
+<script src="assets/i18n.js" defer></script>
 </head>
 <body data-page="home">
 <div id="site-nav"></div>
@@ -154,8 +164,5 @@
     'วัน'+th[now.getDay()]+'ที่ '+now.getDate()+' '+thm[now.getMonth()]+' '+(now.getFullYear()+543);
 })();
 </script>
-<script src="assets/api.js"></script>
-<script src="assets/site.js"></script>
-<script src="assets/i18n.js"></script>
 </body>
 </html>

@@ -20,6 +20,9 @@ screenshots/
 .env
 *.env
 
+# ต้นฉบับความละเอียดสูง — เก็บไว้ในเครื่อง ไม่ deploy (ของที่เสิร์ฟจริงย่อแล้วใน assets/)
+assets/_src/
+
 # Raw/unoptimized photo dumps — commit only optimized hero-*.jpg
 assets/photo/*
 !assets/photo/hero-*.jpg

@@ -55,28 +55,47 @@ MCCMU.get = function (sheet, params) {
    ไม่มีการ "วาดของเก่าแล้วค่อยสลับ" จึงไม่เกิดปัญหารูป/ข้อมูลค้าง
    อยากบังคับโหลดใหม่ทันที: เรียก MCCMU.refresh() หรือเปิดด้วย ?fresh */
 var LS_KEY = 'mccmu_all_v1';
-var LS_TTL = 10 * 60 * 1000; // 10 นาที (ปรับได้)
+var LS_TTL = 10 * 60 * 1000;          // 10 นาที — ถือว่า "สด" ไม่ยิง network เลย
+var LS_MAX = 7 * 24 * 60 * 60 * 1000; // 7 วัน  — เกิน TTL แต่ยังไม่เกินนี้ = ใช้ของเก่าไปก่อน แล้วรีเฟรชเบื้องหลัง
+
+function _readCache() {
+  try {
+    var o = JSON.parse(window.localStorage.getItem(LS_KEY) || 'null');
+    return (o && o.data && typeof o.t === 'number') ? o : null;
+  } catch (e) { return null; }
+}
+function _writeCache(data) {
+  try { window.localStorage.setItem(LS_KEY, JSON.stringify({ t: Date.now(), data: data })); } catch (e) {}
+}
+function _fetchAll() {
+  return MCCMU.get('all').then(function (data) { _writeCache(data); return data; });
+}
 
 MCCMU._loadAll = function () {
   if (MCCMU._allPromise) return MCCMU._allPromise;
 
   var bypass = /[?&#]fresh\b/.test(location.search + location.hash);
-  if (!bypass) {
-    try {
-      var raw = window.localStorage.getItem(LS_KEY);
-      if (raw) {
-        var o = JSON.parse(raw);
-        if (o && o.data && (Date.now() - o.t) < LS_TTL) {
-          MCCMU._allPromise = Promise.resolve(o.data); // cache สด → ไม่ยิง request
-          return MCCMU._allPromise;
-        }
-      }
-    } catch (e) {}
+  var c = bypass ? null : _readCache();
+
+  if (c) {
+    var age = Date.now() - c.t;
+    if (age < LS_TTL) {
+      MCCMU._allPromise = Promise.resolve(c.data);   // สด → ไม่ยิง network
+      return MCCMU._allPromise;
+    }
+    if (age < LS_MAX) {
+      /* stale-while-revalidate: วาดด้วยของเก่า "ทันที" (หน้าไม่ค้างรอ Apps Script)
+         แล้วดึงของใหม่เบื้องหลังเก็บไว้ให้รอบถัดไป */
+      MCCMU._allPromise = Promise.resolve(c.data);
+      _fetchAll().catch(function () {});
+      return MCCMU._allPromise;
+    }
   }
 
-  MCCMU._allPromise = MCCMU.get('all').then(function (data) {
-    try { window.localStorage.setItem(LS_KEY, JSON.stringify({ t: Date.now(), data: data })); } catch (e) {}
-    return data;
+  /* ไม่มี cache เลย (หรือเก่ามาก) → จำเป็นต้องรอ network รอบเดียว */
+  MCCMU._allPromise = _fetchAll().catch(function (err) {
+    if (c) return c.data;   // network ล่ม แต่ยังมีของเก่า → ดีกว่าหน้าว่าง
+    throw err;
   });
   return MCCMU._allPromise;
 };
@@ -144,26 +163,41 @@ function _el(tag, cls, text) {
   if (text != null) e.textContent = text;
   return e;
 }
-/* ใส่รูปลงใน wrapper .ph — โหลดไม่ได้ก็คง placeholder เดิมไว้ */
+/* ย่อขนาดรูป Drive ให้พอดีกับที่แสดงจริง — การ์ดกว้างสุด ~400px → w800 พอสำหรับจอ 2x
+   (เดิมขอ w1600 ทุกใบ = โหลดข้อมูลเกินความจำเป็นราว 4 เท่า) */
+var IMG_W = 800;
+function _sizeDriveUrl(url, w) {
+  w = w || IMG_W;
+  return url
+    .replace(/([?&]sz=)w\d+/, '$1w' + w)          // drive.google.com/thumbnail?...&sz=w1600
+    .replace(/=w\d+(-h\d+)?$/, '=w' + w);        // lh3.googleusercontent.com/d/ID=w1600
+}
+
+/* ใส่รูปลงใน wrapper .ph — โหลดไม่ได้ก็คง placeholder เดิมไว้
+   แนบ <img> เข้า DOM ตั้งแต่แรกเพื่อให้ loading="lazy" ทำงาน (รูปนอกจอไม่ถูกโหลด)
+   CSS ซ่อนรูปด้วย opacity จนกว่าจะ onload → ยังไม่เห็นกรอบรูปแตกระหว่างรอ */
 function _fillImg(ph, url, alt) {
   if (!ph || !url || !/^https:\/\//.test(url)) return;
   var img = new Image();
   img.referrerPolicy = 'no-referrer';   // จำเป็นสำหรับรูป Google Drive (กัน Referer block)
   img.alt = alt || '';
+  img.loading = 'lazy';
+  img.decoding = 'async';
   var triedAlt = false;
-  /* หมายเหตุ: ห้ามใส่ img.loading='lazy' ที่นี่ — img สร้างนอก DOM แล้วรอ onload ค่อย append
-     ถ้า lazy เบราว์เซอร์จะเลื่อนการโหลด → onload ไม่ยิง → รูปไม่ขึ้น */
-  img.onload = function () { ph.classList.add('has-img'); ph.appendChild(img); };
+  img.onload = function () { ph.classList.add('has-img'); };
   img.onerror = function () {
     /* รูปหลักโหลดไม่ได้ → ลองอีก endpoint หนึ่งครั้ง (ดึง id แล้วสลับไป lh3) */
     if (!triedAlt) {
       triedAlt = true;
       var m = url.match(/[-\w]{25,}/);
-      if (m) { img.src = 'https://lh3.googleusercontent.com/d/' + m[0] + '=w1600'; return; }
+      if (m) { img.src = 'https://lh3.googleusercontent.com/d/' + m[0] + '=w' + IMG_W; return; }
     }
-    /* ยังไม่ได้ → คง placeholder เดิม */
+    /* ยังไม่ได้ → เอารูปออก คง placeholder เดิม */
+    ph.classList.remove('has-img');
+    img.remove();
   };
-  img.src = url;
+  ph.appendChild(img);
+  img.src = _sizeDriveUrl(url);
 }
 /* สร้าง wrapper .ph พร้อมรูป (สำหรับการ์ดที่สร้างใหม่) */
 function _phWithImg(cls, ratio, url, alt, label) {

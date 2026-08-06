@@ -6,7 +6,15 @@
 <link rel="icon" type="image/png" href="assets/logo_white_bc.png">
 <link rel="apple-touch-icon" href="assets/logo_white_bc.png">
 <title>คลังความรู้ · MCCMU</title>
+<!-- เปิดคอนเนกชันล่วงหน้าไปยังปลายทางที่ต้องยิงแน่ ๆ (ตัดเวลา DNS+TLS ~200-400ms) -->
+<link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin>
+<link rel="preconnect" href="https://drive.google.com" crossorigin>
+<link rel="dns-prefetch" href="https://script.google.com">
 <link rel="stylesheet" href="assets/mccmu.css">
+<!-- โหลดสคริปต์แบบ defer: ไม่บล็อกการวาดหน้า และรันตามลำดับก่อน DOMContentLoaded -->
+<script src="assets/site.js" defer></script>
+<script src="assets/api.js" defer></script>
+<script src="assets/i18n.js" defer></script>
 </head>
 <body data-page="knowledge">
 <div id="site-nav"></div>
@@ -216,7 +224,6 @@
 </style>
 
 <!-- ====================== SCRIPT ====================== -->
-<script src="assets/api.js"></script>
 <script>
 var DOCS = [];
 
@@ -360,17 +367,23 @@ function buildCard(d) {
 
   countEl.textContent = 'กำลังโหลด…';
 
-  MCCMU.getDocs().then(function(items){
-    DOCS = items.map(function(d){
-      return { title: d.title, description: d.description || '',
-               date: _docThai(d.date), fileId: d.file_id };
+  /* assets/api.js โหลดแบบ defer → รันหลังสคริปต์ inline นี้
+     จึงต้องรอให้ MCCMU พร้อมก่อน (deferred script เสร็จก่อน DOMContentLoaded เสมอ) */
+  function loadDocs(){
+    MCCMU.getDocs().then(function(items){
+      DOCS = items.map(function(d){
+        return { title: d.title, description: d.description || '',
+                 date: _docThai(d.date), fileId: d.file_id };
+      });
+      render();
+    }).catch(function(err){
+      console.error('[MCCMU] docs:', err);
+      countEl.textContent = '';
+      empty.style.display = 'block';
     });
-    render();
-  }).catch(function(err){
-    console.error('[MCCMU] docs:', err);
-    countEl.textContent = '';
-    empty.style.display = 'block';
-  });
+  }
+  if (window.MCCMU && MCCMU.getDocs) loadDocs();
+  else document.addEventListener('DOMContentLoaded', loadDocs);
 })();
 
 /* ── lightbox ── */
@@ -404,7 +417,5 @@ document.getElementById('lbClose').addEventListener('click', closeLightbox);
 lb.addEventListener('click', function(e){ if(e.target === lb) closeLightbox(); });
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeLightbox(); });
 </script>
-<script src="assets/site.js"></script>
-<script src="assets/i18n.js"></script>
 </body>
 </html>
