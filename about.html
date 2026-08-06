@@ -219,6 +219,15 @@
   margin-left:auto;align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.05em;
   padding:5px 11px;border-radius:999px;color:var(--grape-700);
   background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.18);
+  white-space:nowrap;flex-shrink:0;   /* ป้ายเป็นแคปซูลบรรทัดเดียวเสมอ ไม่ตัดคำจนบวม */
+}
+/* จอแคบ: บีบ padding/gap ของแถวธนาคารให้ชื่อธนาคารพอดี 1 บรรทัด ไม่เบียดกับป้าย */
+@media (max-width:480px){
+  .donate-card__bank{ padding:18px 16px;gap:12px; }
+  .donate-card__logo{ width:44px;height:44px;border-radius:12px;font-size:15px; }
+  .donate-card__bankinfo h4{ font-size:15.5px; }
+  .donate-card__tag{ font-size:10.5px;padding:4px 9px;letter-spacing:.03em; }
+  .donate-card__body{ padding:22px 18px 20px; }
 }
 .donate-card__body{ padding:26px 28px 24px; }
 .donate-card__field{ margin-bottom:0; }
@@ -231,6 +240,12 @@
 .donate-card__divider{ height:1px;background:rgba(124,58,237,.14);margin:20px 0; }
 .donate-card__name{ font-size:20px;color:var(--ink);font-weight:600;margin-top:8px;line-height:1.5; }
 .donate-card__note{ font-size:13px;color:var(--muted);margin-top:18px; }
+
+/* จอกลาง (621-900px): .g-3 เหลือ 2 คอลัมน์ → การ์ดติดต่อใบที่ 3 ค้างเดี่ยวครึ่งแถว
+   มีช่องว่างโหว่ข้างขวา ให้กินเต็มแถวแทน จะได้เรียงตรงกับกล่องแผนที่ด้านล่าง */
+@media (min-width:621px) and (max-width:900px){
+  #contact .grid.g-3 > .ctile:last-child{ grid-column:1 / -1; }
+}
 .donate-card__note a{ color:var(--grape-600);font-weight:600; }
 </style>
 <script>
