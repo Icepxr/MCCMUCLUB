@@ -1,0 +1,37 @@
+# สำรองข้อมูลจาก Google Sheets ลง repo อัตโนมัติ
+#
+# ทำไม: ข้อมูลทั้งเว็บอยู่ในบัญชี Google บัญชีเดียว ถ้าบัญชีนั้นหาย
+# ข้อมูลหายตามทันที งานนี้ทำให้ทุกคนที่ clone repo มีสำเนาครบชุด
+# และได้ประวัติว่าข้อมูลเปลี่ยนอะไรไปบ้างในแต่ละวันจาก git log
+#
+# กดรันเองได้ที่แท็บ Actions → Backup data → Run workflow
+name: Backup data
+
+on:
+  schedule:
+    - cron: '0 19 * * *'      # 02:00 ตามเวลาไทย (UTC+7) ทุกวัน
+  workflow_dispatch:           # กดรันเองได้
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ดึงข้อมูลจาก Google Sheets
+        run: ./scripts/backup-data.sh
+
+      - name: commit ถ้าข้อมูลเปลี่ยน
+        run: |
+          if git diff --quiet -- data/backup; then
+            echo "ข้อมูลไม่เปลี่ยน — ไม่ต้อง commit"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/backup
+          git commit -m "chore(backup): สำรองข้อมูลอัตโนมัติ $(date -u '+%Y-%m-%d')"
+          git push
