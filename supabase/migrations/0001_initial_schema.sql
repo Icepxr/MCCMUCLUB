@@ -7,6 +7,7 @@
 --  หลักความปลอดภัย (Row Level Security):
 --    • คนทั่วไป (anon)  อ่านได้เฉพาะแถวที่ status = 'published'
 --    • ผู้ดูแล           ทำได้ทุกอย่าง — ดูจากอีเมลในตาราง admins
+--  (นโยบายจริงอยู่ในไฟล์ 0002)
 --  แปลว่าเบราว์เซอร์ต่อฐานข้อมูลตรงได้อย่างปลอดภัย ไม่ต้องมี API คั่น
 -- ============================================================
 
@@ -20,21 +21,6 @@ create table admins (
   created_at timestamptz not null default now()
 );
 comment on table admins is 'อีเมลที่เข้าหลังบ้านได้ — เพิ่ม/ลบที่นี่เมื่อเปลี่ยนรุ่น';
-
--- ── ตัวช่วยเช็คสิทธิ์ ใช้ในทุก policy ──
--- security definer เพื่อให้อ่านตาราง admins ได้โดยไม่ติด RLS ของตัวเอง
-create or replace function is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from admins
-    where email = lower(coalesce(auth.jwt() ->> 'email', ''))
-  );
-$$;
 
 -- ── อัปเดต updated_at อัตโนมัติ ──
 create or replace function touch_updated_at()
@@ -146,29 +132,3 @@ alter table places     enable row level security;
 alter table members    enable row level security;
 alter table settings   enable row level security;
 
--- เนื้อหา: คนทั่วไปอ่านเฉพาะ published · ผู้ดูแลทำได้ทุกอย่าง
--- (นโยบาย select สองอันเป็น OR กัน ผู้ดูแลจึงเห็น draft/archived ด้วย)
-do $$
-declare t text;
-begin
-  foreach t in array array['activities','docs','albums','places','members'] loop
-    execute format($f$
-      create policy public_read_published on %I
-        for select to anon, authenticated
-        using (status = 'published');
-      create policy admin_full_access on %I
-        for all to authenticated
-        using (is_admin()) with check (is_admin());
-    $f$, t, t);
-  end loop;
-end $$;
-
--- settings: อ่านได้ทุกคน (หน้าเว็บต้องใช้) แก้ได้เฉพาะผู้ดูแล
-create policy public_read on settings
-  for select to anon, authenticated using (true);
-create policy admin_full_access on settings
-  for all to authenticated using (is_admin()) with check (is_admin());
-
--- admins: ไม่เปิดให้ anon เห็นรายชื่อ · ผู้ดูแลจัดการกันเองได้
-create policy admin_full_access on admins
-  for all to authenticated using (is_admin()) with check (is_admin());
