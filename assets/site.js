@@ -181,6 +181,29 @@
     });
   }, { passive: true });
 
+  /* ---------- นับผู้เข้าชม ----------
+     ส่งแค่ชื่อหน้ากับธงว่า "วันนี้เคยนับเบราว์เซอร์นี้แล้วหรือยัง"
+     ไม่ส่ง IP ไม่ส่งอะไรที่ระบุตัวตน · ธงเก็บใน localStorage ของเครื่องผู้ใช้เอง
+     ล้มเหลวเมื่อไหร่ก็เงียบ ๆ ไป สถิติไม่ควรทำให้หน้าเว็บพัง */
+  (function () {
+    if (!window.MCCMU_SUPABASE) return;          // ยังไม่ตั้งค่า → ไม่ต้องนับ
+    var today = new Date().toISOString().slice(0, 10);
+    var key = 'mccmu_seen_' + today;
+    var fresh = false;
+    try {
+      fresh = !localStorage.getItem(key);
+      if (fresh) localStorage.setItem(key, '1');
+    } catch (e) {}
+
+    var path = location.pathname.replace(/index\.html$/, '') || '/';
+    fetch(window.MCCMU_SUPABASE.url + '/rest/v1/rpc/track_view', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', apikey: window.MCCMU_SUPABASE.key },
+      body: JSON.stringify({ p_path: path, p_new_visitor: fresh }),
+      keepalive: true,
+    }).catch(function () {});
+  })();
+
   // reveal on scroll
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });

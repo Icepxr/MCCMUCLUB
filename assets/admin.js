@@ -234,13 +234,32 @@ async function go(v) {
 }
 
 /* ── ภาพรวม ── */
+const PAGE_TH = {
+  '/': 'หน้าแรก', '/activities.html': 'กิจกรรม', '/halal-map.html': 'สถานที่ฮาลาล',
+  '/knowledge.html': 'คลังความรู้', '/about.html': 'เกี่ยวกับเรา', '/admin': 'หลังบ้าน',
+};
+const thDay = (d) => new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
 async function renderOverview(main) {
   clear(main);
   const head = el('div', 'head');
   head.appendChild(el('h2', null, `สวัสดี ${me.name.split(' ')[0]}`));
   main.appendChild(head);
-  main.appendChild(el('p', 'sub', 'เลือกหัวข้อจากเมนูซ้ายเพื่อแก้ไขข้อมูล การเปลี่ยนแปลงจะขึ้นเว็บภายใน 10 นาที'));
+  main.appendChild(el('p', 'sub',
+    'เลือกหัวข้อจากเมนูซ้ายเพื่อแก้ไขข้อมูล การเปลี่ยนแปลงจะขึ้นเว็บภายใน 10 นาที'));
 
+  const stack = el('div', 'stack');
+  main.appendChild(stack);
+
+  /* แถวบน: สถิติผู้เข้าชม + หน้ายอดนิยม */
+  const two = el('div', 'two-col');
+  const visits = el('div', 'panel-card');
+  const top = el('div', 'panel-card');
+  two.append(visits, top);
+  stack.appendChild(two);
+  await renderVisits(visits, top);
+
+  /* การ์ดนับเนื้อหา */
   const tiles = el('div', 'tiles');
   Object.entries(SCHEMA).forEach(([k, s]) => {
     const t = el('button', 'tile');
@@ -249,16 +268,24 @@ async function renderOverview(main) {
     t.addEventListener('click', () => go(k));
     tiles.appendChild(t);
   });
-  main.appendChild(tiles);
+  stack.appendChild(tiles);
 
+  /* แก้ไขล่าสุด */
   const { data } = await db.from('audit_log')
     .select('at,actor,action,table_name,summary').order('at', { ascending: false }).limit(8);
   if (data?.length) {
-    main.appendChild(el('h3', null, 'แก้ไขล่าสุด'));
-    const card = el('div', 'card'); const wrap = el('div', 'tablewrap');
-    const tb = el('table');
+    const card = el('div', 'panel-card');
+    const h = el('div', 'panel-card__head');
+    h.appendChild(el('h3', null, 'แก้ไขล่าสุด'));
+    const more = el('button', 'linkbtn note', 'ดูทั้งหมด');
+    more.style.color = 'var(--grape-600)';
+    more.addEventListener('click', () => go('audit'));
+    h.appendChild(more);
+    card.appendChild(h);
+
+    const wrap = el('div', 'tablewrap'); const tb = el('table');
     const th = el('thead'); const hr = el('tr');
-    ['เมื่อไหร่', 'ใคร', 'ทำอะไร', 'รายการ'].forEach((h) => hr.appendChild(el('th', null, h)));
+    ['เมื่อไหร่', 'ใคร', 'ทำอะไร', 'รายการ'].forEach((x) => hr.appendChild(el('th', null, x)));
     th.appendChild(hr); tb.appendChild(th);
     const body = el('tbody');
     data.forEach((r) => {
@@ -266,11 +293,153 @@ async function renderOverview(main) {
       tr.appendChild(el('td', null, new Date(r.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })));
       tr.appendChild(el('td', null, r.actor || '—'));
       tr.appendChild(el('td', null, ACTION_TH[r.action] || r.action));
-      tr.appendChild(el('td', null, r.summary || '—'));
+      tr.appendChild(el('td', 'title', r.summary || '—'));
       body.appendChild(tr);
     });
-    tb.appendChild(body); wrap.appendChild(tb); card.appendChild(wrap); main.appendChild(card);
+    tb.appendChild(body); wrap.appendChild(tb); card.appendChild(wrap);
+    stack.appendChild(card);
   }
+}
+
+/* สถิติผู้เข้าชม 14 วันล่าสุด */
+async function renderVisits(box, topBox) {
+  const from = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await db.from('page_stats')
+    .select('day,path,views,visitors').gte('day', from).order('day');
+
+  const head = el('div', 'panel-card__head');
+  head.appendChild(el('h3', null, 'ผู้เข้าชมเว็บ'));
+  head.appendChild(el('span', 'note', '14 วันล่าสุด'));
+  box.appendChild(head);
+
+  if (error) {
+    box.appendChild(el('div', 'chart-empty',
+      'ยังเปิดใช้สถิติไม่ได้ — ต้องรัน supabase/migrations/0004_page_stats.sql ก่อน'));
+    topBox.appendChild(el('div', 'panel-card__head')).appendChild(el('h3', null, 'หน้ายอดนิยม'));
+    topBox.appendChild(el('div', 'chart-empty', 'ยังไม่มีข้อมูล'));
+    return;
+  }
+
+  /* รวมยอดรายวัน */
+  const byDay = new Map();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    byDay.set(d, { views: 0, visitors: 0 });
+  }
+  (data || []).forEach((r) => {
+    const e = byDay.get(r.day);
+    if (e) { e.views += r.views; e.visitors += r.visitors; }
+  });
+  const days = [...byDay.entries()];
+  const todayKey = days[days.length - 1][0];
+
+  const sum = (arr, k) => arr.reduce((a, [, v]) => a + v[k], 0);
+  const last7 = days.slice(-7), prev7 = days.slice(-14, -7);
+  const v7 = sum(last7, 'visitors'), vPrev = sum(prev7, 'visitors');
+  const delta = vPrev ? Math.round(((v7 - vPrev) / vPrev) * 100) : null;
+
+  const kpis = el('div', 'kpis');
+  const kpi = (n, label, extra) => {
+    const k = el('div', 'kpi');
+    k.appendChild(el('b', null, n.toLocaleString('th-TH')));
+    k.appendChild(el('span', null, label));
+    if (extra) k.appendChild(extra);
+    return k;
+  };
+  kpis.appendChild(kpi(byDay.get(todayKey).visitors, 'ผู้เข้าชมวันนี้'));
+  const wk = kpi(v7, 'ผู้เข้าชม 7 วัน');
+  if (delta !== null) {
+    wk.appendChild(el('em', delta >= 0 ? 'up' : 'down',
+      (delta >= 0 ? '▲ ' : '▼ ') + Math.abs(delta) + '% จากสัปดาห์ก่อน'));
+  }
+  kpis.appendChild(wk);
+  kpis.appendChild(kpi(sum(days, 'views'), 'เปิดหน้าเว็บรวม 14 วัน'));
+  box.appendChild(kpis);
+
+  const max = Math.max(1, ...days.map(([, v]) => v.views));
+  if (!sum(days, 'views')) {
+    box.appendChild(el('div', 'chart-empty',
+      'ยังไม่มีคนเข้าชมในช่วง 14 วันนี้ — ตัวเลขจะเริ่มขึ้นหลังมีคนเปิดเว็บ'));
+  } else {
+    box.appendChild(barChart(days, max, todayKey));
+  }
+
+  /* หน้ายอดนิยม */
+  const th2 = el('div', 'panel-card__head');
+  th2.appendChild(el('h3', null, 'หน้ายอดนิยม'));
+  th2.appendChild(el('span', 'note', '14 วันล่าสุด'));
+  topBox.appendChild(th2);
+
+  const byPath = new Map();
+  (data || []).forEach((r) => byPath.set(r.path, (byPath.get(r.path) || 0) + r.views));
+  const list = [...byPath.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  if (!list.length) {
+    topBox.appendChild(el('div', 'chart-empty', 'ยังไม่มีข้อมูล'));
+    return;
+  }
+  const top = list[0][1];
+  const wrap = el('div', 'toplist');
+  list.forEach(([path, n]) => {
+    const row = el('div', 'toprow');
+    row.appendChild(el('span', 'nm', PAGE_TH[path] || path));
+    const track = el('span', 'track');
+    const fill = el('span', 'fill');
+    fill.style.width = Math.max(4, Math.round((n / top) * 100)) + '%';
+    track.appendChild(fill);
+    row.appendChild(track);
+    row.appendChild(el('span', 'n', n.toLocaleString('th-TH')));
+    wrap.appendChild(row);
+  });
+  topBox.appendChild(wrap);
+}
+
+/* กราฟแท่ง SVG — ไม่ใช้ไลบรารีภายนอก */
+function barChart(days, max, todayKey) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 100, H = 100, gap = 1.4;
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'chart');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H + 10}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label',
+    `กราฟผู้เข้าชม ${days.length} วัน สูงสุด ${max} ครั้งต่อวัน`);
+
+  [0, 0.5, 1].forEach((f) => {
+    const l = document.createElementNS(NS, 'line');
+    l.setAttribute('class', 'grid');
+    l.setAttribute('x1', 0); l.setAttribute('x2', W);
+    l.setAttribute('y1', H * f); l.setAttribute('y2', H * f);
+    l.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.appendChild(l);
+  });
+
+  const bw = (W - gap * (days.length - 1)) / days.length;
+  days.forEach(([day, v], i) => {
+    const h = Math.max(v.views ? 2 : 0, (v.views / max) * H);
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('class', 'bar' + (day === todayKey ? ' today' : ''));
+    r.setAttribute('x', i * (bw + gap));
+    r.setAttribute('y', H - h);
+    r.setAttribute('width', bw);
+    r.setAttribute('height', h);
+    r.setAttribute('rx', 0.8);
+    const t = document.createElementNS(NS, 'title');
+    t.textContent = `${thDay(day)} · เปิด ${v.views} ครั้ง · ผู้เข้าชม ${v.visitors} คน`;
+    r.appendChild(t);
+    svg.appendChild(r);
+  });
+
+  [0, days.length - 1].forEach((i) => {
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('class', 'lbl');
+    t.setAttribute('x', i === 0 ? 0 : W);
+    t.setAttribute('y', H + 8);
+    t.setAttribute('text-anchor', i === 0 ? 'start' : 'end');
+    t.textContent = thDay(days[i][0]);
+    svg.appendChild(t);
+  });
+  return svg;
 }
 const ACTION_TH = { insert: 'เพิ่ม', update: 'แก้ไข', delete: 'ลบ' };
 

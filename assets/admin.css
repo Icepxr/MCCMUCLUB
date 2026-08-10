@@ -16,8 +16,10 @@
   --sidebar:236px;
 }
 *,*::before,*::after{ box-sizing:border-box; }
-body{ margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
-      font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+body{ margin:0; color:var(--ink); font-family:var(--sans);
+      font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+      background:var(--paper);
+      background-image:radial-gradient(90% 55% at 100% 0%, var(--lilac-100), transparent 62%); }
 h1,h2,h3,h4{ margin:0; line-height:1.25; letter-spacing:-.01em; }
 button{ font:inherit; cursor:pointer; }
 input,select,textarea{ font:inherit; color:inherit; }
@@ -38,7 +40,7 @@ a{ color:var(--grape-600); }
 /* ── โครงหน้า ── */
 .app{ display:grid; grid-template-columns:var(--sidebar) 1fr; min-height:100vh; }
 
-.side{ background:var(--grape-900); color:var(--violet-200); padding:20px 14px;
+.side{ background:linear-gradient(175deg,var(--grape-900) 0%,#2C1059 100%); color:var(--violet-200); padding:20px 14px;
        display:flex; flex-direction:column; gap:6px; position:sticky; top:0; height:100vh; overflow-y:auto; }
 .side__brand{ display:flex; align-items:center; gap:10px; padding:4px 8px 18px; }
 .side__brand img{ width:34px; height:34px; object-fit:contain; }
@@ -52,7 +54,9 @@ a{ color:var(--grape-600); }
          background:none; border:0; color:var(--violet-200); text-align:left;
          padding:9px 11px; border-radius:var(--radius-sm); font-size:14px; }
 .navbtn:hover{ background:rgba(255,255,255,.07); color:var(--white); }
-.navbtn.is-active{ background:var(--grape-600); color:var(--white); font-weight:600; }
+.navbtn.is-active{ background:var(--grape-600); color:var(--white); font-weight:600;
+                   box-shadow:0 8px 20px -10px rgba(124,58,237,.9); }
+.navbtn.is-active .count{ opacity:1; }
 .navbtn .count{ font-family:var(--mono); font-size:11.5px; opacity:.75; }
 .side__foot{ margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,.12);
              display:flex; align-items:center; gap:9px; font-size:12.5px; }
@@ -68,7 +72,7 @@ a{ color:var(--grape-600); }
 /* ── พื้นที่หลัก ── */
 .main{ padding:28px 30px 70px; min-width:0; }
 .head{ display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-bottom:22px; }
-.head h2{ font-size:22px; flex:1; min-width:180px; }
+.head h2{ font-size:25px; flex:1; min-width:180px; letter-spacing:-.02em; }
 .sub{ color:var(--muted); font-size:13.5px; margin:-10px 0 20px; max-width:62ch; }
 
 .btn{ border:1px solid transparent; border-radius:var(--radius-sm); padding:9px 16px;
@@ -87,7 +91,8 @@ a{ color:var(--grape-600); }
 .tools input[type=search]{ flex:1; min-width:180px; }
 
 /* ── ตาราง ── */
-.card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+.card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius);
+       overflow:hidden; box-shadow:0 1px 2px rgba(43,15,92,.04), 0 12px 30px -24px rgba(43,15,92,.5); }
 .tablewrap{ overflow-x:auto; }
 table{ width:100%; border-collapse:collapse; font-size:14px; }
 th,td{ text-align:left; padding:11px 15px; border-bottom:1px solid var(--line); vertical-align:middle; }
@@ -167,3 +172,53 @@ td .title{ font-weight:600; }
   .main{ padding:20px 16px 60px; }
 }
 @media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important; } }
+
+
+/* ══════════════════════════════════════════════════════════
+   ภาพรวม — สถิติผู้เข้าชมและกราฟ
+   ══════════════════════════════════════════════════════════ */
+.panel-card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius);
+             box-shadow:0 1px 2px rgba(43,15,92,.04), 0 12px 30px -24px rgba(43,15,92,.5);
+             padding:22px 24px; }
+.panel-card__head{ display:flex; align-items:baseline; gap:12px; margin-bottom:18px; }
+.panel-card__head h3{ font-size:16px; }
+.panel-card__head .note{ margin-left:auto; font-size:12.5px; color:var(--muted); }
+
+/* ตัวเลขสถิติหลัก */
+.kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:22px; margin-bottom:22px; }
+.kpi{ display:flex; flex-direction:column; gap:2px; }
+.kpi b{ font-family:var(--mono); font-size:30px; font-weight:650; letter-spacing:-.03em;
+        color:var(--grape-700); font-variant-numeric:tabular-nums; line-height:1.1; }
+.kpi span{ font-size:12.5px; color:var(--muted); }
+.kpi em{ font-style:normal; font-size:11.5px; font-family:var(--mono); }
+.kpi em.up{ color:var(--good); } .kpi em.down{ color:var(--danger); }
+
+/* กราฟแท่ง 14 วัน — วาดด้วย SVG ไม่ใช้ไลบรารี */
+.chart{ width:100%; height:132px; display:block; overflow:visible; }
+.chart .bar{ fill:var(--violet-200); transition:fill .15s; }
+.chart .bar:hover, .chart .bar.today{ fill:var(--grape-600); }
+.chart .grid{ stroke:var(--line); stroke-width:1; }
+.chart .lbl{ font-family:var(--mono); font-size:9px; fill:var(--muted); }
+.chart-empty{ display:grid; place-items:center; height:132px; color:var(--muted); font-size:13.5px;
+              border:1px dashed var(--line); border-radius:var(--radius-sm); text-align:center; padding:0 20px; }
+
+/* ตารางหน้ายอดนิยม */
+.toplist{ display:flex; flex-direction:column; gap:2px; }
+.toprow{ display:flex; align-items:center; gap:12px; padding:7px 0; font-size:14px; }
+.toprow .nm{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.toprow .track{ width:96px; height:6px; border-radius:99px; background:var(--lilac-100); overflow:hidden; flex-shrink:0; }
+.toprow .fill{ height:100%; background:var(--grape-500); border-radius:99px; }
+.toprow .n{ font-family:var(--mono); font-size:13px; color:var(--ink-soft);
+            min-width:46px; text-align:right; font-variant-numeric:tabular-nums; }
+
+/* การ์ดนับเนื้อหา — กดได้ */
+.tiles{ grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); }
+.tile{ cursor:pointer; transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+       box-shadow:0 1px 2px rgba(43,15,92,.04); }
+.tile:hover{ transform:translateY(-2px); border-color:var(--violet-300);
+             box-shadow:0 14px 30px -20px rgba(43,15,92,.55); }
+.tile b{ font-size:28px; }
+
+.stack{ display:flex; flex-direction:column; gap:20px; }
+.two-col{ display:grid; grid-template-columns:1.55fr 1fr; gap:20px; align-items:start; }
+@media (max-width:960px){ .two-col{ grid-template-columns:1fr; } }
