@@ -44,12 +44,13 @@ def rows(p):
 
 items = rows(pub) + rows(arc)
 
-# ตัดฟิลด์ที่ backend คำนวณขึ้นมาเอง — ไม่ใช่ข้อมูลต้นฉบับ และทำให้ diff รก
-# (photos อ่านสดจากโฟลเดอร์ Drive ทุกครั้ง, *_url สร้างจาก *_id อยู่แล้ว)
-DERIVED = ('photos', 'count')
+# ตัดเฉพาะฟิลด์ที่ backend คำนวณขึ้นมาเอง (ดูรายชื่อจริงใน backend/Code.gs)
+# ต้องระบุชื่อตรง ๆ ห้ามกรองด้วยนามสกุล _url เพราะ places.map_url เป็นคอลัมน์จริง
+# ไม่ใช่ของที่คำนวณมา — เคยกรองแบบนั้นแล้วทำข้อมูลหายเงียบ ๆ
+DERIVED = {'photos', 'count', 'cover_url', 'download_url',
+           'image_url', 'thumb_url', 'view_url'}
 def clean(r):
-    return {k: v for k, v in r.items()
-            if k not in DERIVED and not k.endswith('_url')}
+    return {k: v for k, v in r.items() if k not in DERIVED}
 
 items = [clean(r) for r in items]
 # เรียงคงที่เพื่อให้ git diff อ่านรู้เรื่อง ไม่สลับที่ไปมาทุกครั้งที่รัน
@@ -67,7 +68,12 @@ python3 - "$TMP/settings.json" "$OUT/settings.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1], encoding='utf-8'))
 if not d.get('ok'): raise SystemExit('API ตอบ ok:false')
-data = {k: v for k, v in (d.get('data') or {}).items() if not k.endswith('_url')}
+src = d.get('data') or {}
+# settings: backend สร้าง X_url ให้อัตโนมัติทุกคีย์ที่ลงท้าย _id
+# ตัดเฉพาะคู่ที่มี X_id อยู่จริงเท่านั้น — คีย์อย่าง halal_map_url / map_embed_url
+# เป็นค่าที่คนกรอกเอง ต้องเก็บไว้
+derived = {k[:-3] + '_url' for k in src if k.endswith('_id')}
+data = {k: v for k, v in src.items() if k not in derived}
 json.dump(data, open(sys.argv[2], 'w', encoding='utf-8'),
           ensure_ascii=False, indent=2, sort_keys=True)
 print(f'{len(data)} ค่า')

@@ -2,6 +2,7 @@
   {
     "coords": "",
     "description": "",
+    "map_url": "https://maps.app.goo.gl/1vopJdyPCRPAPABA6",
     "name": "ก๋วยเตี๋ยวเนื้อตุ๋น ครัวมัยซาเราะห์(บังมัต)",
     "status": "published",
     "type": "ร้านอาหาร"
@@ -9,34 +10,15 @@
   {
     "coords": "",
     "description": "",
-    "name": "ข้าวมันไก่ไปรษณีย์ 2",
+    "map_url": "https://maps.app.goo.gl/8Uzm8yursBbTsns69",
+    "name": "โฮงชา Hong Cha Halal",
     "status": "published",
     "type": "ร้านอาหาร"
   },
   {
     "coords": "",
     "description": "",
-    "name": "ร้านรอฟีอีย์ ",
-    "status": "published",
-    "type": "ร้านอาหาร"
-  },
-  {
-    "coords": "",
-    "description": "",
-    "name": "สภากาแฟ 786",
-    "status": "published",
-    "type": "ร้านอาหาร"
-  },
-  {
-    "coords": "",
-    "description": "",
-    "name": "เพชรอาหารตามสั่ง",
-    "status": "published",
-    "type": "ร้านอาหาร"
-  },
-  {
-    "coords": "",
-    "description": "",
+    "map_url": "https://maps.app.goo.gl/SeSjarjHaqfdkFvg7",
     "name": "โจ๊ก มุสลิมช้างเผือก",
     "status": "published",
     "type": "ร้านอาหาร"
@@ -44,13 +26,39 @@
   {
     "coords": "",
     "description": "",
-    "name": "โฮงชา Hong Cha Halal",
+    "map_url": "https://maps.app.goo.gl/X6wKKKcoJJdJnYKZ9",
+    "name": "เพชรอาหารตามสั่ง",
+    "status": "published",
+    "type": "ร้านอาหาร"
+  },
+  {
+    "coords": "",
+    "description": "",
+    "map_url": "https://maps.app.goo.gl/Y3qYmsX9pZPppjyn8",
+    "name": "สภากาแฟ 786",
+    "status": "published",
+    "type": "ร้านอาหาร"
+  },
+  {
+    "coords": "",
+    "description": "",
+    "map_url": "https://maps.app.goo.gl/jLr9HpMjtEa55xTX6",
+    "name": "ข้าวมันไก่ไปรษณีย์ 2",
+    "status": "published",
+    "type": "ร้านอาหาร"
+  },
+  {
+    "coords": "",
+    "description": "",
+    "map_url": "https://maps.app.goo.gl/jzrZAKZtnHaxqfNs8",
+    "name": "ร้านรอฟีอีย์ ",
     "status": "published",
     "type": "ร้านอาหาร"
   },
   {
     "coords": "",
     "description": "ชั้น 1 เดินตรงสุดทางเดินห้องละหมาดจะอยู่ข้างๆ ห้องนำ้ฝั่งซ้ายมือ",
+    "map_url": "https://maps.app.goo.gl/mEk5bswgjbbwNhHL9",
     "name": "สำนักหอสมุด มหาวิทยาลัยเชียงใหม่",
     "status": "published",
     "type": "ห้องละหมาด"
@@ -58,6 +66,7 @@
   {
     "coords": "",
     "description": "มัสยิดที่ตั้งอยู่ในตำบลศรีภูมิ ถือเป็นหนึ่งในมัสยิดที่อยู่ไม่ไกลจากมหาวิทยาลัยเชียงใหม่มากนัก เหมาะสำหรับการเดินทางไปละหมาด",
+    "map_url": "https://maps.google.com/?cid=2834020731258726130",
     "name": "มัสยิดช้างเผือก​",
     "status": "published",
     "type": "มัสยิด"
@@ -65,6 +74,7 @@
   {
     "coords": "",
     "description": "มัสยิดศูนย์กลางในย่านช้างคลาน ซึ่งรายล้อมไปด้วยร้านอาหารฮาลาล สามารถไปละหมาดและหาของทานต่อได้ทันที",
+    "map_url": "https://maps.google.com/?cid=7179959984581566116",
     "name": "มัสยิดช้างคลาน",
     "status": "published",
     "type": "มัสยิด"
@@ -72,6 +82,7 @@
   {
     "coords": "",
     "description": "มัสยิดเก่าแก่ที่สร้างขึ้นตั้งแต่ปี พ.ศ. 2458 ตั้งอยู่ในย่านช้างม่อย มีสถาปัตยกรรมแบบอิสลามสมัยใหม่ที่สวยงามและเ ป็นศูนย์รวมจิตใจของชุมชน",
+    "map_url": "https://maps.google.com/?cid=12284499542729992882",
     "name": "มัสยิดอิสลามบ้านฮ่อ",
     "status": "published",
     "type": "มัสยิด"
@@ -79,6 +90,7 @@
   {
     "coords": "",
     "description": "ร้านตั้งอยู่บนถนนช้างคลาน ให้บริการอาหารฮาลาลหลากหลายประเภทและเป็นที่รู้จักในหมู่นักท่องเที่ยวและคนในพื้นที่",
+    "map_url": "https://maps.google.com/?cid=3069661248384570264",
     "name": "ร้านอาหารรวมมิตรฮาลาล",
     "status": "published",
     "type": "ร้านอาหาร"
@@ -86,6 +98,7 @@
   {
     "coords": "",
     "description": "ร้านอาหารบรรยากาศเป็นกันเองบนถนนซอยเวียงพิงค์ เหมาะสำหรับมื้ออาหารสบายๆ นอกรั้วมหาวิทยาลัย",
+    "map_url": "https://maps.google.com/?cid=3878444041434903623",
     "name": "Aba Kitchen",
     "status": "published",
     "type": "ร้านอาหาร"
@@ -93,6 +106,7 @@
   {
     "coords": "",
     "description": "ร้านอาหารฮาลาลที่ตั้งอยู่ใกล้กับมหาวิทยาลัยเชียงใหม่มากที่สุด โดยอยู่ในบริเวณโรงพยาบาลมหาราชนครเชียงใหม่ (สวนดอก) ซึ่งเป็นส่วนหนึ่งของมหาวิทยาลัย",
+    "map_url": "https://maps.app.goo.gl/YMgSe5Fxw8uQ94rf7",
     "name": "Halal Kitchen CMU MED-MAHARAJ NAKORN HOSPITAL",
     "status": "published",
     "type": "ร้านอาหาร"
@@ -100,6 +114,7 @@
   {
     "coords": "",
     "description": "ร้านอาหารฮาลาลที่ตั้งอยู่ในซอยเชียงใหม่แลนด์ 10 มีเมนูอาหารฮาลาลที่หลากหลายสำหรับผู้ที่ต้องการเปลี่ยนบรรยากาศ",
+    "map_url": "https://maps.google.com/?cid=9346629988305440066",
     "name": "ทาคาว่า ฮาลาล คูซีน",
     "status": "published",
     "type": "ร้านอาหาร"
@@ -107,6 +122,7 @@
   {
     "coords": "",
     "description": "ร้านอาหารฮาลาลในย่านช้างคลาน ซึ่งเป็นย่านที่มีชุมชนมุสลิมและร้านอาหารฮาลาลให้เลือกหลากหลาย สามารถเดินทางจาก มช. ได้ง่าย",
+    "map_url": "https://maps.google.com/?cid=763809947202735777",
     "name": "มัตอัมเชียงใหม่",
     "status": "published",
     "type": "ร้านอาหาร"
@@ -114,6 +130,7 @@
   {
     "coords": "",
     "description": "ห้องละหมาดอยู่ตรงทางเชื่อมระหว่างตึก SCB <-> RB3",
+    "map_url": "https://maps.app.goo.gl/RzGE5tokbLPxLJSx8",
     "name": "ห้องละหมาด คณะวิทยาศาสตร์",
     "status": "published",
     "type": "ห้องละหมาด"
@@ -121,6 +138,7 @@
   {
     "coords": "18.8009,98.9525",
     "description": "อาคารคาเฟ่เดินขึ้นชั้น 2 จะเห็นห้องละหมาดทันที",
+    "map_url": "https://maps.app.goo.gl/sX9GC8nAL5Ak115E9",
     "name": "ศูนย์กีฬาและสุขภาพ มหาวิทยาลัยเชียงใหม่",
     "status": "published",
     "type": "ห้องละหมาด"
