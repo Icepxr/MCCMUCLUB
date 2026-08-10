@@ -17,12 +17,20 @@ MCCMU.API_URL  = 'https://script.google.com/macros/s/AKfycbyS8PY6nJ4FmFYf4KS8chC
 /* proxy edge-cached บน Cloudflare Pages (functions/data.js) — ใช้ตอนเสิร์ฟผ่านโฮสต์ */
 MCCMU.PROXY_URL = '/data';
 
+/* เปิดหน้าเว็บด้วย ?src=supabase เพื่อทดสอบแหล่งข้อมูลใหม่ทั้งหน้า
+   โดยที่คนอื่นยังเห็นของเดิม — ค่านี้ถูกส่งต่อไปให้ /data ตัดสินใจ */
+var _SRC = (function () {
+  var m = /[?&]src=(sheets|supabase)\b/.exec(location.search);
+  return m ? m[1] : '';
+})();
+
 function _query(sheet, params) {
   var qs = '?sheet=' + encodeURIComponent(sheet);
   if (params) Object.keys(params).forEach(function (k) {
     if (params[k] !== '' && params[k] != null)
       qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
   });
+  if (_SRC) qs += '&src=' + _SRC;
   return qs;
 }
 function _handle(r) {
@@ -54,7 +62,7 @@ MCCMU.get = function (sheet, params) {
    • cache หมดอายุ/ไม่มี → ดึงใหม่ (โชว์ skeleton ระหว่างรอ) แล้ววาดด้วยข้อมูลใหม่ทั้งชุด
    ไม่มีการ "วาดของเก่าแล้วค่อยสลับ" จึงไม่เกิดปัญหารูป/ข้อมูลค้าง
    อยากบังคับโหลดใหม่ทันที: เรียก MCCMU.refresh() หรือเปิดด้วย ?fresh */
-var LS_KEY = 'mccmu_all_v1';
+var LS_KEY = 'mccmu_all_v1' + (_SRC ? '_' + _SRC : '');   // แยก cache ต่อแหล่ง กันข้อมูลทดสอบปนของจริง
 var LS_TTL = 10 * 60 * 1000;          // 10 นาที — ถือว่า "สด" ไม่ยิง network เลย
 var LS_MAX = 7 * 24 * 60 * 60 * 1000; // 7 วัน  — เกิน TTL แต่ยังไม่เกินนี้ = ใช้ของเก่าไปก่อน แล้วรีเฟรชเบื้องหลัง
 
