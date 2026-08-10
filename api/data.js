@@ -23,7 +23,9 @@ const SB_URL  = process.env.SUPABASE_URL;
 const SB_KEY  = process.env.SUPABASE_ANON_KEY;
 const DEFAULT_SOURCE = (process.env.DATA_SOURCE || 'sheets').toLowerCase();
 
-const EDGE_TTL = 600;   // วินาที — ต้นทางถูกเรียกไม่เกิน 1 ครั้ง/10 นาที
+/* 180 วินาที — ของที่แก้ในหลังบ้านขึ้นเว็บภายใน ~3 นาที
+   สั้นกว่านี้ได้แต่จะยิง Supabase ถี่ขึ้น (คิดเป็น egress ~450MB/เดือน ที่ค่านี้) */
+const EDGE_TTL = 180;
 const CACHE = `public, max-age=120, s-maxage=${EDGE_TTL}, stale-while-revalidate=60`;
 
 /* ── ตัวช่วยสร้าง URL ของ Google Drive — ต้องตรงกับ backend/Code.gs เป๊ะ ── */
@@ -85,11 +87,35 @@ const shapeMembers = (rows) => rows.map((d) => ({
   order: d.sort_order,                    // หน้าเว็บยังเรียกชื่อเดิมว่า order
   image_url: img(d.cover_id, 800),
 }));
-/* albums: photos เคยได้จากการไล่อ่านโฟลเดอร์ Drive ซึ่ง Supabase ทำแทนไม่ได้
-   จะกลับมาครบตอนย้ายไฟล์เข้า Supabase Storage — ระหว่างนี้แสดงแค่รูปปก */
-const shapeAlbums = (rows) => rows.map((d) => ({
-  ...d, cover_url: img(d.cover_id, 1000), photos: [], count: 0,
-}));
+/* albums: เดิม Apps Script ไล่อ่านโฟลเดอร์ Drive เพื่อหารูปในอัลบั้ม
+   Supabase ทำแบบนั้นไม่ได้ จึงเก็บ "รายชื่อรูป" ไว้ในตาราง album_photos แทน
+   ตัวไฟล์รูปยังอยู่บน Drive เหมือนเดิม รูปร่างที่ส่งกลับต้องตรงกับของเดิมเป๊ะ
+   (name, file_id, thumb_url, image_url) เพราะ lightbox ฝั่งหน้าเว็บใช้ฟิลด์เหล่านี้ */
+async function shapeAlbums(rows) {
+  if (!rows.length) return rows;
+  const ids = rows.map((r) => r.id);
+  const photos = await sb('album_photos',
+    `select=album_id,file_id,sort_order&album_id=in.(${ids.join(',')})&order=sort_order`);
+  const byAlbum = new Map();
+  photos.forEach((p) => {
+    if (!byAlbum.has(p.album_id)) byAlbum.set(p.album_id, []);
+    byAlbum.get(p.album_id).push({
+      name: p.file_id,
+      file_id: p.file_id,
+      thumb_url: img(p.file_id, 600),
+      image_url: img(p.file_id, 1600),
+    });
+  });
+  return rows.map((d) => {
+    const ph = byAlbum.get(d.id) || [];
+    return {
+      ...d,
+      photos: ph,
+      count: ph.length,
+      cover_url: d.cover_id ? img(d.cover_id, 1000) : (ph[0] ? ph[0].thumb_url : ''),
+    };
+  });
+}
 
 async function settingsFromSb() {
   const rows = await sb('settings', 'select=key,value');
@@ -160,7 +186,7 @@ async function fromSupabase(url) {
     if (sheet === 'activities') return json({ ok: true, data: shapeActivities(await sb('activities', `select=*&${P}&order=date.asc`)) });
     if (sheet === 'docs')       return json({ ok: true, data: shapeDocs(await sb('docs', `select=*&${P}&order=date.desc`)) });
     if (sheet === 'members')    return json({ ok: true, data: shapeMembers(await sb('members', `select=*&${P}&order=sort_order.asc`)) });
-    if (sheet === 'albums')     return json({ ok: true, data: shapeAlbums(await sb('albums', `select=*&${P}&order=date.desc`)) });
+    if (sheet === 'albums')     return json({ ok: true, data: await shapeAlbums(await sb('albums', `select=*&${P}&order=date.desc`)) });
     if (sheet === 'settings')   return json({ ok: true, data: await settingsFromSb() });
     if (sheet === 'places') {
       const type = url.searchParams.get('type');

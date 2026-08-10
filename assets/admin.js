@@ -245,8 +245,12 @@ async function renderOverview(main) {
   const head = el('div', 'head');
   head.appendChild(el('h2', null, `สวัสดี ${me.name.split(' ')[0]}`));
   main.appendChild(head);
+  const site = el('a', 'btn btn--ghost', 'เปิดหน้าเว็บ ↗');
+  site.href = '/?fresh'; site.target = '_blank'; site.rel = 'noopener';
+  head.appendChild(site);
   main.appendChild(el('p', 'sub',
-    'เลือกหัวข้อจากเมนูซ้ายเพื่อแก้ไขข้อมูล การเปลี่ยนแปลงจะขึ้นเว็บภายใน 10 นาที'));
+    'เลือกหัวข้อจากเมนูซ้ายเพื่อแก้ไขข้อมูล · ของที่แก้จะขึ้นหน้าเว็บภายใน ~3 นาที '
+    + 'กด "เปิดหน้าเว็บ" เพื่อดูของล่าสุดทันทีโดยข้าม cache ในเครื่อง'));
 
   const stack = el('div', 'stack');
   main.appendChild(stack);
