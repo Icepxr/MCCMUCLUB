@@ -1,0 +1,42 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>หลังบ้าน · ชมรมมุสลิม มช.</title>
+<link rel="icon" type="image/png" href="/assets/logo_white_bc.png">
+<link rel="stylesheet" href="/assets/admin.css">
+
+<!-- ── หน้าล็อกอิน ── -->
+<div class="login" id="loginView">
+  <div class="login__card">
+    <img class="login__logo" src="/assets/logo_white_bc.png" alt="">
+    <h1>ระบบหลังบ้าน</h1>
+    <p>สำหรับฝ่ายไอทีชมรมมุสลิม มช.</p>
+    <div id="loginMsg"></div>
+    <button class="btn btn--primary" id="btnLogin" style="width:100%;justify-content:center">
+      เข้าสู่ระบบด้วย Google
+    </button>
+  </div>
+</div>
+
+<!-- ── หน้าหลัก ── -->
+<div class="app hidden" id="appView">
+  <aside class="side">
+    <div class="side__brand">
+      <img src="/assets/logo_white_bc.png" alt="">
+      <b>ชมรมมุสลิม มช.<span>ระบบหลังบ้าน</span></b>
+    </div>
+    <div class="side__label">เนื้อหา</div>
+    <nav id="navContent"></nav>
+    <div class="side__label">ระบบ</div>
+    <nav id="navSystem"></nav>
+    <div class="side__foot">
+      <img id="meAvatar" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+      <span class="who"><b id="meName">—</b><span id="meEmail"></span></span>
+      <button class="linkbtn" id="btnLogout">ออก</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<script type="module" src="/assets/admin.js"></script>
