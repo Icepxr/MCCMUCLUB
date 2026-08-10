@@ -27,7 +27,8 @@ const STATUS = [
 const SCHEMA = {
   activities: {
     label: 'กิจกรรม', title: 'title_th', order: 'date.desc',
-    cols: [['cover_id', 'รูป', 'img'], ['title_th', 'ชื่อกิจกรรม'], ['date', 'วันที่'], ['status', 'สถานะ', 'status']],
+    cols: [['cover_id', 'รูป', 'img'], ['title_th', 'ชื่อกิจกรรม', 'title+featured'],
+         ['date', 'วันที่'], ['status', 'สถานะ', 'status']],
     fields: [
       { k: 'title_th', label: 'ชื่อกิจกรรม', type: 'text', required: true },
       { k: 'date', label: 'วันที่จัด', type: 'date' },
@@ -114,6 +115,17 @@ const driveId = (s) => {
 };
 const driveThumb = (id) => (id ? `https://drive.google.com/thumbnail?id=${driveId(id)}&sz=w200` : '');
 
+function starSvg() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', 'M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z');
+  svg.appendChild(path);
+  return svg;
+}
+
 const fmtDate = (d) => {
   if (!d) return '—';
   const t = new Date(d);
@@ -139,6 +151,18 @@ $('#btnLogin').addEventListener('click', async () => {
   });
   if (error) showLoginError(error.message);
 });
+
+/* ลิ้นชักเมนูสำหรับจอเล็ก */
+const side = () => $('#sideNav');
+function openMenu(on) {
+  side().classList.toggle('open', on);
+  $('#sideScrim').hidden = !on;
+  $('#btnMenu').setAttribute('aria-expanded', on ? 'true' : 'false');
+  document.body.style.overflow = on ? 'hidden' : '';
+}
+$('#btnMenu').addEventListener('click', () => openMenu(!side().classList.contains('open')));
+$('#sideScrim').addEventListener('click', () => openMenu(false));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openMenu(false); });
 
 $('#btnLogout').addEventListener('click', async () => {
   await db.auth.signOut();
@@ -217,8 +241,13 @@ async function refreshCounts() {
 /* ══════════════════════════════════════════════════════════════
    สลับหน้า
    ══════════════════════════════════════════════════════════════ */
+const VIEW_TH = { overview: 'ภาพรวม', settings: 'ตั้งค่าเว็บ',
+                  admins: 'ผู้ดูแลระบบ', audit: 'ประวัติการแก้ไข' };
+
 async function go(v) {
   view = v; markActive();
+  $('#topTitle').textContent = (SCHEMA[v] || {}).label || VIEW_TH[v] || '';
+  openMenu(false);                       // จอเล็ก: เลือกแล้วปิดเมนูให้เลย
   const main = $('#main'); clear(main);
   main.appendChild(el('p', null, 'กำลังโหลด…'));
   try {
@@ -467,7 +496,15 @@ async function renderList(main, table) {
   const filter = el('select');
   filter.appendChild(new Option('ทุกสถานะ', ''));
   STATUS.forEach((x) => filter.appendChild(new Option(x.label, x.v)));
-  tools.append(search, filter); main.appendChild(tools);
+  tools.append(search, filter);
+  let onlyPinned = null;
+  if (table === 'activities') {
+    onlyPinned = el('select');
+    onlyPinned.appendChild(new Option('ทั้งหมด', ''));
+    onlyPinned.appendChild(new Option('เฉพาะที่ปักหมุด', '1'));
+    tools.appendChild(onlyPinned);
+  }
+  main.appendChild(tools);
 
   const card = el('div', 'card'); const wrap = el('div', 'tablewrap');
   const tb = el('table'); const thead = el('thead'); const hr = el('tr');
@@ -483,6 +520,7 @@ async function renderList(main, table) {
     const st = filter.value;
     const rows = data.filter((r) =>
       (!st || r.status === st) &&
+      (!onlyPinned || !onlyPinned.value || r.featured) &&
       (!q || String(r[s.title] || '').toLowerCase().includes(q)));
     if (!rows.length) {
       clear(card); card.appendChild(el('div', 'empty', 'ไม่มีรายการที่ตรงกับที่ค้นหา'));
@@ -502,6 +540,20 @@ async function renderList(main, table) {
           td.appendChild(el('span', 'tag tag--' + r[k], (STATUS.find((x) => x.v === r[k]) || {}).label || r[k]));
         } else if (k === 'date') {
           td.textContent = fmtDate(r[k]);
+        } else if (kind === 'title+featured') {
+          td.className = 'title';
+          const line = el('span', 'titleline');
+          line.appendChild(el('span', null, r[k] ?? '—'));
+          /* ปักหมุด = กิจกรรมเด่นที่หน้าแรกหยิบขึ้นมาโชว์ก่อน
+             ต้องเห็นได้จากหน้ารายการโดยไม่ต้องเปิดเข้าไปดูทีละอัน */
+          if (r.featured) {
+            const pin = el('span', 'pin');
+            pin.title = 'ปักหมุดเป็นกิจกรรมเด่น';
+            pin.appendChild(starSvg());
+            pin.appendChild(el('span', null, 'เด่น'));
+            line.appendChild(pin);
+          }
+          td.appendChild(line);
         } else {
           td.textContent = r[k] ?? '—';
           if (k === s.title) td.className = 'title';
@@ -517,6 +569,7 @@ async function renderList(main, table) {
   }
   search.addEventListener('input', draw);
   filter.addEventListener('change', draw);
+  if (onlyPinned) onlyPinned.addEventListener('change', draw);
   draw();
 }
 

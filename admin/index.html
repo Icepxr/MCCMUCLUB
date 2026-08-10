@@ -1,5 +1,7 @@
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#3B1578">
 <meta name="robots" content="noindex, nofollow">
 <title>หลังบ้าน · ชมรมมุสลิม มช.</title>
 <link rel="icon" type="image/png" href="/assets/logo_white_bc.png">
@@ -20,7 +22,19 @@
 
 <!-- ── หน้าหลัก ── -->
 <div class="app hidden" id="appView">
-  <aside class="side">
+  <!-- แถบบนสำหรับจอเล็ก · ซ่อนบนจอใหญ่ -->
+  <header class="topbar">
+    <button class="topbar__burger" id="btnMenu" aria-label="เปิดเมนู"
+            aria-expanded="false" aria-controls="sideNav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+    </button>
+    <span class="topbar__title" id="topTitle">ภาพรวม</span>
+  </header>
+  <div class="side-scrim" id="sideScrim" hidden></div>
+
+  <aside class="side" id="sideNav">
     <div class="side__brand">
       <img src="/assets/logo_white_bc.png" alt="">
       <b>ชมรมมุสลิม มช.<span>ระบบหลังบ้าน</span></b>
