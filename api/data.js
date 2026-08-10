@@ -102,17 +102,28 @@ async function settingsFromSb() {
   return out;
 }
 
-/* เวลาละหมาด — เรียก aladhan โดยตรง (Apps Script ก็เรียกเจ้าเดียวกัน) */
+/* เวลาละหมาด — เรียก aladhan เจ้าเดียวกับที่ Apps Script เรียก
+   ต้องส่งคืนรูปร่างเดิมเป๊ะ: date/hijri เป็นข้อความ (หน้าเว็บเอาไปต่อกันแสดงผล)
+   และต้องมี tune=0,... ไม่งั้นเวลา Asr จะต่างจากของเดิม 1 นาที */
 const LAT = 18.7883, LNG = 98.9853;
-async function prayerTimes(dateStr, method) {
+async function prayerTimes(dateStr, methodSetting) {
+  const method = parseInt(methodSetting, 10) || 2;
   const d = dateStr || new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', year: 'numeric',
   }).format(new Date()).replace(/\//g, '-');
-  const url = `https://api.aladhan.com/v1/timings/${d}?latitude=${LAT}&longitude=${LNG}&method=${method || 2}`;
+  const url = `https://api.aladhan.com/v1/timings/${d}`
+    + `?latitude=${LAT}&longitude=${LNG}&method=${method}&tune=0,0,0,0,0,0,0,0,0`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('aladhan ' + res.status);
   const j = await res.json();
-  return { ...j.data.timings, date: j.data.date, meta: j.data.meta };
+  const t = j.data.timings, dt = j.data.date;
+  return {
+    date: dt.readable,
+    hijri: `${dt.hijri.date} ${dt.hijri.month.en} ${dt.hijri.year}`,
+    Fajr: t.Fajr, Sunrise: t.Sunrise, Dhuhr: t.Dhuhr,
+    Asr: t.Asr, Maghrib: t.Maghrib, Isha: t.Isha,
+    method,
+  };
 }
 
 async function fromSupabase(url) {
