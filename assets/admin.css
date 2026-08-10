@@ -268,11 +268,16 @@ td .title{ font-weight:600; }
   .rowacts .btn{ padding:9px 14px; }              /* ปุ่มแก้ไขในตารางกดติดง่ายขึ้น */
 }
 
-/* ── ปรับสำหรับอุปกรณ์สัมผัสทุกขนาด (รวม iPad ที่จอกว้างกว่า 860px) ── */
+/* ช่องกรอกต้อง 16px "เสมอ" ไม่ผูกกับการตรวจว่าเป็นอุปกรณ์สัมผัส
+   เพราะ iPad ที่ต่อคีย์บอร์ด/แทร็กแพด จะรายงานตัวเองเป็นเมาส์ (pointer:fine)
+   แต่ Safari ก็ยังซูมเข้าเองอยู่ดีถ้าช่องเล็กกว่า 16px
+   บนคอมพิวเตอร์ 16px ก็อ่านง่ายกว่าเดิม ไม่เสียอะไร */
+.field input, .field select, .field textarea,
+.tools input, .tools select{ font-size:16px; }
+
+/* ── ขนาดปุ่มสำหรับนิ้ว — อันนี้ผูกกับอุปกรณ์สัมผัสได้ เพราะเป็นเรื่องความสบาย
+      ไม่ใช่เรื่องที่จะทำให้ใช้งานไม่ได้ ── */
 @media (pointer:coarse){
-  /* iOS Safari ซูมเข้าเองถ้าช่องกรอกเล็กกว่า 16px — ต้องกัน */
-  .field input, .field select, .field textarea,
-  .tools input, .tools select{ font-size:16px; }
   .btn{ min-height:44px; }
   .btn--sm{ min-height:38px; padding:8px 14px; font-size:14px; }
   .linkbtn{ padding:6px 2px; }
