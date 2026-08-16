@@ -48,8 +48,11 @@ a{ color:var(--grape-600); }
 .side__brand span{ display:block; font-size:11px; color:var(--violet-300); font-weight:400; }
 /* หัวข้อกลุ่มในเมนู — เดิมใช้ grape-500 บนพื้น grape-900 ได้ contrast แค่ 3.2:1
    ต่ำกว่าเกณฑ์ WCAG AA (4.5:1) จนอ่านแทบไม่ออก · violet-300 ได้ 7.3:1 */
-.side__label{ font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-              color:var(--violet-300); opacity:.75; padding:14px 10px 6px; }
+/* ข้อความไทยห้ามใส่ letter-spacing / font ตระกูล mono — สระและวรรณยุกต์จะหลุด
+   จากพยัญชนะ กลายเป็นตัวอักษรที่ดูยืดและอ่านยาก (ที่อื่นในไฟล์นี้ก็ถูกแก้ด้วยเหตุผลเดียวกัน)
+   mono เก็บไว้ใช้กับ "ตัวเลข" เท่านั้น */
+.side__label{ font-size:11px; font-weight:700; color:var(--violet-300);
+              opacity:.8; padding:14px 10px 6px; }
 .navbtn{ display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%;
          background:none; border:0; color:var(--violet-200); text-align:left;
          padding:9px 11px; border-radius:var(--radius-sm); font-size:14px; }
@@ -57,7 +60,7 @@ a{ color:var(--grape-600); }
 .navbtn.is-active{ background:var(--grape-600); color:var(--white); font-weight:600;
                    box-shadow:0 8px 20px -10px rgba(124,58,237,.9); }
 .navbtn.is-active .count{ opacity:1; }
-.navbtn .count{ font-family:var(--mono); font-size:11.5px; opacity:.75; }
+.navbtn .count{ font-family:var(--mono); font-size:12px; opacity:.75; font-variant-numeric:tabular-nums; }
 .side__foot{ margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,.12);
              display:flex; align-items:center; gap:9px; font-size:12.5px; }
 .side__foot img{ width:28px; height:28px; border-radius:50%; }
@@ -85,10 +88,11 @@ a{ color:var(--grape-600); }
 .btn:disabled{ opacity:.55; cursor:not-allowed; }
 
 .tools{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
-.tools input[type=search], .tools select{
+/* เดิมจัดสไตล์เฉพาะ input[type=search] ช่องอีเมล/ชื่อในหน้าผู้ดูแลระบบจึงเป็นช่องเปล่า ๆ ไม่มีกรอบ */
+.tools input, .tools select{
   border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 12px;
   background:var(--white); font-size:14px; }
-.tools input[type=search]{ flex:1; min-width:180px; }
+.tools input{ flex:1; min-width:180px; }
 
 /* ── ตาราง ── */
 .card{ background:var(--white); border:1px solid var(--line); border-radius:var(--radius);
@@ -96,8 +100,8 @@ a{ color:var(--grape-600); }
 .tablewrap{ overflow-x:auto; }
 table{ width:100%; border-collapse:collapse; font-size:14px; }
 th,td{ text-align:left; padding:11px 15px; border-bottom:1px solid var(--line); vertical-align:middle; }
-thead th{ background:var(--lilac-50); font-size:11.5px; font-family:var(--mono);
-          letter-spacing:.07em; text-transform:uppercase; color:var(--ink-soft); }
+thead th{ background:var(--lilac-50); font-size:12.5px; font-weight:700;
+          color:var(--ink-soft); white-space:nowrap; }
 tbody tr:last-child td{ border-bottom:0; }
 tbody tr:hover{ background:var(--lilac-50); }
 td .title{ font-weight:600; }
@@ -105,8 +109,11 @@ td .title{ font-weight:600; }
         display:block; flex-shrink:0; }
 .rowacts{ display:flex; gap:6px; justify-content:flex-end; }
 
-.tag{ display:inline-block; font-family:var(--mono); font-size:11px; font-weight:650;
+.tag{ display:inline-block; font-size:11.5px; font-weight:700;
       padding:2px 9px; border-radius:999px; white-space:nowrap; }
+.tag--owner{ background:var(--lilac-100); color:var(--grape-700); }
+.tag--editor{ background:#EFEAF8; color:var(--ink-soft); }
+.tag--you{ background:var(--good-bg); color:var(--good); }
 .tag--published{ background:var(--good-bg); color:var(--good); }
 .tag--draft{ background:var(--warn-bg); color:var(--warn); }
 .tag--archived{ background:#EFEAF8; color:var(--muted); }
@@ -173,21 +180,27 @@ td .title{ font-weight:600; }
 .panel-card__head .note{ margin-left:auto; font-size:12.5px; color:var(--muted); }
 
 /* ตัวเลขสถิติหลัก */
-.kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:22px; margin-bottom:22px; }
-.kpi{ display:flex; flex-direction:column; gap:2px; }
-.kpi b{ font-family:var(--mono); font-size:30px; font-weight:650; letter-spacing:-.03em;
-        color:var(--grape-700); font-variant-numeric:tabular-nums; line-height:1.1; }
-.kpi span{ font-size:12.5px; color:var(--muted); }
-.kpi em{ font-style:normal; font-size:11.5px; font-family:var(--mono); }
+.kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:12px; margin-bottom:20px; }
+.kpi{ display:flex; flex-direction:column; gap:2px; padding:12px 14px;
+      background:var(--lilac-50); border:1px solid var(--line); border-radius:var(--radius-sm); }
+.kpi b{ font-family:var(--mono); font-size:27px; font-weight:650; letter-spacing:-.03em;
+        color:var(--grape-700); font-variant-numeric:tabular-nums; line-height:1.15; }
+.kpi span{ font-size:12.5px; color:var(--ink-soft); }
+.kpi em{ font-style:normal; font-size:11.5px; font-weight:600; }
 .kpi em.up{ color:var(--good); } .kpi em.down{ color:var(--danger); }
 
-/* กราฟแท่ง 14 วัน — วาดด้วย SVG ไม่ใช้ไลบรารี */
-.chart{ width:100%; height:132px; display:block; overflow:visible; }
+/* กราฟแท่ง 14 วัน — วาดด้วย SVG ไม่ใช้ไลบรารี
+   SVG ยืดเต็มความกว้าง (preserveAspectRatio=none) ได้เฉพาะเพราะ "ไม่มีตัวหนังสือข้างใน"
+   ตัวเลขวันที่อยู่ใน .bars__axis ซึ่งเป็น HTML ปกติ จึงไม่ถูกยืดตาม */
+.bars{ display:flex; flex-direction:column; gap:7px; }
+.chart{ width:100%; height:150px; display:block; }
 .chart .bar{ fill:var(--violet-200); transition:fill .15s; }
 .chart .bar:hover, .chart .bar.today{ fill:var(--grape-600); }
 .chart .grid{ stroke:var(--line); stroke-width:1; }
-.chart .lbl{ font-family:var(--mono); font-size:9px; fill:var(--muted); }
-.chart-empty{ display:grid; place-items:center; height:132px; color:var(--muted); font-size:13.5px;
+.bars__axis{ display:grid; font-family:var(--mono); font-size:11px; color:var(--muted);
+             font-variant-numeric:tabular-nums; text-align:center; }
+.bars__cap{ font-size:12px; color:var(--muted); }
+.chart-empty{ display:grid; place-items:center; height:150px; color:var(--muted); font-size:13.5px;
               border:1px dashed var(--line); border-radius:var(--radius-sm); text-align:center; padding:0 20px; }
 
 /* ตารางหน้ายอดนิยม */
@@ -198,6 +211,38 @@ td .title{ font-weight:600; }
 .toprow .fill{ height:100%; background:var(--grape-500); border-radius:99px; }
 .toprow .n{ font-family:var(--mono); font-size:13px; color:var(--ink-soft);
             min-width:46px; text-align:right; font-variant-numeric:tabular-nums; }
+
+/* ── ส่วนที่เพิ่มใหม่ ── */
+.greet{ flex:1; min-width:180px; }
+.greet__day{ display:block; font-size:13px; color:var(--muted); margin-top:3px; }
+td.nowrap{ white-space:nowrap; }
+
+/* กล่องบอกข้อมูล/เตือน — ใช้ทั้งหน้าภาพรวมและหน้าผู้ดูแลระบบ */
+.notice{ display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+         background:var(--white); border:1px solid var(--line); border-left:4px solid var(--grape-500);
+         border-radius:var(--radius-sm); padding:13px 16px; font-size:13.5px; color:var(--ink-soft);
+         margin-bottom:16px; }
+.notice > span{ flex:1; min-width:220px; }
+.notice--warn{ border-left-color:var(--gold); background:#FFFDF6; margin-bottom:0; }
+
+/* ระดับสิทธิ์ในตารางผู้ดูแล */
+.rolesel{ border:1px solid var(--line); border-radius:var(--radius-sm);
+          padding:6px 10px; background:var(--white); font-size:14px; }
+
+/* ── รูปในอัลบั้ม ── */
+.panel--wide{ width:min(860px,100%); }
+.photos{ display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:12px; }
+.photo{ position:relative; margin:0; border:1px solid var(--line); border-radius:var(--radius-sm);
+        overflow:hidden; background:var(--lilac-100); aspect-ratio:4/3; }
+.photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.photo__badge{ position:absolute; top:6px; left:6px; background:var(--grape-600); color:var(--white);
+               font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+.photo__acts{ position:absolute; left:0; right:0; bottom:0; display:flex; gap:2px; padding:5px;
+              background:linear-gradient(to top,rgba(33,27,51,.78),transparent); }
+.iconbtn{ flex:1; min-height:30px; border:0; border-radius:6px; background:rgba(255,255,255,.9);
+          color:var(--ink); font-size:14px; line-height:1; font-weight:700; }
+.iconbtn:hover{ background:var(--white); }
+.iconbtn--bad:hover{ background:var(--danger); color:var(--white); }
 
 /* การ์ดนับเนื้อหา — กดได้ */
 .tiles{ grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); }

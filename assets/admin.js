@@ -5,7 +5,9 @@
    ความปลอดภัยอยู่ที่ Row Level Security ในฐานข้อมูล:
      • คนทั่วไปอ่านได้เฉพาะแถวที่ status = 'published'
      • คนที่อีเมลอยู่ในตาราง admins เท่านั้นที่แก้ไขได้
+     • เฉพาะ role = 'owner' เท่านั้นที่เพิ่ม/ถอด/เปลี่ยนระดับผู้ดูแลได้
    ต่อให้มีคนเปิดหน้านี้ได้ ก็ทำอะไรไม่ได้ถ้าไม่อยู่ในตาราง admins
+   และปุ่มที่ซ่อนไว้ในหน้านี้ ต่อให้เรียกเองก็ไม่ผ่าน policy ฝั่งฐานข้อมูล
 
    ส่งต่อรุ่น: เพิ่ม/ลบอีเมลในหน้า "ผู้ดูแลระบบ" ไม่ต้องแก้โค้ด
    ============================================================ */
@@ -23,6 +25,15 @@ const STATUS = [
   { v: 'draft',     label: 'ร่าง' },
   { v: 'archived',  label: 'เก็บเข้ากรุ' },
 ];
+
+/* ระดับสิทธิ์ — บังคับจริงที่ Row Level Security (migration 0006)
+   หน้าเว็บแค่ซ่อนปุ่มที่กดไปก็ไม่ผ่าน ให้ใช้งานไม่สับสน */
+const ROLES = [
+  { v: 'owner',  label: 'เจ้าของระบบ' },
+  { v: 'editor', label: 'ผู้แก้ไข' },
+];
+const ROLE_TH = { owner: 'เจ้าของระบบ', editor: 'ผู้แก้ไข' };
+const isOwner = () => me && me.role === 'owner';
 
 const SCHEMA = {
   activities: {
@@ -51,13 +62,16 @@ const SCHEMA = {
     ],
   },
   albums: {
-    label: 'อัลบั้มภาพ', title: 'title', order: 'date.desc',
-    cols: [['cover_id', 'ปก', 'img'], ['title', 'ชื่ออัลบั้ม'], ['date', 'วันที่'], ['status', 'สถานะ', 'status']],
+    label: 'อัลบั้มภาพ', title: 'title', order: 'date.desc', photos: true,
+    cols: [['cover_id', 'ปก', 'img'], ['title', 'ชื่ออัลบั้ม'], ['date', 'วันที่'],
+           ['id', 'รูปข้างใน', 'photocount'], ['status', 'สถานะ', 'status']],
     fields: [
       { k: 'title', label: 'ชื่ออัลบั้ม', type: 'text', required: true },
       { k: 'date', label: 'วันที่', type: 'date' },
       { k: 'description', label: 'คำอธิบาย', type: 'textarea' },
-      { k: 'folder_id', label: 'โฟลเดอร์รูป', type: 'drive', hint: 'วางลิงก์โฟลเดอร์ Drive ที่ตั้งแชร์ "ทุกคนที่มีลิงก์" แล้ว' },
+      { k: 'folder_id', label: 'โฟลเดอร์รูป', type: 'drive',
+        hint: 'วางลิงก์โฟลเดอร์ Drive ที่ตั้งแชร์ "ทุกคนที่มีลิงก์" แล้ว · '
+            + 'ใส่ตรงนี้อย่างเดียวรูปยังไม่ขึ้นเว็บ ต้องกด "จัดการรูป" ในหน้ารายการเพื่อดึงรูปเข้าระบบ' },
       { k: 'cover_id', label: 'รูปปก', type: 'drive' },
       { k: 'status', label: 'สถานะ', type: 'status' },
     ],
@@ -182,7 +196,9 @@ async function boot() {
   /* เช็คสิทธิ์จากฐานข้อมูลจริง ไม่ใช่เชื่อ token ฝั่งเบราว์เซอร์
      RLS ทำให้คนที่ไม่ใช่ผู้ดูแลอ่านตาราง admins ได้ผลลัพธ์ว่าง */
   const email = (session.user.email || '').toLowerCase();
-  const { data: rows, error } = await db.from('admins').select('email').eq('email', email);
+  /* select('*') ไม่ใช่ 'email,role' เพราะถ้าโค้ดนี้ขึ้นเว็บก่อนรัน migration 0006
+     การขอคอลัมน์ที่ยังไม่มีจะได้ error 400 กลับมา = ไม่มีใครเข้าหลังบ้านได้เลย */
+  const { data: rows, error } = await db.from('admins').select('*').eq('email', email);
   if (error) { showLoginError('ตรวจสอบสิทธิ์ไม่สำเร็จ: ' + error.message); return; }
   if (!rows || !rows.length) {
     showLoginError(`บัญชี ${email} ยังไม่มีสิทธิ์เข้าระบบ — ให้ผู้ดูแลคนปัจจุบันเพิ่มอีเมลนี้ในหน้า "ผู้ดูแลระบบ"`);
@@ -190,10 +206,18 @@ async function boot() {
     return;
   }
 
-  me = { email, name: session.user.user_metadata?.full_name || email,
+  /* ระดับสิทธิ์มาจากฐานข้อมูล ไม่ใช่จาก token — และไม่ได้ใช้แค่ซ่อนปุ่ม
+     ต่อให้แก้ค่านี้ในเบราว์เซอร์ RLS ฝั่งฐานข้อมูลก็ยังปฏิเสธอยู่ดี
+
+     ยังไม่ได้รัน migration 0006 (ไม่มีคอลัมน์ role) → ถือว่าทุกคนเป็น owner
+     เท่ากับพฤติกรรมเดิมก่อนมีระดับสิทธิ์ ไม่ใช่การเปิดสิทธิ์เกิน
+     ลบเงื่อนไขนี้ทิ้งได้เมื่อรัน migration บนฐานข้อมูลจริงแล้ว */
+  const role = ('role' in rows[0]) ? (rows[0].role || 'editor') : 'owner';
+  me = { email, role,
+         name: session.user.user_metadata?.full_name || email,
          avatar: session.user.user_metadata?.avatar_url || '' };
   $('#meName').textContent = me.name;
-  $('#meEmail').textContent = me.email;
+  $('#meEmail').textContent = ROLE_TH[me.role] + ' · ' + me.email;
   if (me.avatar) $('#meAvatar').src = me.avatar;
 
   $('#loginView').classList.add('hidden');
@@ -272,11 +296,15 @@ const thDay = (d) => new Date(d).toLocaleDateString('th-TH', { day: 'numeric', m
 async function renderOverview(main) {
   clear(main);
   const head = el('div', 'head');
-  head.appendChild(el('h2', null, `สวัสดี ${me.name.split(' ')[0]}`));
-  main.appendChild(head);
+  const hi = el('div', 'greet');
+  hi.appendChild(el('h2', null, `สวัสดี ${me.name.split(' ')[0]}`));
+  hi.appendChild(el('span', 'greet__day', new Date().toLocaleDateString('th-TH',
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })));
+  head.appendChild(hi);
   const site = el('a', 'btn btn--ghost', 'เปิดหน้าเว็บ ↗');
   site.href = '/?fresh'; site.target = '_blank'; site.rel = 'noopener';
   head.appendChild(site);
+  main.appendChild(head);
   main.appendChild(el('p', 'sub',
     'เลือกหัวข้อจากเมนูซ้ายเพื่อแก้ไขข้อมูล · ของที่แก้จะขึ้นหน้าเว็บภายใน ~3 นาที '
     + 'กด "เปิดหน้าเว็บ" เพื่อดูของล่าสุดทันทีโดยข้าม cache ในเครื่อง'));
@@ -303,6 +331,20 @@ async function renderOverview(main) {
   });
   stack.appendChild(tiles);
 
+  /* เตือนอัลบั้มที่ยังไม่มีรูป — อัลบั้มแบบนี้ขึ้นเว็บแล้วเห็นแค่ปก
+     เป็นกับดักที่คนใหม่ตกซ้ำ ๆ เพราะใส่โฟลเดอร์ Drive แล้วนึกว่าเสร็จ */
+  const empty = await albumsWithoutPhotos();
+  if (empty.length) {
+    const warn = el('div', 'notice notice--warn');
+    warn.appendChild(el('span', null,
+      `อัลบั้ม ${empty.length} รายการยังไม่มีรูปในระบบ (${empty.slice(0, 3).join(' · ')}`
+      + `${empty.length > 3 ? ' …' : ''}) — หน้าเว็บจะเห็นแค่รูปปก`));
+    const goBtn = el('button', 'btn btn--ghost btn--sm', 'ไปจัดการรูป');
+    goBtn.addEventListener('click', () => go('albums'));
+    warn.appendChild(goBtn);
+    stack.appendChild(warn);
+  }
+
   /* แก้ไขล่าสุด */
   const { data } = await db.from('audit_log')
     .select('at,actor,action,table_name,summary').order('at', { ascending: false }).limit(8);
@@ -323,7 +365,7 @@ async function renderOverview(main) {
     const body = el('tbody');
     data.forEach((r) => {
       const tr = el('tr');
-      tr.appendChild(el('td', null, new Date(r.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })));
+      tr.appendChild(el('td', 'nowrap', new Date(r.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })));
       tr.appendChild(el('td', null, r.actor || '—'));
       tr.appendChild(el('td', null, ACTION_TH[r.action] || r.action));
       tr.appendChild(el('td', 'title', r.summary || '—'));
@@ -332,6 +374,15 @@ async function renderOverview(main) {
     tb.appendChild(body); wrap.appendChild(tb); card.appendChild(wrap);
     stack.appendChild(card);
   }
+}
+
+/* ชื่ออัลบั้มที่ยังไม่มีแถวในตาราง album_photos */
+async function albumsWithoutPhotos() {
+  const [{ data: albums }, counts2] = await Promise.all([
+    db.from('albums').select('id,title'),
+    albumPhotoCounts(),
+  ]);
+  return (albums || []).filter((a) => !counts2.get(a.id)).map((a) => a.title);
 }
 
 /* สถิติผู้เข้าชม 14 วันล่าสุด */
@@ -426,17 +477,20 @@ async function renderVisits(box, topBox) {
   topBox.appendChild(wrap);
 }
 
-/* กราฟแท่ง SVG — ไม่ใช้ไลบรารีภายนอก */
+/* กราฟแท่ง 14 วัน — ไม่ใช้ไลบรารีภายนอก
+   แท่งวาดด้วย SVG ที่ยืดเต็มความกว้าง (preserveAspectRatio=none)
+   แต่ "ตัวหนังสือทุกตัวอยู่ใน HTML" เพราะ text ใน SVG แบบนี้จะถูกยืดตามไปด้วย
+   จนตัวอักษรแบนผิดสัดส่วน — เป็นที่มาของหน้า dashboard ที่ตัวอักษรยืด */
 function barChart(days, max, todayKey) {
   const NS = 'http://www.w3.org/2000/svg';
-  const W = 100, H = 100, gap = 1.4;
+  const W = 100, H = 100, gap = 1.6;
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('class', 'chart');
-  svg.setAttribute('viewBox', `0 0 ${W} ${H + 10}`);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('preserveAspectRatio', 'none');
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label',
-    `กราฟผู้เข้าชม ${days.length} วัน สูงสุด ${max} ครั้งต่อวัน`);
+    `กราฟผู้เข้าชม ${days.length} วันล่าสุด สูงสุด ${max} ครั้งต่อวัน`);
 
   [0, 0.5, 1].forEach((f) => {
     const l = document.createElementNS(NS, 'line');
@@ -456,24 +510,26 @@ function barChart(days, max, todayKey) {
     r.setAttribute('y', H - h);
     r.setAttribute('width', bw);
     r.setAttribute('height', h);
-    r.setAttribute('rx', 0.8);
     const t = document.createElementNS(NS, 'title');
     t.textContent = `${thDay(day)} · เปิด ${v.views} ครั้ง · ผู้เข้าชม ${v.visitors} คน`;
     r.appendChild(t);
     svg.appendChild(r);
   });
 
-  [0, days.length - 1].forEach((i) => {
-    const t = document.createElementNS(NS, 'text');
-    t.setAttribute('class', 'lbl');
-    t.setAttribute('x', i === 0 ? 0 : W);
-    t.setAttribute('y', H + 8);
-    t.setAttribute('text-anchor', i === 0 ? 'start' : 'end');
-    t.textContent = thDay(days[i][0]);
-    svg.appendChild(t);
-  });
-  return svg;
+  const box = el('div', 'bars');
+  box.appendChild(svg);
+
+  /* วันที่ใต้แท่ง — ตัวเลขวันอย่างเดียวเพื่อไม่ให้แน่นเกินไป
+     แล้วบอกช่วงวันเต็ม ๆ ไว้บรรทัดล่าง */
+  const axis = el('div', 'bars__axis');
+  axis.style.gridTemplateColumns = `repeat(${days.length}, 1fr)`;
+  days.forEach(([day]) => axis.appendChild(el('span', null, String(new Date(day).getDate()))));
+  box.appendChild(axis);
+  box.appendChild(el('div', 'bars__cap',
+    `${thDay(days[0][0])} – ${thDay(todayKey)} · แท่งสุดท้ายคือวันนี้`));
+  return box;
 }
+
 const ACTION_TH = { insert: 'เพิ่ม', update: 'แก้ไข', delete: 'ลบ' };
 
 /* ── รายการ ── */
@@ -482,6 +538,10 @@ async function renderList(main, table) {
   const [col, dir] = s.order.split('.');
   const { data, error } = await db.from(table).select('*').order(col, { ascending: dir === 'asc' });
   if (error) throw error;
+
+  /* อัลบั้ม: รูปที่ขึ้นเว็บมาจากตาราง album_photos ไม่ใช่จากโฟลเดอร์ Drive
+     จึงต้องเห็นตั้งแต่หน้ารายการว่าอัลบั้มไหนยังไม่มีรูปสักใบ */
+  const photoCount = s.photos ? await albumPhotoCounts() : null;
 
   clear(main);
   const head = el('div', 'head');
@@ -540,6 +600,11 @@ async function renderList(main, table) {
           td.appendChild(el('span', 'tag tag--' + r[k], (STATUS.find((x) => x.v === r[k]) || {}).label || r[k]));
         } else if (k === 'date') {
           td.textContent = fmtDate(r[k]);
+        } else if (kind === 'photocount') {
+          const n = (photoCount && photoCount.get(r.id)) || 0;
+          td.appendChild(n
+            ? el('span', null, n + ' รูป')
+            : el('span', 'tag tag--draft', 'ยังไม่มีรูป'));
         } else if (kind === 'title+featured') {
           td.className = 'title';
           const line = el('span', 'titleline');
@@ -561,6 +626,11 @@ async function renderList(main, table) {
         tr.appendChild(td);
       });
       const act = el('td'); const box = el('div', 'rowacts');
+      if (s.photos) {
+        const ph = el('button', 'btn btn--ghost btn--sm', 'จัดการรูป');
+        ph.addEventListener('click', () => openPhotos(r));
+        box.appendChild(ph);
+      }
       const edit = el('button', 'btn btn--ghost btn--sm', 'แก้ไข');
       edit.addEventListener('click', () => openForm(table, r));
       box.appendChild(edit); act.appendChild(box); tr.appendChild(act);
@@ -571,6 +641,198 @@ async function renderList(main, table) {
   filter.addEventListener('change', draw);
   if (onlyPinned) onlyPinned.addEventListener('change', draw);
   draw();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   รูปในอัลบั้ม
+
+   รูปที่ขึ้นหน้าเว็บอ่านจากตาราง album_photos ไม่ใช่จากโฟลเดอร์ Drive
+   (เบราว์เซอร์กับ Supabase ไล่อ่านโฟลเดอร์ Drive แทน Apps Script ไม่ได้)
+   หน้านี้คือที่เดียวที่เขียนตารางนั้น — ไม่มีหน้านี้ อัลบั้มใหม่จะมีแต่ปก
+   ══════════════════════════════════════════════════════════════ */
+async function albumPhotoCounts() {
+  const { data } = await db.from('album_photos').select('album_id');
+  const m = new Map();
+  (data || []).forEach((p) => m.set(p.album_id, (m.get(p.album_id) || 0) + 1));
+  return m;
+}
+
+function openPhotos(album) {
+  let photos = [];
+
+  const scrim = el('div', 'scrim');
+  const panel = el('div', 'panel panel--wide');
+  const head = el('div', 'panel__head');
+  head.appendChild(el('h3', null, 'รูปในอัลบั้ม · ' + (album.title || '')));
+  const close = el('button', 'btn btn--ghost btn--sm', 'ปิด');
+  head.appendChild(close); panel.appendChild(head);
+
+  const body = el('div', 'panel__body'); panel.appendChild(body);
+  body.appendChild(el('p', 'sub',
+    'รูปที่อยู่ในรายการนี้เท่านั้นที่ขึ้นหน้าเว็บ · ไฟล์จริงยังอยู่บน Google Drive '
+    + 'และต้องตั้งแชร์ "ทุกคนที่มีลิงก์" ไม่งั้นคนนอกจะเห็นเป็นรูปว่าง'));
+
+  /* ── ดึงจากโฟลเดอร์ Drive ทีเดียวทั้งอัลบั้ม ── */
+  const tools = el('div', 'tools');
+  const sync = el('button', 'btn btn--primary', 'ดึงรูปจากโฟลเดอร์ Drive');
+  sync.disabled = !album.folder_id;
+  sync.addEventListener('click', () => importFolder());
+  tools.appendChild(sync);
+  const openFolder = el('a', 'btn btn--ghost', 'เปิดโฟลเดอร์ ↗');
+  if (album.folder_id) {
+    openFolder.href = 'https://drive.google.com/drive/folders/' + driveId(album.folder_id);
+    openFolder.target = '_blank'; openFolder.rel = 'noopener';
+    tools.appendChild(openFolder);
+  }
+  body.appendChild(tools);
+  if (!album.folder_id) {
+    body.appendChild(el('span', 'hint',
+      'อัลบั้มนี้ยังไม่ได้ใส่ "โฟลเดอร์รูป" — ใส่ในหน้าแก้ไขอัลบั้มก่อน แล้วค่อยกดดึงรูป '
+      + 'หรือวางลิงก์รูปทีละใบด้านล่างก็ได้'));
+  }
+
+  /* ── วางลิงก์เอง (ใช้ตอนอยากเลือกเฉพาะบางรูป) ── */
+  const addWrap = el('div', 'field');
+  const addLab = el('label', null, 'หรือวางลิงก์รูปเอง (บรรทัดละ 1 ลิงก์)');
+  addLab.htmlFor = 'photoPaste';
+  const ta = el('textarea'); ta.id = 'photoPaste';
+  ta.placeholder = 'https://drive.google.com/file/d/xxxxxxxx/view\nhttps://drive.google.com/file/d/yyyyyyyy/view';
+  const addBtn = el('button', 'btn btn--ghost', 'เพิ่มรูปที่วางไว้');
+  addBtn.style.alignSelf = 'flex-start';
+  addBtn.addEventListener('click', async () => {
+    const ids = String(ta.value).match(/[-\w]{25,}/g) || [];
+    if (!ids.length) { toast('ไม่พบลิงก์ Drive ในข้อความที่วาง', true); return; }
+    if (await addPhotos([...new Set(ids)])) ta.value = '';
+  });
+  addWrap.append(addLab, ta, addBtn);
+  body.appendChild(addWrap);
+
+  const listBox = el('div');
+  body.appendChild(listBox);
+
+  const foot = el('div', 'panel__foot');
+  const done = el('button', 'btn btn--primary', 'เสร็จแล้ว');
+  foot.appendChild(done); panel.appendChild(foot);
+
+  function shut() {
+    scrim.remove(); panel.remove();
+    document.removeEventListener('keydown', esc);
+    go('albums');                       // กลับไปหน้ารายการเพื่อให้ตัวเลขจำนวนรูปตรง
+  }
+  function esc(e) { if (e.key === 'Escape') shut(); }
+  [close, done, scrim].forEach((n) => n.addEventListener('click', shut));
+  document.addEventListener('keydown', esc);
+
+  /* ── งานกับฐานข้อมูล ── */
+  async function load() {
+    const { data, error } = await db.from('album_photos')
+      .select('*').eq('album_id', album.id).order('sort_order');
+    if (error) { listBox.replaceChildren(el('div', 'alert', 'โหลดรูปไม่สำเร็จ: ' + error.message)); return; }
+    photos = data || [];
+    draw();
+  }
+
+  async function addPhotos(ids) {
+    const have = new Set(photos.map((p) => p.file_id));
+    const fresh = ids.map(driveId).filter((id) => id && !have.has(id));
+    if (!fresh.length) { toast('รูปเหล่านี้อยู่ในอัลบั้มอยู่แล้ว'); return false; }
+    const base = photos.length ? Math.max(...photos.map((p) => p.sort_order)) + 1 : 0;
+    const rows = fresh.map((file_id, i) => ({ album_id: album.id, file_id, sort_order: base + i }));
+    const { error } = await db.from('album_photos')
+      .upsert(rows, { onConflict: 'album_id,file_id', ignoreDuplicates: true });
+    if (error) { toast('เพิ่มรูปไม่สำเร็จ: ' + error.message, true); return false; }
+    toast('เพิ่ม ' + fresh.length + ' รูปแล้ว');
+    await load();
+    return true;
+  }
+
+  /* โฟลเดอร์ Drive อ่านผ่าน /data?sheet=folder (ต้องตั้ง GOOGLE_API_KEY บน Vercel)
+     ถ้ายังไม่ได้ตั้ง ปุ่มนี้จะบอกวิธี แล้วใช้ช่องวางลิงก์แทนได้ */
+  async function importFolder() {
+    sync.disabled = true; sync.textContent = 'กำลังอ่านโฟลเดอร์…';
+    try {
+      const res = await fetch('/data?sheet=folder&id=' + encodeURIComponent(driveId(album.folder_id)));
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || 'อ่านโฟลเดอร์ไม่สำเร็จ');
+      if (!j.data.length) { toast('ไม่พบไฟล์รูปในโฟลเดอร์นี้', true); return; }
+      await addPhotos(j.data.map((f) => f.file_id));
+    } catch (err) {
+      toast(err.message, true);
+    } finally {
+      sync.disabled = !album.folder_id; sync.textContent = 'ดึงรูปจากโฟลเดอร์ Drive';
+    }
+  }
+
+  async function move(i, d) {
+    const j = i + d;
+    if (j < 0 || j >= photos.length) return;
+    const a = photos[i], b = photos[j];
+    const [sa, sb] = [a.sort_order, b.sort_order];
+    const { error } = await db.from('album_photos').upsert([
+      { ...a, sort_order: sb }, { ...b, sort_order: sa },
+    ]);
+    if (error) { toast('สลับลำดับไม่สำเร็จ: ' + error.message, true); return; }
+    await load();
+  }
+
+  async function remove(p) {
+    if (!confirm('เอารูปนี้ออกจากอัลบั้ม? (ไฟล์บน Drive ยังอยู่เหมือนเดิม)')) return;
+    const { error } = await db.from('album_photos').delete().eq('id', p.id);
+    if (error) { toast('ลบไม่สำเร็จ: ' + error.message, true); return; }
+    await load();
+  }
+
+  async function setCover(p) {
+    const { error } = await db.from('albums').update({ cover_id: p.file_id }).eq('id', album.id);
+    if (error) { toast('ตั้งปกไม่สำเร็จ: ' + error.message, true); return; }
+    album.cover_id = p.file_id;
+    toast('ตั้งเป็นรูปปกแล้ว');
+    draw();
+  }
+
+  /* ── วาดรายการรูป ── */
+  function draw() {
+    clear(listBox);
+    const h = el('div', 'panel-card__head');
+    h.appendChild(el('h3', null, 'รูปทั้งหมด'));
+    h.appendChild(el('span', 'note', photos.length + ' รูป'));
+    listBox.appendChild(h);
+
+    if (!photos.length) {
+      listBox.appendChild(el('div', 'empty',
+        'ยังไม่มีรูปในอัลบั้มนี้ — หน้าเว็บจะเห็นแค่รูปปก'));
+      return;
+    }
+    const grid = el('div', 'photos');
+    photos.forEach((p, i) => {
+      const t = el('figure', 'photo');
+      const im = el('img');
+      im.referrerPolicy = 'no-referrer'; im.loading = 'lazy'; im.alt = '';
+      im.src = driveThumb(p.file_id);
+      t.appendChild(im);
+      if (album.cover_id && driveId(album.cover_id) === p.file_id) {
+        t.appendChild(el('span', 'photo__badge', 'ปก'));
+      }
+      const acts = el('div', 'photo__acts');
+      const mk = (label, title, fn, cls) => {
+        const b = el('button', 'iconbtn' + (cls ? ' ' + cls : ''), label);
+        b.title = title; b.setAttribute('aria-label', title);
+        b.addEventListener('click', fn);
+        return b;
+      };
+      acts.appendChild(mk('‹', 'เลื่อนไปก่อนหน้า', () => move(i, -1)));
+      acts.appendChild(mk('›', 'เลื่อนไปถัดไป', () => move(i, 1)));
+      acts.appendChild(mk('★', 'ตั้งเป็นรูปปก', () => setCover(p)));
+      acts.appendChild(mk('✕', 'เอาออกจากอัลบั้ม', () => remove(p), 'iconbtn--bad'));
+      t.appendChild(acts);
+      grid.appendChild(t);
+    });
+    listBox.appendChild(grid);
+  }
+
+  document.body.append(scrim, panel);
+  listBox.appendChild(el('p', null, 'กำลังโหลด…'));
+  load();
 }
 
 /* ── ฟอร์มเพิ่ม/แก้ไข ── */
@@ -710,48 +972,98 @@ async function renderSettings(main) {
 
 /* ── ผู้ดูแลระบบ ── */
 async function renderAdmins(main) {
-  const { data, error } = await db.from('admins').select('*').order('created_at');
+  const { data, error } = await db.from('admins').select('*').order('role').order('created_at');
   if (error) throw error;
   clear(main);
   const head = el('div', 'head'); head.appendChild(el('h2', null, 'ผู้ดูแลระบบ'));
   main.appendChild(head);
-  main.appendChild(el('p', 'sub', 'คนที่อยู่ในรายการนี้เท่านั้นที่เข้าหลังบ้านได้ · ตอนเปลี่ยนรุ่นให้เพิ่มคนใหม่ก่อนแล้วค่อยลบคนเก่า'));
 
-  const tools = el('div', 'tools');
-  const em = el('input'); em.type = 'text'; em.placeholder = 'อีเมล Google ของคนใหม่';
-  const nm = el('input'); nm.type = 'text'; nm.placeholder = 'ชื่อ (ไม่บังคับ)';
-  const add = el('button', 'btn btn--primary', 'เพิ่ม');
-  add.addEventListener('click', async () => {
-    const email = em.value.trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('อีเมลไม่ถูกต้อง', true); return; }
-    const { error: e2 } = await db.from('admins').insert({ email, name: nm.value.trim() || null });
-    toast(e2 ? 'เพิ่มไม่สำเร็จ: ' + e2.message : 'เพิ่มแล้ว', !!e2);
-    if (!e2) go('admins');
-  });
-  tools.append(em, nm, add); main.appendChild(tools);
+  const owners = data.filter((r) => r.role === 'owner');
+
+  main.appendChild(el('p', 'sub',
+    'คนที่อยู่ในรายการนี้เท่านั้นที่เข้าหลังบ้านได้ · '
+    + 'เจ้าของระบบเท่านั้นที่เพิ่ม ถอด หรือเปลี่ยนระดับสิทธิ์ของคนอื่นได้ '
+    + '— ผู้แก้ไขแก้เนื้อหาได้ทุกอย่างเหมือนกัน แต่แตะรายชื่อนี้ไม่ได้'));
+
+  if (isOwner()) {
+    const tools = el('div', 'tools');
+    const em = el('input'); em.type = 'text'; em.placeholder = 'อีเมล Google ของคนใหม่';
+    const nm = el('input'); nm.type = 'text'; nm.placeholder = 'ชื่อ (ไม่บังคับ)';
+    const rl = el('select');
+    ROLES.forEach((x) => rl.appendChild(new Option(x.label, x.v)));
+    rl.value = 'editor';                       // ค่าเริ่มต้นคือสิทธิ์น้อยที่สุดเสมอ
+    const add = el('button', 'btn btn--primary', 'เพิ่ม');
+    add.addEventListener('click', async () => {
+      const email = em.value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('อีเมลไม่ถูกต้อง', true); return; }
+      const { error: e2 } = await db.from('admins')
+        .insert({ email, name: nm.value.trim() || null, role: rl.value });
+      toast(e2 ? 'เพิ่มไม่สำเร็จ: ' + e2.message : 'เพิ่มแล้ว', !!e2);
+      if (!e2) go('admins');
+    });
+    tools.append(em, nm, rl, add); main.appendChild(tools);
+  } else {
+    main.appendChild(el('div', 'notice',
+      'คุณเป็น "ผู้แก้ไข" จึงดูรายชื่อได้อย่างเดียว · '
+      + 'ต้องการเพิ่มหรือถอดใครให้บอกเจ้าของระบบ: '
+      + (owners.map((o) => o.email).join(', ') || 'ยังไม่มีเจ้าของระบบ')));
+  }
 
   const card = el('div', 'card'); const wrap = el('div', 'tablewrap'); const tb = el('table');
   const th = el('thead'); const hr = el('tr');
-  ['อีเมล', 'ชื่อ', 'เพิ่มเมื่อ', ''].forEach((h) => hr.appendChild(el('th', null, h)));
+  ['อีเมล', 'ชื่อ', 'ระดับสิทธิ์', 'เพิ่มเมื่อ', ''].forEach((h) => hr.appendChild(el('th', null, h)));
   th.appendChild(hr); tb.appendChild(th);
   const body = el('tbody');
   data.forEach((r) => {
     const tr = el('tr');
-    tr.appendChild(el('td', 'title', r.email));
+    const mail = el('td', 'title');
+    const line = el('span', 'titleline');
+    line.appendChild(el('span', null, r.email));
+    if (r.email === me.email) line.appendChild(el('span', 'tag tag--you', 'คุณ'));
+    mail.appendChild(line);
+    tr.appendChild(mail);
     tr.appendChild(el('td', null, r.name || '—'));
+
+    /* ระดับสิทธิ์: เจ้าของเปลี่ยนได้จากตรงนี้เลย คนอื่นเห็นเป็นป้ายเฉย ๆ */
+    const roleTd = el('td');
+    if (isOwner()) {
+      const sel = el('select', 'rolesel');
+      ROLES.forEach((x) => sel.appendChild(new Option(x.label, x.v)));
+      sel.value = r.role;
+      sel.addEventListener('change', async () => {
+        const to = sel.value;
+        if (r.role === 'owner' && to !== 'owner' && owners.length < 2) {
+          toast('ต้องเหลือเจ้าของระบบอย่างน้อย 1 คน — ตั้งคนใหม่เป็นเจ้าของก่อน', true);
+          sel.value = r.role; return;
+        }
+        if (r.email === me.email && to !== 'owner'
+            && !confirm('ลดสิทธิ์ตัวเองเป็น "ผู้แก้ไข"? หลังจากนี้คุณจะเพิ่มหรือถอดผู้ดูแลไม่ได้อีก')) {
+          sel.value = r.role; return;
+        }
+        const { error: e4 } = await db.from('admins').update({ role: to }).eq('email', r.email);
+        toast(e4 ? 'เปลี่ยนไม่สำเร็จ: ' + e4.message : 'เปลี่ยนเป็น ' + ROLE_TH[to] + ' แล้ว', !!e4);
+        if (e4) sel.value = r.role; else go('admins');
+      });
+      roleTd.appendChild(sel);
+    } else {
+      roleTd.appendChild(el('span', 'tag tag--' + r.role, ROLE_TH[r.role] || r.role));
+    }
+    tr.appendChild(roleTd);
     tr.appendChild(el('td', null, fmtDate(r.created_at)));
+
     const act = el('td'); const box = el('div', 'rowacts');
-    if (r.email !== me.email) {
+    if (isOwner() && r.email !== me.email) {
       const del = el('button', 'btn btn--ghost btn--sm', 'ถอดสิทธิ์');
       del.addEventListener('click', async () => {
+        if (r.role === 'owner' && owners.length < 2) {
+          toast('ถอดเจ้าของระบบคนสุดท้ายไม่ได้', true); return;
+        }
         if (!confirm(`ถอดสิทธิ์ ${r.email} ออกจากระบบหลังบ้าน?`)) return;
         const { error: e3 } = await db.from('admins').delete().eq('email', r.email);
         toast(e3 ? 'ไม่สำเร็จ: ' + e3.message : 'ถอดสิทธิ์แล้ว', !!e3);
         if (!e3) go('admins');
       });
       box.appendChild(del);
-    } else {
-      box.appendChild(el('span', 'tag tag--published', 'คุณ'));
     }
     act.appendChild(box); tr.appendChild(act); body.appendChild(tr);
   });

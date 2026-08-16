@@ -21,6 +21,9 @@ const APPS_SCRIPT = process.env.APPS_SCRIPT_URL
   || 'https://script.google.com/macros/s/AKfycbyS8PY6nJ4FmFYf4KS8chC4Jej3bZEnA5yPupDw0FvFavoWe1h5q1hJ1VuE_Ga-yKx5Ag/exec';
 const SB_URL  = process.env.SUPABASE_URL;
 const SB_KEY  = process.env.SUPABASE_ANON_KEY;
+/* คีย์ Google Drive API (ไม่บังคับ) — มีไว้ให้หลังบ้านกด "ดึงรูปจากโฟลเดอร์" ได้
+   ไม่ตั้งก็ใช้เว็บได้ปกติ แค่ต้องวางลิงก์รูปเองในหน้าจัดการรูป */
+const GOOGLE_KEY = process.env.GOOGLE_API_KEY;
 const DEFAULT_SOURCE = (process.env.DATA_SOURCE || 'sheets').toLowerCase();
 
 /* 180 วินาที — ของที่แก้ในหลังบ้านขึ้นเว็บภายใน ~3 นาที
@@ -204,6 +207,50 @@ async function fromSupabase(url) {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   รายชื่อรูปในโฟลเดอร์ Drive — ใช้จากหน้าหลังบ้านตอนสร้างอัลบั้มใหม่
+   (เดิมงานนี้เป็นของ Apps Script ที่ไล่อ่าน Drive ให้ พอย้ายมา Supabase
+    ก็ไม่มีใครทำแทน อัลบั้มใหม่เลยมีแต่ปก)
+
+   อ่านอย่างเดียว และเห็นได้เฉพาะโฟลเดอร์ที่ตั้งแชร์ "ทุกคนที่มีลิงก์" อยู่แล้ว
+   — API key แบบนี้เปิดไฟล์ส่วนตัวของใครไม่ได้ ต่อให้รู้ id
+   คนที่ "เขียน" รายชื่อรูปลงฐานข้อมูลยังต้องเป็นผู้ดูแลที่ล็อกอินแล้วเสมอ (RLS)
+   ══════════════════════════════════════════════════════════════════ */
+async function listDriveFolder(url) {
+  const id = driveId(url.searchParams.get('id') || '');
+  if (!/^[-\w]{25,}$/.test(id)) {
+    return json({ ok: false, error: 'ลิงก์โฟลเดอร์ไม่ถูกต้อง' }, 400, 'no-store');
+  }
+  if (!GOOGLE_KEY) {
+    return json({ ok: false, error:
+      'ยังไม่ได้ตั้งค่า GOOGLE_API_KEY บน Vercel — ระหว่างนี้ใช้ช่อง "วางลิงก์รูปเอง" แทนได้ '
+      + '(วิธีตั้งค่าอยู่ใน ADMIN_SETUP.md)' }, 501, 'no-store');
+  }
+
+  const out = [];
+  let pageToken = '';
+  do {
+    const q = new URLSearchParams({
+      q: `'${id}' in parents and mimeType contains 'image/' and trashed = false`,
+      fields: 'nextPageToken,files(id,name)',
+      orderBy: 'name',
+      pageSize: '200',
+      key: GOOGLE_KEY,
+    });
+    if (pageToken) q.set('pageToken', pageToken);
+    const res = await fetch('https://www.googleapis.com/drive/v3/files?' + q);
+    if (!res.ok) {
+      return json({ ok: false, error: `อ่านโฟลเดอร์ไม่ได้ (drive ${res.status}) — `
+        + 'ตรวจว่าตั้งแชร์ "ทุกคนที่มีลิงก์" แล้วหรือยัง' }, 502, 'no-store');
+    }
+    const j = await res.json();
+    (j.files || []).forEach((f) => out.push({ file_id: f.id, name: f.name }));
+    pageToken = j.nextPageToken || '';
+  } while (pageToken && out.length < 1000);
+
+  return json({ ok: true, count: out.length, data: out }, 200, 'no-store');
+}
+
 /* ══════════════════════════════════════════════════════════════════ */
 export default async function handler(request) {
   const url = new URL(request.url);
@@ -211,6 +258,10 @@ export default async function handler(request) {
   const src = (url.searchParams.get('src') || DEFAULT_SOURCE).toLowerCase();
 
   try {
+    /* ไม่ผูกกับ DATA_SOURCE เพราะเป็นเครื่องมือของหลังบ้าน ไม่ใช่ข้อมูลของหน้าเว็บ */
+    if ((url.searchParams.get('sheet') || '').toLowerCase().trim() === 'folder') {
+      return await listDriveFolder(url);
+    }
     return src === 'supabase' ? await fromSupabase(url) : await fromSheets(url.search);
   } catch (err) {
     return json({ ok: false, error: 'upstream fetch failed: ' + err.message }, 502, 'no-store');
