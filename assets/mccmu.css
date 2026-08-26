@@ -376,6 +376,8 @@ html[lang="en"] .en{ display:none; }
 .quick-row:hover{border-color:var(--teal-soft);box-shadow:var(--shadow);transform:translateY(-2px);}
 
 .section--soft{background:linear-gradient(180deg,#F7FBF8 0%, var(--lilac-50) 100%);}
+/* เส้นคั่นบาง ๆ เมื่อ section พื้นขาวสองอันติดกัน (home: กิจกรรมเด่น → หยิบมาอ่าน) */
+.section--rule{border-top:1px solid var(--line);}
 .row-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
 
 .svc__card{
@@ -677,6 +679,16 @@ body[data-page="about"]      .phero::after{ background-image:url('photo/hero-abo
 .article__body p{ color:var(--ink-soft);font-size:14.5px; }
 .article__meta{ display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted);margin-top:14px; }
 
+/* ---------- หยิบมาอ่าน (home #homePicks) ---------- */
+.pick{ display:flex;flex-direction:column;overflow:hidden;color:inherit;text-decoration:none; }
+.pick .article__body{ display:flex;flex-direction:column;flex:1; }
+.pick .chip{ align-self:flex-start; }   /* กัน chip ยืดเต็มความกว้างเพราะ body เป็น flex column */
+.pick h3{ margin:10px 0 8px; }
+/* คำอธิบายยาวไม่เท่ากัน → ตัด 3 บรรทัดให้การ์ดสูงเท่ากันทั้งแถว */
+.pick p{ display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
+.pick .article__meta{ margin-top:auto;padding-top:14px; }
+.pick__go{ display:block;margin-top:10px; }
+
 /* gallery */
 .masonry{ columns:3;column-gap:16px; }
 .masonry > *{ break-inside:avoid;margin-bottom:16px;border-radius:14px;overflow:hidden; }
@@ -947,7 +959,18 @@ body{ overflow-x:clip; }
   background:rgba(231,176,8,.35);animation:featPulse 1.6s ease-out infinite;
 }
 @keyframes featPulse{ 0%{transform:scale(.5);opacity:1;} 100%{transform:scale(1.4);opacity:0;} }
-.feat-count.is-today{ background:#fdf6e0;border-color:#f0e2b0;color:#8a6a00; }
+/* ── สถานะกิจกรรมบนชิป: เขียว = กำลังจะมาถึง · ม่วง = จัดไปแล้ว ── */
+.feat-count--up{ background:var(--leaf-soft);color:var(--leaf);border-color:#D9F0A3; }
+.feat-count--up .pulse-dot{ background:var(--leaf); }
+.feat-count--up .pulse-dot::after{ background:rgba(77,124,15,.32); }
+/* วันนี้/พรุ่งนี้ — เขียวเข้มทึบ ให้เด่นกว่างานที่ยังอีกไกล */
+.feat-count--up.is-today{ background:var(--leaf);color:#fff;border-color:var(--leaf); }
+.feat-count--up.is-today .pulse-dot{ background:#fff; }
+.feat-count--up.is-today .pulse-dot::after{ background:rgba(255,255,255,.5); }
+/* จบไปแล้ว → ม่วง และไม่ต้องกะพริบ (ไม่มีอะไรให้รอแล้ว) */
+.feat-count--past{ background:var(--lilac-100);color:var(--grape-700);border-color:var(--violet-200); }
+.feat-count--past .pulse-dot{ background:var(--grape-500); }
+.feat-count--past .pulse-dot::after{ display:none; }
 @media (prefers-reduced-motion:reduce){
   .feat-count .pulse-dot::after{ animation:none; }
   .feature-evt > .ph::before{ display:none; }

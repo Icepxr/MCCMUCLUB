@@ -52,6 +52,12 @@
     /* featured */
     'ไฮไลต์': 'Featured',
     'กิจกรรมเด่นเร็ว ๆ นี้': 'Upcoming featured events',
+    'ย้อนดู': 'Recap',
+    'จัดไปแล้ว': 'Completed',
+    'กิจกรรมล่าสุดที่ผ่านมา': 'Most recent past event',
+    'หยิบมาอ่าน': 'Picked for you',
+    'จากคลังความรู้': 'From the knowledge library',
+    'ดูทั้งหมด': 'View all',
     'กำลังโหลดกิจกรรม…': 'Loading event…',
     'รอสักครู่ กำลังดึงข้อมูลกิจกรรมล่าสุด': 'Please wait — fetching the latest event.',
     'กำลังโหลดโปสเตอร์…': 'Loading poster…',

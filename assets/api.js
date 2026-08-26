@@ -332,15 +332,17 @@ function _fillFeatCard(box, d, today) {
     var cd = box.querySelector('[data-feat="countdown"]');
     if (cd) {
       var thDay = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสฯ','ศุกร์','เสาร์'];
-      var lbl = diff === 0 ? 'วันนี้'
+      var past = diff < 0;
+      var lbl = past       ? 'จัดไปแล้ว'
+              : diff === 0 ? 'วันนี้'
               : diff === 1 ? 'พรุ่งนี้'
-              : (diff > 1 && diff <= 7) ? 'วัน' + thDay[ev.getDay()] + 'นี้'
-              : diff > 7 ? 'เร็ว ๆ นี้' : '';
-      if (lbl) {
-        cd.hidden = false;
-        if (diff <= 1) cd.classList.add('is-today');
-        var bEl = cd.querySelector('b'); if (bEl) bEl.textContent = lbl;
-      }
+              : diff <= 7  ? 'วัน' + thDay[ev.getDay()] + 'นี้'
+              : 'เร็ว ๆ นี้';
+      cd.hidden = false;
+      /* สีชิปบอกสถานะทันทีโดยไม่ต้องอ่าน: เขียว = กำลังจะมาถึง · ม่วง = จัดไปแล้ว */
+      cd.classList.add(past ? 'feat-count--past' : 'feat-count--up');
+      if (!past && diff <= 1) cd.classList.add('is-today');   // วันนี้/พรุ่งนี้ = เขียวเข้มเน้นกว่า
+      var bEl = cd.querySelector('b'); if (bEl) bEl.textContent = lbl;
     }
     var badge = box.querySelector('.feat-date');
     if (badge) {
@@ -412,6 +414,18 @@ function _initFeatSlider(track, n) {
     setInterval(function () { if (!paused) goTo(idx + 1); }, 6500);
 }
 
+/* หัวข้อ section กิจกรรมเด่น — มีงานล่วงหน้า = "เร็ว ๆ นี้", ไม่มี = ป้ายย้อนหลัง, ว่างเปล่า = ซ่อนทั้ง section
+   (หน้าแรกไม่โหรงเหรงเพราะมี section "หยิบมาอ่าน" รับช่วงต่ออยู่แล้ว) */
+function _setFeatHeading(mode) {
+  var h = _q('[data-feat-heading]'); if (!h) return;
+  var sec = h.closest('section');
+  if (mode === 'upcoming') return;               // ข้อความใน HTML ถูกอยู่แล้ว
+  if (mode === 'none') { if (sec) sec.hidden = true; return; }
+  h.textContent = 'กิจกรรมล่าสุดที่ผ่านมา';
+  var eyebrow = sec && _q('.eyebrow', sec);
+  if (eyebrow) eyebrow.replaceChildren(document.createTextNode('ย้อนดู '), _el('span', 'en', 'Recap'));
+}
+
 /* ── กิจกรรมเด่น — featured=yes ที่ยังไม่ถึงวันงานทั้งหมด (สูงสุด 5)
    มี >1 → แสดงเป็นสไลด์เลื่อนได้ (ต้องมี wrapper .feat-slider ในหน้า เช่น home) ── */
 MCCMU.renderFeatured = function (sel) {
@@ -426,7 +440,9 @@ MCCMU.renderFeatured = function (sel) {
                        .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
     var list = upcoming.length ? upcoming.slice(0, 5)
              : (pool.length ? [pool[pool.length - 1]] : []); // ไม่มีงานล่วงหน้า → ใบล่าสุดใบเดียว
-    if (!list.length) return;
+    if (!list.length) { _setFeatHeading('none'); return; }
+    /* ใบที่โชว์เป็นงานที่จบไปแล้ว → เปลี่ยนหัวข้อ ไม่ให้อ่านว่า "เร็ว ๆ นี้" ทั้งที่ผ่านไปแล้ว */
+    _setFeatHeading(upcoming.length ? 'upcoming' : 'past');
 
     /* มีหลายใบ + หน้ามีสไลเดอร์ → โคลนการ์ดเปล่าเป็นสไลด์เพิ่มก่อนเติมข้อมูล */
     var track = box.closest('.feat-slider__track');
@@ -441,7 +457,10 @@ MCCMU.renderFeatured = function (sel) {
     }
     cards.forEach(function (card, i) { _fillFeatCard(card, list[i], today); });
     if (track) _initFeatSlider(track, cards.length);
-  }).catch(function (err) { console.error('[MCCMU] featured:', err); });
+  }).catch(function (err) {
+    console.error('[MCCMU] featured:', err);
+    _setFeatHeading('none');
+  });
 };
 
 
@@ -510,6 +529,89 @@ MCCMU.renderDocs = function (gridSel, tabsSel, countSel, emptySel) {
   }).catch(function (err) {
     console.error('[MCCMU] docs:', err);
     _emptyMsg(grid, 'ไม่สามารถโหลดไฟล์ได้ในขณะนี้');
+  });
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   หยิบมาอ่าน — สุ่มไฟล์จากคลังความรู้ขึ้นหน้าแรก (#homePicks)
+   • ใช้ข้อมูลก้อนเดียวกับหน้าอื่น (?sheet=all) → ไม่มี request เพิ่ม
+   • สุ่มแบบ seed ตามวันที่: เปิดหน้าแรกกี่รอบในวันเดียวกันก็ได้ชุดเดิม
+     (cache เป็น stale-while-revalidate 3 นาที ถ้าสุ่มสดทุกครั้งการ์ดจะเด้ง
+      สลับไปมาทุกครั้งที่กดย้อนกลับ ดูเหมือนหน้าเว็บพัง) — ขึ้นวันใหม่ค่อยเปลี่ยนชุด
+   ══════════════════════════════════════════════════════════════════ */
+function _daySeed() {
+  var d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+/* mulberry32 — PRNG ขนาดจิ๋ว ให้ผลเหมือนเดิมทุกครั้งเมื่อ seed เท่ากัน */
+function _seededRand(seed) {
+  var s = seed >>> 0;
+  return function () {
+    s = (s + 0x6D2B79F5) >>> 0;
+    var t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+/* Fisher-Yates ด้วย PRNG ที่ seed ไว้ → ลำดับคงที่ต่อ seed หนึ่ง ๆ */
+function _pickSome(items, n, seed) {
+  var a = items.slice(), rnd = _seededRand(seed);
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(rnd() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a.slice(0, n);
+}
+
+/* file_id ในชีตกรอกได้ทั้ง id ล้วนและ URL เต็มของ Drive → ดึงเฉพาะ id ออกมา */
+function _driveId(s) {
+  s = (s || '').toString().trim();
+  var m = s.match(/[-\w]{25,}/);
+  return m ? m[0] : s;
+}
+
+function _pickCard(d) {
+  /* การ์ดทั้งใบเป็นลิงก์ → ไปหน้า knowledge แล้วเปิด preview ไฟล์นั้นให้เลย */
+  var card = _el('a', 'card card--hover pick');
+  card.href = 'knowledge.html' + (d.file_id ? '#doc=' + encodeURIComponent(_driveId(d.file_id)) : '');
+  card.appendChild(_phWithImg('arch-sm', '4/3', d.thumb_url, d.title, 'คลังความรู้'));
+
+  var body = _el('div', 'article__body');
+  body.appendChild(_el('span', 'chip', 'คลังความรู้'));
+  body.appendChild(_el('h3', null, d.title || ''));
+  if (d.description) body.appendChild(_el('p', null, d.description));
+  var date = _thaiDate(d.date);
+  if (date) {
+    var mw = _el('div', 'article__meta');
+    mw.appendChild(_el('span', null, date));
+    body.appendChild(mw);
+  }
+  body.appendChild(_el('span', 'svc__go pick__go', 'เปิดอ่าน'));
+  card.appendChild(body);
+  return card;
+}
+
+MCCMU.renderKnowledgePicks = function (sel, n) {
+  var grid = _q(sel); if (!grid) return;
+  n = n || 3;
+  var sec = grid.closest('section');
+  function hide() { if (sec) sec.hidden = true; }
+
+  _skeleton(grid, n, function () {
+    var c = _el('div', 'card pick');
+    c.appendChild(_phWithImg('arch-sm skel', '4/3'));
+    c.appendChild(_el('div', 'article__body'));
+    return c;
+  });
+
+  MCCMU.getDocs().then(function (items) {
+    var pool = items.filter(function (d) { return d.title && d.file_id; });
+    if (!pool.length) return hide();   // คลังยังว่าง → ไม่ต้องโชว์ section เปล่า
+    _clear(grid);
+    _pickSome(pool, n, _daySeed()).forEach(function (d) { grid.appendChild(_pickCard(d)); });
+  }).catch(function (err) {
+    console.error('[MCCMU] picks:', err);
+    hide();
   });
 };
 
@@ -919,6 +1021,7 @@ MCCMU.init = function () {
   switch (page) {
     case 'home':
       MCCMU.renderFeatured('#homeFeatured');     // กิจกรรมเด่นเร็ว ๆ นี้
+      MCCMU.renderKnowledgePicks('#homePicks', 3); // หยิบมาอ่าน (สุ่มรายวัน)
       MCCMU.renderPrayerStrip();
       /* hero เป็นการ์ดโลโก้ static (assets/club-logo.png) — ไม่ render สไลด์รูปแล้ว */
       break;

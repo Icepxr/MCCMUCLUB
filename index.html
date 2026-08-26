@@ -67,7 +67,7 @@
   <div class="container">
     <div class="s-head reveal" style="margin-bottom:30px">
       <span class="eyebrow">ไฮไลต์ <span class="en">Featured</span></span>
-      <h2 style="margin-top: 10px;">กิจกรรมเด่นเร็ว ๆ นี้</h2>
+      <h2 style="margin-top: 10px;" data-feat-heading>กิจกรรมเด่นเร็ว ๆ นี้</h2>
     </div>
     <!-- มี featured หลายรายการ → api.js โคลนการ์ดเป็นสไลด์เพิ่มใน track นี้ -->
     <div class="feat-slider reveal">
@@ -102,6 +102,22 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- หยิบมาอ่าน: สุ่ม 3 ไฟล์จากคลังความรู้ (ชุดเดิมทั้งวัน เปลี่ยนเมื่อขึ้นวันใหม่)
+     ข้อมูลมากับก้อน ?sheet=all อยู่แล้ว → ไม่มี request เพิ่ม — assets/api.js renderKnowledgePicks -->
+<section class="section section--tight section--rule" id="picks">
+  <div class="container">
+    <div class="row-head reveal" style="margin-bottom:34px">
+      <div class="s-head">
+        <span class="eyebrow">หยิบมาอ่าน <span class="en">Picked for you</span></span>
+        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:10px">จากคลังความรู้</h2>
+      </div>
+      <a class="btn btn--ghost btn--sm" href="knowledge.html">ดูทั้งหมด
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+    <div class="grid g-3" id="homePicks"></div>
   </div>
 </section>
 

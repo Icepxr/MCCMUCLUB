@@ -387,12 +387,27 @@ function buildCard(d) {
                  date: _docThai(d.date), fileId: d.file_id };
       });
       render();
+      openFromHash();
     }).catch(function(err){
       console.error('[MCCMU] docs:', err);
       countEl.textContent = '';
       empty.style.display = 'block';
     });
   }
+  /* deep-link จากหน้าแรก: knowledge.html#doc=<file_id> → เปิด preview ไฟล์นั้นเลย
+     ค่าจาก hash ถูกใช้ "จับคู่" กับรายการที่โหลดมาเท่านั้น ไม่ถูกเอาไปประกอบ URL ตรง ๆ */
+  function openFromHash(){
+    var m = /[#&]doc=([^&]+)/.exec(location.hash);
+    if(!m) return;
+    var want;
+    try { want = decodeURIComponent(m[1]); } catch(e){ return; }
+    var hit = DOCS.filter(function(d){ return _docId(d.fileId) === _docId(want); })[0];
+    if(!hit) return;
+    document.getElementById('sec-docs').scrollIntoView({ behavior:'smooth', block:'start' });
+    openPreview(hit);
+  }
+  window.addEventListener('hashchange', openFromHash);
+
   if (window.MCCMU && MCCMU.getDocs) loadDocs();
   else document.addEventListener('DOMContentLoaded', loadDocs);
 })();
