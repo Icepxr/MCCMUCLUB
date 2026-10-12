@@ -69,9 +69,11 @@ async function fromSheets(search) {
 /* ══════════════════════════════════════════════════════════════════
    แหล่งที่ 2 — Supabase
    ══════════════════════════════════════════════════════════════════ */
-async function sb(table, query = '') {
+/* auth = JWT ของผู้ใช้ (เฉพาะโหมดตัวอย่าง) — ไม่ส่งก็ใช้สิทธิ์ anon เหมือนคนทั่วไป
+   สิทธิ์ที่ได้ตัดสินโดย RLS ในฐานข้อมูล ไม่ใช่โค้ดนี้: ผู้ดูแลเห็นร่าง คนอื่นเห็นแค่ที่เผยแพร่ */
+async function sb(table, query = '', auth = SB_KEY) {
   const res = await fetch(`${SB_URL}/rest/v1/${table}?${query}`, {
-    headers: { apikey: SB_KEY, authorization: `Bearer ${SB_KEY}` },
+    headers: { apikey: SB_KEY, authorization: `Bearer ${auth}` },
   });
   if (!res.ok) throw new Error(`supabase ${table}: ${res.status}`);
   return res.json();
@@ -94,11 +96,11 @@ const shapeMembers = (rows) => rows.map((d) => ({
    Supabase ทำแบบนั้นไม่ได้ จึงเก็บ "รายชื่อรูป" ไว้ในตาราง album_photos แทน
    ตัวไฟล์รูปยังอยู่บน Drive เหมือนเดิม รูปร่างที่ส่งกลับต้องตรงกับของเดิมเป๊ะ
    (name, file_id, thumb_url, image_url) เพราะ lightbox ฝั่งหน้าเว็บใช้ฟิลด์เหล่านี้ */
-async function shapeAlbums(rows) {
+async function shapeAlbums(rows, auth) {
   if (!rows.length) return rows;
   const ids = rows.map((r) => r.id);
   const photos = await sb('album_photos',
-    `select=album_id,file_id,sort_order&album_id=in.(${ids.join(',')})&order=sort_order`);
+    `select=album_id,file_id,sort_order&album_id=in.(${ids.join(',')})&order=sort_order`, auth);
   const byAlbum = new Map();
   photos.forEach((p) => {
     if (!byAlbum.has(p.album_id)) byAlbum.set(p.album_id, []);
@@ -120,8 +122,8 @@ async function shapeAlbums(rows) {
   });
 }
 
-async function settingsFromSb() {
-  const rows = await sb('settings', 'select=key,value');
+async function settingsFromSb(auth) {
+  const rows = await sb('settings', 'select=key,value', auth);
   const out = {};
   rows.forEach((r) => { out[r.key] = r.value ?? ''; });
   /* คีย์ที่ลงท้าย _id จะมี _url คู่กันเสมอ — เหมือนที่ Apps Script ทำ */
@@ -155,26 +157,46 @@ async function prayerTimes(dateStr, methodSetting) {
   };
 }
 
-async function fromSupabase(url) {
+/* คอลัมน์ที่หน้าเว็บสาธารณะขอ — ระบุชื่อตรง ๆ แทน select=* เพราะ anon ถูกถอนสิทธิ์อ่าน updated_by
+   (อีเมลผู้ดูแล — migration 0007) ถ้าขอ * ด้วยสิทธิ์ anon หลังรัน migration จะได้ permission denied ทั้งตาราง
+   เพิ่มคอลัมน์ใหม่ในตารางเมื่อไหร่: เพิ่มชื่อที่นี่ และ grant ให้ anon ใน migration ด้วย */
+const PUBLIC_COLS = {
+  activities: 'id,title_th,date,location,description,featured,cover_id,status,created_at,updated_at',
+  docs:       'id,title,description,date,file_id,status,created_at,updated_at',
+  albums:     'id,title,date,description,folder_id,cover_id,status,created_at,updated_at',
+  places:     'id,name,type,description,map_url,coords,status,created_at,updated_at',
+  members:    'id,name,title,description,sort_order,cover_id,status,created_at,updated_at',
+};
+
+async function fromSupabase(url, auth) {
   if (!SB_URL || !SB_KEY) {
     return json({ ok: false, error: 'ยังไม่ได้ตั้งค่า SUPABASE_URL หรือ SUPABASE_ANON_KEY' }, 500, 'no-store');
   }
   const sheet = (url.searchParams.get('sheet') || '').toLowerCase().trim();
-  const P = 'status=eq.published';
+  /* โหมดตัวอย่าง: ขอทั้งที่เผยแพร่และร่าง (ไม่เอาที่เก็บเข้ากรุ) แล้วให้ RLS ตัดสินว่าเห็นอะไรได้จริง
+     ห้าม cache เด็ดขาด — ไม่งั้นร่างจะหลุดไปให้คนถัดไปที่ขอ URL เดียวกัน */
+  const preview = !!auth;
+  const P = preview ? 'status=in.(published,draft)' : 'status=eq.published';
+  const out = (body, status) => json(body, status, preview ? 'private, no-store' : undefined);
+  auth = auth || SB_KEY;
+  /* updated_by เก็บอีเมลผู้ดูแล — หน้าเว็บสาธารณะไม่ใช้ และไม่ควรแจกให้ทุกคนที่เปิดเว็บ */
+  /* โหมดตัวอย่างใช้ token ผู้ดูแล อ่านได้ทุกคอลัมน์ · คนทั่วไปขอเฉพาะคอลัมน์สาธารณะ */
+  const cols = (t) => (preview ? '*' : PUBLIC_COLS[t]);
+  const clean = (rows) => (preview ? rows : rows.map(({ updated_by, ...r }) => r));
 
   try {
     if (sheet === 'all') {
       const [activities, docs, places, members, settings] = await Promise.all([
-        sb('activities', `select=*&${P}&order=date.asc`),
-        sb('docs', `select=*&${P}&order=date.desc`),
-        sb('places', `select=*&${P}`),
-        sb('members', `select=*&${P}&order=sort_order.asc`),
-        settingsFromSb(),
+        sb('activities', `select=${cols('activities')}&${P}&order=date.asc`, auth).then(clean),
+        sb('docs', `select=${cols('docs')}&${P}&order=date.desc`, auth).then(clean),
+        sb('places', `select=${cols('places')}&${P}`, auth).then(clean),
+        sb('members', `select=${cols('members')}&${P}&order=sort_order.asc`, auth).then(clean),
+        settingsFromSb(auth),
       ]);
       let prayer = {};
       try { prayer = await prayerTimes('', settings.prayer_method); } catch { /* ไม่มีเวลาละหมาดดีกว่าหน้าพัง */ }
-      return json({
-        ok: true, source: 'supabase', cached_at: new Date().toISOString(),
+      return out({
+        ok: true, source: 'supabase', preview, cached_at: new Date().toISOString(),
         data: {
           activities: shapeActivities(activities),
           docs: shapeDocs(docs),
@@ -186,19 +208,19 @@ async function fromSupabase(url) {
       });
     }
 
-    if (sheet === 'activities') return json({ ok: true, data: shapeActivities(await sb('activities', `select=*&${P}&order=date.asc`)) });
-    if (sheet === 'docs')       return json({ ok: true, data: shapeDocs(await sb('docs', `select=*&${P}&order=date.desc`)) });
-    if (sheet === 'members')    return json({ ok: true, data: shapeMembers(await sb('members', `select=*&${P}&order=sort_order.asc`)) });
-    if (sheet === 'albums')     return json({ ok: true, data: await shapeAlbums(await sb('albums', `select=*&${P}&order=date.desc`)) });
-    if (sheet === 'settings')   return json({ ok: true, data: await settingsFromSb() });
+    if (sheet === 'activities') return out({ ok: true, data: shapeActivities(await sb('activities', `select=${cols('activities')}&${P}&order=date.asc`, auth).then(clean)) });
+    if (sheet === 'docs')       return out({ ok: true, data: shapeDocs(await sb('docs', `select=${cols('docs')}&${P}&order=date.desc`, auth).then(clean)) });
+    if (sheet === 'members')    return out({ ok: true, data: shapeMembers(await sb('members', `select=${cols('members')}&${P}&order=sort_order.asc`, auth).then(clean)) });
+    if (sheet === 'albums')     return out({ ok: true, data: await shapeAlbums(await sb('albums', `select=${cols('albums')}&${P}&order=date.desc`, auth).then(clean), auth) });
+    if (sheet === 'settings')   return out({ ok: true, data: await settingsFromSb(auth) });
     if (sheet === 'places') {
       const type = url.searchParams.get('type');
-      const q = `select=*&${P}` + (type ? `&type=eq.${encodeURIComponent(type)}` : '');
-      return json({ ok: true, data: await sb('places', q) });
+      const q = `select=${cols('places')}&${P}` + (type ? `&type=eq.${encodeURIComponent(type)}` : '');
+      return out({ ok: true, data: await sb('places', q, auth).then(clean) });
     }
     if (sheet === 'prayer') {
-      const s = await settingsFromSb();
-      return json({ ok: true, data: await prayerTimes(url.searchParams.get('date'), s.prayer_method) });
+      const s = await settingsFromSb(auth);
+      return out({ ok: true, data: await prayerTimes(url.searchParams.get('date'), s.prayer_method) });
     }
 
     return json({ ok: false, error: 'unknown sheet: ' + sheet }, 400, 'no-store');
@@ -251,6 +273,40 @@ async function listDriveFolder(url) {
   return json({ ok: true, count: out.length, data: out }, 200, 'no-store');
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   คลิปจากช่อง YouTube ของชมรม — ใช้ในหน้าคลังความรู้
+
+   อ่านจาก RSS สาธารณะของช่อง ไม่ต้องใช้ API key และไม่มีโควตา
+   อัปคลิปใหม่ขึ้นช่องแล้วหน้าเว็บเห็นเองภายใน ~30 นาที ไม่ต้องเข้าหลังบ้าน
+   (RSS ให้มาสูงสุด 15 คลิปล่าสุด) · เบราว์เซอร์อ่าน RSS ของ YouTube ตรง ๆ ไม่ได้เพราะติด CORS
+   Edge runtime ไม่มี DOMParser จึงแกะ XML ด้วย regex — รูปแบบ feed นี้คงที่มาหลายปีแล้ว
+   ══════════════════════════════════════════════════════════════════ */
+const YT_CHANNEL = process.env.YOUTUBE_CHANNEL_ID || 'UCpi1ogZDgOqnXF6G94tRqYg';   // @muslimcmu
+const YT_CACHE = 'public, max-age=600, s-maxage=1800, stale-while-revalidate=86400';
+
+const xmlText = (s) => s
+  .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+  .replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&')
+  .trim();
+const xmlTag = (block, name) => {
+  const m = block.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`));
+  return m ? xmlText(m[1]) : '';
+};
+
+async function youtubeFeed() {
+  const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${YT_CHANNEL}`);
+  if (!res.ok) return json({ ok: false, error: `youtube ${res.status}` }, 502, 'no-store');
+  const xml = await res.text();
+  const data = xml.split('<entry>').slice(1).map((e) => ({
+    id: xmlTag(e, 'yt:videoId'),
+    title: xmlTag(e, 'title'),
+    published: xmlTag(e, 'published'),
+    description: xmlTag(e, 'media:description'),
+  })).filter((v) => /^[-\w]{11}$/.test(v.id));
+  return json({ ok: true, channel_id: YT_CHANNEL, data }, 200, YT_CACHE);
+}
+
 /* ══════════════════════════════════════════════════════════════════ */
 export default async function handler(request) {
   const url = new URL(request.url);
@@ -259,8 +315,15 @@ export default async function handler(request) {
 
   try {
     /* ไม่ผูกกับ DATA_SOURCE เพราะเป็นเครื่องมือของหลังบ้าน ไม่ใช่ข้อมูลของหน้าเว็บ */
-    if ((url.searchParams.get('sheet') || '').toLowerCase().trim() === 'folder') {
-      return await listDriveFolder(url);
+    const sheet = (url.searchParams.get('sheet') || '').toLowerCase().trim();
+    if (sheet === 'folder') return await listDriveFolder(url);
+    /* คลิป YouTube ไม่ได้อยู่ทั้งใน Sheets และ Supabase จึงไม่ผูกกับ DATA_SOURCE เช่นกัน */
+    if (sheet === 'youtube') return await youtubeFeed();
+    /* โหมดตัวอย่างจากหลังบ้าน — อ่านจาก Supabase เสมอด้วย token ของผู้ดูแลที่ส่งมา */
+    if (url.searchParams.get('preview') === '1') {
+      const m = (request.headers.get('authorization') || '').match(/^Bearer ([\w-]+\.[\w-]+\.[\w-]+)$/);
+      if (!m) return json({ ok: false, error: 'ต้องเข้าสู่ระบบหลังบ้านก่อนจึงจะดูตัวอย่างได้' }, 401, 'no-store');
+      return await fromSupabase(url, m[1]);
     }
     return src === 'supabase' ? await fromSupabase(url) : await fromSheets(url.search);
   } catch (err) {
