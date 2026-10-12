@@ -11,8 +11,14 @@
 
    ส่งต่อรุ่น: เพิ่ม/ลบอีเมลในหน้า "ผู้ดูแลระบบ" ไม่ต้องแก้โค้ด
    ============================================================ */
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+/* ล็อกเวอร์ชันตายตัว — @2 เฉย ๆ จะดึงเวอร์ชันใหม่สุดทุกครั้งที่ CDN ออกตัวใหม่ ซึ่งอาจเปลี่ยนพฤติกรรมโดยไม่มีใครรู้
+   อัปเกรดเมื่อพร้อมทดสอบ: เปลี่ยนเลขตรงนี้ (และใน .claude/audit/admin-mock.html) */
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '/admin/config.js';
+
+/* ต้องดูก่อนสร้าง client เพราะ supabase จะลบ token ออกจาก URL ทันที
+   ใช้แยก "เพิ่งกลับมาจาก Google" (เล่นจังหวะต้อนรับเต็ม) กับ "เปิดหน้าใหม่ตอนล็อกอินค้างอยู่" (เข้าเร็ว) */
+const fromOAuth = /[#&?](access_token|code)=/.test(location.href);
 
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -122,6 +128,19 @@ function toast(msg, bad = false) {
   setTimeout(() => t.remove(), bad ? 6000 : 2600);
 }
 
+/* แถบแจ้งเตือนที่มีลิงก์ให้กด — ค้างไว้นานกว่าปกติให้ทันกด */
+function toastLink(msg, href, label) {
+  document.querySelectorAll('.toast').forEach((t) => t.remove());
+  const t = el('div', 'toast toast--link');
+  t.appendChild(el('span', null, msg));
+  const a = el('a', null, label);
+  a.href = href; a.target = '_blank'; a.rel = 'noopener';
+  a.addEventListener('click', () => t.remove());
+  t.appendChild(a);
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 12000);
+}
+
 /* ดึง Drive id จากลิงก์เต็ม — ให้แอดมินวางลิงก์ได้เลย ไม่ต้องหา id เอง */
 const driveId = (s) => {
   const m = String(s || '').trim().match(/[-\w]{25,}/);
@@ -156,15 +175,110 @@ let view = 'overview';
 let counts = {};
 
 /* ══════════════════════════════════════════════════════════════
-   ล็อกอิน
+   ล็อกอิน และจังหวะเข้า/ออกจากระบบ
    ══════════════════════════════════════════════════════════════ */
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = (ms) => new Promise((r) => setTimeout(r, reduceMotion() ? 0 : ms));
+
+function setLoginState(state, status) {
+  $('#loginView').dataset.state = state;
+  if (status != null) $('#loginStatus').textContent = status;
+}
+
 $('#btnLogin').addEventListener('click', async () => {
+  const btn = $('#btnLogin');
+  btn.disabled = true;
+  $('#btnLoginText').textContent = 'กำลังไปหน้า Google…';
   const { error } = await db.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: location.origin + '/admin' },
   });
-  if (error) showLoginError(error.message);
+  if (error) {
+    btn.disabled = false;
+    $('#btnLoginText').textContent = 'เข้าสู่ระบบด้วย Google';
+    showLoginError(error.message);
+  }
 });
+
+/* ── ฉากหน้าล็อกอิน: ฝุ่นลอยในลำแสง + ฉากขยับตามเมาส์เล็กน้อยให้มีมิติ ──
+   วาดบน canvas เดียว ไม่กี่สิบจุด หยุดเองเมื่อออกจากหน้าล็อกอิน และไม่วาดตอนแท็บถูกซ่อน */
+function startScene() {
+  const cv = $('#dust');
+  if (reduceMotion()) {
+    document.querySelectorAll('animateTransform').forEach((n) => n.remove());   // หยุดแสงวิ่งบนดาวทอง
+    return;
+  }
+  const ctx = cv.getContext('2d');
+  let w = 0, h = 0, dots = [];
+  function size() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    w = cv.clientWidth; h = cv.clientHeight;
+    cv.width = w * dpr; cv.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.min(90, Math.round((w * h) / 16000));
+    dots = Array.from({ length: n }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      r: 0.4 + Math.random() * 1.6,
+      vx: (Math.random() - 0.5) * 0.12, vy: -0.05 - Math.random() * 0.22,
+      ph: Math.random() * Math.PI * 2, tw: 0.008 + Math.random() * 0.02,
+    }));
+  }
+  size();
+  addEventListener('resize', size);
+
+  /* ฝุ่นใกล้กลางลำแสงสว่างกว่าฝุ่นที่อยู่ในเงา */
+  function frame() {
+    if ($('#loginView').classList.contains('hidden')) return;
+    if (!document.hidden) {
+      ctx.clearRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'lighter';
+      const cx = w * 0.28, cy = h * 0.24, reach = Math.max(w, h) * 0.6;
+      for (const d of dots) {
+        d.ph += d.tw;
+        d.x += d.vx + Math.sin(d.ph) * 0.08; d.y += d.vy;
+        if (d.y < -4) { d.y = h + 4; d.x = Math.random() * w; }
+        if (d.x < -4) d.x = w + 4; else if (d.x > w + 4) d.x = -4;
+        const lit = Math.max(0, 1 - Math.hypot(d.x - cx, d.y - cy) / reach);
+        const a = (0.15 + 0.85 * lit) * (0.55 + 0.45 * Math.sin(d.ph * 1.7));
+        const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r * 3);
+        g.addColorStop(0, `rgba(255,240,205,${a.toFixed(3)})`);
+        g.addColorStop(1, 'rgba(255,240,205,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(d.x, d.y, d.r * 3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  if (matchMedia('(pointer: fine)').matches) {
+    addEventListener('pointermove', (e) => {
+      const dx = e.clientX / innerWidth - 0.5, dy = e.clientY / innerHeight - 0.5;
+      document.documentElement.style.setProperty('--px', (dx * -18).toFixed(1) + 'px');
+      document.documentElement.style.setProperty('--py', (dy * -12).toFixed(1) + 'px');
+    });
+  }
+}
+startScene();
+
+/* เข้าระบบ: หน้าทำงานโผล่ข้างใต้ หน้าล็อกอินจางออก — สั้น ลื่น ไม่ขวางการใช้งาน */
+async function enterApp(greet) {
+  const login = $('#loginView'), app = $('#appView');
+  if (reduceMotion()) {
+    login.classList.add('hidden'); app.classList.remove('hidden');
+    return;
+  }
+  if (greet) {
+    setLoginState('checking', `ยินดีต้อนรับ ${me.name.split(' ')[0]}`);
+    await wait(700);
+  }
+  app.classList.add('is-entering');
+  app.classList.remove('hidden');
+  setLoginState('entering');
+  await wait(900);
+  login.classList.add('hidden');
+  app.classList.remove('is-entering');
+}
 
 /* ลิ้นชักเมนูสำหรับจอเล็ก */
 const side = () => $('#sideNav');
@@ -178,7 +292,15 @@ $('#btnMenu').addEventListener('click', () => openMenu(!side().classList.contain
 $('#sideScrim').addEventListener('click', () => openMenu(false));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openMenu(false); });
 
+/* ออกจากระบบ: จางเป็นสีพื้นหน้าล็อกอิน แล้วโหลดกลับมาที่หน้าล็อกอิน */
 $('#btnLogout').addEventListener('click', async () => {
+  const btn = $('#btnLogout');
+  btn.disabled = true;
+  if (!reduceMotion()) {
+    openMenu(false);
+    document.body.appendChild(el('div', 'veil'));
+    await wait(450);
+  }
   await db.auth.signOut();
   location.reload();
 });
@@ -189,9 +311,19 @@ function showLoginError(msg) {
   box.appendChild(el('div', 'alert', msg));
 }
 
-async function boot() {
+/* onAuthStateChange กับการเรียกตอนโหลดหน้าอาจยิงพร้อมกัน — กันไม่ให้เข้าระบบซ้อนสองรอบ */
+let booting = null, entered = false;
+function boot() {
+  if (entered) return Promise.resolve();
+  if (!booting) booting = runBoot().finally(() => { booting = null; });
+  return booting;
+}
+
+async function runBoot() {
   const { data: { session } } = await db.auth.getSession();
-  if (!session) return;                       // ยังไม่ล็อกอิน → คงหน้า login ไว้
+  if (!session) { setLoginState('signin'); return; }   // ยังไม่ล็อกอิน → โชว์ปุ่มเข้าสู่ระบบ
+
+  setLoginState('checking', 'กำลังตรวจสิทธิ์ผู้ดูแล…');
 
   /* เช็คสิทธิ์จากฐานข้อมูลจริง ไม่ใช่เชื่อ token ฝั่งเบราว์เซอร์
      RLS ทำให้คนที่ไม่ใช่ผู้ดูแลอ่านตาราง admins ได้ผลลัพธ์ว่าง */
@@ -199,12 +331,18 @@ async function boot() {
   /* select('*') ไม่ใช่ 'email,role' เพราะถ้าโค้ดนี้ขึ้นเว็บก่อนรัน migration 0006
      การขอคอลัมน์ที่ยังไม่มีจะได้ error 400 กลับมา = ไม่มีใครเข้าหลังบ้านได้เลย */
   const { data: rows, error } = await db.from('admins').select('*').eq('email', email);
-  if (error) { showLoginError('ตรวจสอบสิทธิ์ไม่สำเร็จ: ' + error.message); return; }
+  if (error) {
+    showLoginError('ตรวจสอบสิทธิ์ไม่สำเร็จ: ' + error.message);
+    setLoginState('signin');
+    return;
+  }
   if (!rows || !rows.length) {
     showLoginError(`บัญชี ${email} ยังไม่มีสิทธิ์เข้าระบบ — ให้ผู้ดูแลคนปัจจุบันเพิ่มอีเมลนี้ในหน้า "ผู้ดูแลระบบ"`);
     await db.auth.signOut();
+    setLoginState('signin');
     return;
   }
+  entered = true;
 
   /* ระดับสิทธิ์มาจากฐานข้อมูล ไม่ใช่จาก token — และไม่ได้ใช้แค่ซ่อนปุ่ม
      ต่อให้แก้ค่านี้ในเบราว์เซอร์ RLS ฝั่งฐานข้อมูลก็ยังปฏิเสธอยู่ดี
@@ -220,16 +358,41 @@ async function boot() {
   $('#meEmail').textContent = ROLE_TH[me.role] + ' · ' + me.email;
   if (me.avatar) $('#meAvatar').src = me.avatar;
 
-  $('#loginView').classList.add('hidden');
-  $('#appView').classList.remove('hidden');
+  /* เตรียมหน้าภาพรวมให้เสร็จก่อนเปิดม่าน — เข้ามาแล้วเห็นข้อมูลเลย ไม่เจอหน้าโหลด */
+  if (!fromOAuth) setLoginState('checking', 'กำลังเตรียมข้อมูล…');
   buildNav();
   await refreshCounts();
-  go('overview');
+  await go('overview');
+  await enterApp(fromOAuth);
 }
 
 /* ══════════════════════════════════════════════════════════════
    เมนูข้าง
    ══════════════════════════════════════════════════════════════ */
+/* ไอคอนเส้นขนาด 24 — path คงที่ในโค้ด ไม่มีข้อมูลผู้ใช้ปน */
+const ICONS = {
+  overview: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
+  activities: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+  docs: 'M5 4h10l4 4v12H5zM15 4v4h4M8 12h8M8 16h6',
+  albums: 'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M15.5 9.5h.01',
+  places: 'M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  members: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.5 3.3-5.5 6.5-5.5s5.9 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.8c1.9.7 3.2 2.5 3.5 5.2',
+  settings: 'M4 7h10M18 7h2M4 17h2M10 17h10M14 4.5v5M6 14.5v5',
+  admins: 'M12 3l7 3v5.5c0 4.5-3 8-7 9.5-4-1.5-7-5-7-9.5V6zM9 12l2 2 4-4',
+  audit: 'M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4',
+};
+function navIcon(id) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'navbtn__ic');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', ICONS[id] || ICONS.overview);
+  svg.appendChild(p);
+  return svg;
+}
+
 function buildNav() {
   const c = $('#navContent'); clear(c);
   c.appendChild(navBtn('overview', 'ภาพรวม'));
@@ -241,15 +404,25 @@ function buildNav() {
 }
 function navBtn(id, label, withCount) {
   const b = el('button', 'navbtn');
-  b.appendChild(el('span', null, label));
+  b.appendChild(navIcon(id));
+  b.appendChild(el('span', 'navbtn__lb', label));
   if (withCount) { const n = el('span', 'count'); n.dataset.count = id; b.appendChild(n); }
   b.dataset.view = id;
   b.addEventListener('click', () => go(id));
   return b;
 }
 function markActive() {
-  document.querySelectorAll('.navbtn').forEach((b) =>
-    b.classList.toggle('is-active', b.dataset.view === view));
+  document.querySelectorAll('.navbtn').forEach((b) => {
+    const on = b.dataset.view === view;
+    b.classList.toggle('is-active', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+}
+
+/* ปิดแผงฟอร์มแบบเลื่อนออก แทนการหายวับ */
+function closeLayer(scrim, panel) {
+  scrim.classList.add('is-leaving'); panel.classList.add('is-leaving');
+  setTimeout(() => { scrim.remove(); panel.remove(); }, reduceMotion() ? 0 : 230);
 }
 
 async function refreshCounts() {
@@ -268,378 +441,719 @@ async function refreshCounts() {
 const VIEW_TH = { overview: 'ภาพรวม', settings: 'ตั้งค่าเว็บ',
                   admins: 'ผู้ดูแลระบบ', audit: 'ประวัติการแก้ไข' };
 
-async function go(v) {
+/* ── ของที่ยังไม่ได้บันทึก ──
+   ฟอร์มและหน้าตั้งค่าลงทะเบียนไว้ตรงนี้ ก่อนเปลี่ยนหน้า/รีเฟรช/ปิดแท็บจะถามก่อนเสมอ
+   (เดิมแก้ตั้งค่าแล้วกดเมนูอื่น ค่าที่พิมพ์ไว้หายเงียบ ๆ) */
+const unsaved = new Set();            // แต่ละตัวมี isDirty() และ discard()
+const hasUnsaved = () => [...unsaved].some((u) => u.isDirty());
+window.addEventListener('beforeunload', (e) => {
+  if (!hasUnsaved()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+let goSeq = 0;
+async function go(v, { force = false } = {}) {
+  if (!force && hasUnsaved()) {
+    if (!confirm('มีการแก้ไขที่ยังไม่ได้บันทึก — ออกจากหน้านี้และทิ้งการแก้ไข?')) return;
+    [...unsaved].forEach((u) => u.discard());
+  }
+  [...unsaved].filter((u) => u.page).forEach((u) => unsaved.delete(u));
+  /* กดเมนูรัว ๆ: หน้าที่โหลดเสร็จช้ากว่าห้ามมาทับหน้าที่เลือกล่าสุด
+     จึงวาดลงกล่องพักก่อน แล้วค่อยสลับเข้าเฉพาะถ้ายังเป็นหน้าล่าสุดอยู่ */
+  const seq = ++goSeq;
   view = v; markActive();
   $('#topTitle').textContent = (SCHEMA[v] || {}).label || VIEW_TH[v] || '';
   openMenu(false);                       // จอเล็ก: เลือกแล้วปิดเมนูให้เลย
-  const main = $('#main'); clear(main);
-  main.appendChild(el('p', null, 'กำลังโหลด…'));
+  const main = $('#main');
+  clear(main);
+  main.appendChild(el('p', 'loading-line', 'กำลังโหลด…'));
+  const stage = document.createElement('div');
   try {
-    if (v === 'overview') await renderOverview(main);
-    else if (v === 'settings') await renderSettings(main);
-    else if (v === 'admins') await renderAdmins(main);
-    else if (v === 'audit') await renderAudit(main);
-    else await renderList(main, v);
+    if (v === 'overview') await renderOverview(stage);
+    else if (v === 'settings') await renderSettings(stage);
+    else if (v === 'admins') await renderAdmins(stage);
+    else if (v === 'audit') await renderAudit(stage);
+    else await renderList(stage, v);
   } catch (err) {
-    clear(main);
-    main.appendChild(el('div', 'alert', 'โหลดข้อมูลไม่สำเร็จ: ' + err.message));
+    clear(stage);
+    stage.appendChild(el('div', 'alert', 'โหลดข้อมูลไม่สำเร็จ: ' + err.message));
+    const retry = el('button', 'btn btn--ghost btn--sm', 'ลองอีกครั้ง');
+    retry.type = 'button';
+    retry.style.marginTop = '12px';
+    retry.addEventListener('click', () => go(v, { force: true }));
+    stage.appendChild(retry);
   }
+  if (seq !== goSeq) return;
+  main.replaceChildren(...stage.childNodes);
 }
 
 /* ── ภาพรวม ── */
-const PAGE_TH = {
-  '/': 'หน้าแรก', '/activities.html': 'กิจกรรม', '/halal-map.html': 'สถานที่ฮาลาล',
-  '/knowledge.html': 'คลังความรู้', '/about.html': 'เกี่ยวกับเรา', '/admin': 'หลังบ้าน',
+
+/* วันที่ตามเวลาไทย (YYYY-MM-DD) — ฐานข้อมูลแบ่งวันตาม Asia/Bangkok
+   เดิมใช้ toISOString() ตรง ๆ ซึ่งเป็นเวลา UTC ช่วงตีห้าถึงเจ็ดโมงเช้า "วันนี้" จึงกลายเป็นเมื่อวาน */
+const bkkDay = (daysAgo = 0) =>
+  new Date(Date.now() + 7 * 3600e3 - daysAgo * 864e5).toISOString().slice(0, 10);
+const dayLabel = (d, opts = { day: 'numeric', month: 'short' }) =>
+  new Date(d + 'T12:00:00+07:00').toLocaleDateString('th-TH', opts);
+
+/* หน้าเว็บจริงของเรา — เว็บใช้ cleanUrls จึงเห็นทั้ง /activities และ /activities.html ปนกัน */
+const SITE_PAGES = {
+  '/': 'หน้าแรก', '/activities': 'กิจกรรม', '/halal-map': 'สถานที่ฮาลาล',
+  '/knowledge': 'คลังความรู้', '/about': 'เกี่ยวกับเรา', '/gallery': 'แกลเลอรี',
 };
-const thDay = (d) => new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+function cleanPath(p) {
+  let s = String(p || '/').toLowerCase()
+    .replace(/\/index(\.html)?$/, '/').replace(/\.html$/, '');
+  if (s.length > 1) s = s.replace(/\/+$/, '');
+  return s || '/';
+}
+/* แถวที่ไม่ใช่หน้าเว็บจริงทิ้งไป — เช่น /Users/... ที่เกิดจากเปิดไฟล์ในเครื่องตอนพัฒนา
+   ไม่งั้นตัวเลขรวมทุกตัวจะเพี้ยนตามไปด้วย */
+const isSitePath = (p) => p in SITE_PAGES || /^\/[a-z0-9-]+$/.test(p);
+
+function relTime(iso) {
+  const t = new Date(iso), mins = Math.round((Date.now() - t) / 60000);
+  const hm = t.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  if (mins < 1) return 'เมื่อสักครู่';
+  if (mins < 60) return `${mins} นาทีที่แล้ว`;
+  if (mins < 60 * 6) return `${Math.round(mins / 60)} ชั่วโมงที่แล้ว`;
+  const days = Math.round((new Date(bkkDay()) - new Date(new Date(t.getTime() + 7 * 3600e3).toISOString().slice(0, 10))) / 864e5);
+  if (days === 0) return `วันนี้ ${hm}`;
+  if (days === 1) return `เมื่อวาน ${hm}`;
+  if (days < 7) return `${days} วันที่แล้ว`;
+  return t.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+}
+
+function greetWord() {
+  const h = new Date().getHours();
+  return h < 11 ? 'สวัสดีตอนเช้า' : h < 16 ? 'สวัสดีตอนบ่าย' : h < 19 ? 'สวัสดีตอนเย็น' : 'สวัสดี';
+}
+
+function card(cls, title, note) {
+  const c = el('section', 'ov-card ' + (cls || ''));
+  if (title) {
+    const h = el('div', 'ov-card__head');
+    h.appendChild(el('h3', null, title));
+    if (note) h.appendChild(note);
+    c.appendChild(h);
+  }
+  return c;
+}
 
 async function renderOverview(main) {
+  /* โหลดทุกอย่างพร้อมกัน แล้วค่อยวาดทีเดียว หน้าจะไม่กระตุกทีละกล่อง */
+  const [stats, content, emptyAlbums, feed] = await Promise.all([
+    loadStats(), loadContentStats(), albumsWithoutPhotos(),
+    db.from('audit_log').select('at,actor,action,table_name,summary')
+      .order('at', { ascending: false }).limit(6),
+  ]);
+  if (feed.error) throw feed.error;
+
   clear(main);
-  const head = el('div', 'head');
+  const head = el('div', 'head ov-head');
   const hi = el('div', 'greet');
-  hi.appendChild(el('h2', null, `สวัสดี ${me.name.split(' ')[0]}`));
+  const first = me.name.split(' ')[0];
+  hi.appendChild(el('h2', null, `${greetWord()} ${first.charAt(0).toUpperCase() + first.slice(1)}`));
   hi.appendChild(el('span', 'greet__day', new Date().toLocaleDateString('th-TH',
     { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })));
   head.appendChild(hi);
   const site = el('a', 'btn btn--ghost', 'เปิดหน้าเว็บ ↗');
   site.href = '/?fresh'; site.target = '_blank'; site.rel = 'noopener';
+  site.title = 'เปิดหน้าเว็บแบบข้าม cache ในเครื่อง · ของที่แก้จะขึ้นเว็บภายใน ~3 นาที';
   head.appendChild(site);
   main.appendChild(head);
-  main.appendChild(el('p', 'sub',
-    'เลือกหัวข้อจากเมนูซ้ายเพื่อแก้ไขข้อมูล · ของที่แก้จะขึ้นหน้าเว็บภายใน ~3 นาที '
-    + 'กด "เปิดหน้าเว็บ" เพื่อดูของล่าสุดทันทีโดยข้าม cache ในเครื่อง'));
 
-  const stack = el('div', 'stack');
-  main.appendChild(stack);
+  const grid = el('div', 'ov');
+  main.appendChild(grid);
+  grid.appendChild(visitsCard(stats));
+  grid.appendChild(todoCard(content, emptyAlbums));
+  grid.appendChild(shelf(content));
+  grid.appendChild(topPagesCard(stats));
+  grid.appendChild(feedCard(feed.data || []));
+}
 
-  /* แถวบน: สถิติผู้เข้าชม + หน้ายอดนิยม */
-  const two = el('div', 'two-col');
-  const visits = el('div', 'panel-card');
-  const top = el('div', 'panel-card');
-  two.append(visits, top);
-  stack.appendChild(two);
-  await renderVisits(visits, top);
-
-  /* การ์ดนับเนื้อหา */
-  const tiles = el('div', 'tiles');
-  Object.entries(SCHEMA).forEach(([k, s]) => {
-    const t = el('button', 'tile');
-    t.appendChild(el('b', null, String(counts[k] ?? 0)));
-    t.appendChild(el('span', null, s.label));
-    t.addEventListener('click', () => go(k));
-    tiles.appendChild(t);
+/* ── ข้อมูล ── */
+async function loadStats() {
+  const { data, error } = await db.from('page_stats')
+    .select('day,path,views,visitors').gte('day', bkkDay(59)).order('day');
+  if (error) return { error };
+  const byDay = new Map();
+  for (let i = 59; i >= 0; i--) byDay.set(bkkDay(i), { day: bkkDay(i), views: 0, visitors: 0 });
+  const byPath = new Map();
+  (data || []).forEach((r) => {
+    const p = cleanPath(r.path);
+    if (!isSitePath(p)) return;
+    const d = byDay.get(r.day);
+    if (!d) return;
+    d.views += r.views; d.visitors += r.visitors;
+    if (!byPath.has(p)) byPath.set(p, new Map());
+    byPath.get(p).set(r.day, (byPath.get(p).get(r.day) || 0) + r.views);
   });
-  stack.appendChild(tiles);
+  return { days: [...byDay.values()], byPath };
+}
 
-  /* เตือนอัลบั้มที่ยังไม่มีรูป — อัลบั้มแบบนี้ขึ้นเว็บแล้วเห็นแค่ปก
-     เป็นกับดักที่คนใหม่ตกซ้ำ ๆ เพราะใส่โฟลเดอร์ Drive แล้วนึกว่าเสร็จ */
-  const empty = await albumsWithoutPhotos();
-  if (empty.length) {
-    const warn = el('div', 'notice notice--warn');
-    warn.appendChild(el('span', null,
-      `อัลบั้ม ${empty.length} รายการยังไม่มีรูปในระบบ (${empty.slice(0, 3).join(' · ')}`
-      + `${empty.length > 3 ? ' …' : ''}) — หน้าเว็บจะเห็นแค่รูปปก`));
-    const goBtn = el('button', 'btn btn--ghost btn--sm', 'ไปจัดการรูป');
-    goBtn.addEventListener('click', () => go('albums'));
-    warn.appendChild(goBtn);
-    stack.appendChild(warn);
-  }
-
-  /* แก้ไขล่าสุด */
-  const { data } = await db.from('audit_log')
-    .select('at,actor,action,table_name,summary').order('at', { ascending: false }).limit(8);
-  if (data?.length) {
-    const card = el('div', 'panel-card');
-    const h = el('div', 'panel-card__head');
-    h.appendChild(el('h3', null, 'แก้ไขล่าสุด'));
-    const more = el('button', 'linkbtn note', 'ดูทั้งหมด');
-    more.style.color = 'var(--grape-600)';
-    more.addEventListener('click', () => go('audit'));
-    h.appendChild(more);
-    card.appendChild(h);
-
-    const wrap = el('div', 'tablewrap'); const tb = el('table');
-    const th = el('thead'); const hr = el('tr');
-    ['เมื่อไหร่', 'ใคร', 'ทำอะไร', 'รายการ'].forEach((x) => hr.appendChild(el('th', null, x)));
-    th.appendChild(hr); tb.appendChild(th);
-    const body = el('tbody');
-    data.forEach((r) => {
-      const tr = el('tr');
-      tr.appendChild(el('td', 'nowrap', new Date(r.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })));
-      tr.appendChild(el('td', null, r.actor || '—'));
-      tr.appendChild(el('td', null, ACTION_TH[r.action] || r.action));
-      tr.appendChild(el('td', 'title', r.summary || '—'));
-      body.appendChild(tr);
-    });
-    tb.appendChild(body); wrap.appendChild(tb); card.appendChild(wrap);
-    stack.appendChild(card);
-  }
+async function loadContentStats() {
+  const out = {};
+  await Promise.all(Object.keys(SCHEMA).map(async (t) => {
+    const { data, error } = await db.from(t).select('status');
+    /* โหลดไม่ได้ต้องแจ้งเป็นข้อผิดพลาด ไม่ใช่นับเป็น 0 แล้วบอกว่า "ไม่มีอะไรค้าง" */
+    if (error) throw error;
+    const rows = data || [];
+    out[t] = { total: rows.length, drafts: rows.filter((r) => r.status === 'draft').length };
+  }));
+  return out;
 }
 
 /* ชื่ออัลบั้มที่ยังไม่มีแถวในตาราง album_photos */
 async function albumsWithoutPhotos() {
-  const [{ data: albums }, counts2] = await Promise.all([
+  const [{ data: albums, error }, counts2] = await Promise.all([
     db.from('albums').select('id,title'),
     albumPhotoCounts(),
   ]);
+  if (error) throw error;
   return (albums || []).filter((a) => !counts2.get(a.id)).map((a) => a.title);
 }
 
-/* สถิติผู้เข้าชม 14 วันล่าสุด */
-async function renderVisits(box, topBox) {
-  const from = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
-  const { data, error } = await db.from('page_stats')
-    .select('day,path,views,visitors').gte('day', from).order('day');
+/* ── ผู้เข้าชม ── */
+const METRIC = { visitors: 'ผู้เข้าชม', views: 'การเปิดหน้า' };
+let ovRange = 14, ovMetric = 'visitors';
 
-  const head = el('div', 'panel-card__head');
-  head.appendChild(el('h3', null, 'ผู้เข้าชมเว็บ'));
-  head.appendChild(el('span', 'note', '14 วันล่าสุด'));
-  box.appendChild(head);
-
-  if (error) {
-    box.appendChild(el('div', 'chart-empty',
-      'ยังเปิดใช้สถิติไม่ได้ — ต้องรัน supabase/migrations/0004_page_stats.sql ก่อน'));
-    topBox.appendChild(el('div', 'panel-card__head')).appendChild(el('h3', null, 'หน้ายอดนิยม'));
-    topBox.appendChild(el('div', 'chart-empty', 'ยังไม่มีข้อมูล'));
-    return;
-  }
-
-  /* รวมยอดรายวัน */
-  const byDay = new Map();
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    byDay.set(d, { views: 0, visitors: 0 });
-  }
-  (data || []).forEach((r) => {
-    const e = byDay.get(r.day);
-    if (e) { e.views += r.views; e.visitors += r.visitors; }
+function seg(options, value, onPick, label) {
+  const g = el('div', 'seg');
+  g.setAttribute('role', 'group'); g.setAttribute('aria-label', label);
+  options.forEach(([v, text]) => {
+    const b = el('button', null, text);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(v === value));
+    b.addEventListener('click', () => {
+      g.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      onPick(v);
+    });
+    g.appendChild(b);
   });
-  const days = [...byDay.entries()];
-  const todayKey = days[days.length - 1][0];
-
-  const sum = (arr, k) => arr.reduce((a, [, v]) => a + v[k], 0);
-  const last7 = days.slice(-7), prev7 = days.slice(-14, -7);
-  const v7 = sum(last7, 'visitors'), vPrev = sum(prev7, 'visitors');
-  const delta = vPrev ? Math.round(((v7 - vPrev) / vPrev) * 100) : null;
-
-  const kpis = el('div', 'kpis');
-  const kpi = (n, label, extra) => {
-    const k = el('div', 'kpi');
-    k.appendChild(el('b', null, n.toLocaleString('th-TH')));
-    k.appendChild(el('span', null, label));
-    if (extra) k.appendChild(extra);
-    return k;
-  };
-  kpis.appendChild(kpi(byDay.get(todayKey).visitors, 'ผู้เข้าชมวันนี้'));
-  const wk = kpi(v7, 'ผู้เข้าชม 7 วัน');
-  if (delta !== null) {
-    wk.appendChild(el('em', delta >= 0 ? 'up' : 'down',
-      (delta >= 0 ? '▲ ' : '▼ ') + Math.abs(delta) + '% จากสัปดาห์ก่อน'));
-  }
-  kpis.appendChild(wk);
-  kpis.appendChild(kpi(sum(days, 'views'), 'เปิดหน้าเว็บรวม 14 วัน'));
-  box.appendChild(kpis);
-
-  const max = Math.max(1, ...days.map(([, v]) => v.views));
-  if (!sum(days, 'views')) {
-    box.appendChild(el('div', 'chart-empty',
-      'ยังไม่มีคนเข้าชมในช่วง 14 วันนี้ — ตัวเลขจะเริ่มขึ้นหลังมีคนเปิดเว็บ'));
-  } else {
-    box.appendChild(barChart(days, max, todayKey));
-  }
-
-  /* หน้ายอดนิยม */
-  const th2 = el('div', 'panel-card__head');
-  th2.appendChild(el('h3', null, 'หน้ายอดนิยม'));
-  th2.appendChild(el('span', 'note', '14 วันล่าสุด'));
-  topBox.appendChild(th2);
-
-  const byPath = new Map();
-  (data || []).forEach((r) => byPath.set(r.path, (byPath.get(r.path) || 0) + r.views));
-  const list = [...byPath.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-  if (!list.length) {
-    topBox.appendChild(el('div', 'chart-empty', 'ยังไม่มีข้อมูล'));
-    return;
-  }
-  const top = list[0][1];
-  const wrap = el('div', 'toplist');
-  list.forEach(([path, n]) => {
-    const row = el('div', 'toprow');
-    row.appendChild(el('span', 'nm', PAGE_TH[path] || path));
-    const track = el('span', 'track');
-    const fill = el('span', 'fill');
-    fill.style.width = Math.max(4, Math.round((n / top) * 100)) + '%';
-    track.appendChild(fill);
-    row.appendChild(track);
-    row.appendChild(el('span', 'n', n.toLocaleString('th-TH')));
-    wrap.appendChild(row);
-  });
-  topBox.appendChild(wrap);
+  return g;
 }
 
-/* กราฟแท่ง 14 วัน — ไม่ใช้ไลบรารีภายนอก
-   แท่งวาดด้วย SVG ที่ยืดเต็มความกว้าง (preserveAspectRatio=none)
-   แต่ "ตัวหนังสือทุกตัวอยู่ใน HTML" เพราะ text ใน SVG แบบนี้จะถูกยืดตามไปด้วย
-   จนตัวอักษรแบนผิดสัดส่วน — เป็นที่มาของหน้า dashboard ที่ตัวอักษรยืด */
-function barChart(days, max, todayKey) {
+function visitsCard(stats) {
+  const c = card('ov-visits');
+  const top = el('div', 'ov-visits__top');
+  top.appendChild(el('h3', null, 'ผู้เข้าชมเว็บ'));
+  c.appendChild(top);
+
+  if (stats.error) {
+    c.appendChild(el('div', 'chart-empty',
+      /* แยกให้ออก: ตารางยังไม่ถูกสร้างจริง ๆ กับแค่โหลดไม่สำเร็จชั่วคราว */
+      /42P01|PGRST205|does not exist|schema cache/i.test(`${stats.error.code} ${stats.error.message}`)
+        ? 'ยังเปิดใช้สถิติไม่ได้ — ต้องรัน supabase/migrations/0004_page_stats.sql ก่อน'
+        : 'โหลดสถิติผู้เข้าชมไม่สำเร็จ ลองรีเฟรชอีกครั้ง'));
+    return c;
+  }
+
+  const ctrls = el('div', 'ov-visits__ctrls');
+  ctrls.appendChild(seg([['visitors', 'ผู้เข้าชม'], ['views', 'การเปิดหน้า']], ovMetric,
+    (v) => { ovMetric = v; draw(false); }, 'เลือกตัวเลขที่จะดู'));
+  ctrls.appendChild(seg([[7, '7 วัน'], [14, '14 วัน'], [30, '30 วัน']], ovRange,
+    (v) => { ovRange = v; draw(false); }, 'เลือกช่วงเวลา'));
+  top.appendChild(ctrls);
+
+  const summary = el('div', 'ov-sum');
+  const chartBox = el('div');
+  const foot = el('p', 'ov-visits__note',
+    'ผู้เข้าชม = นับเบราว์เซอร์ละครั้งต่อวัน · การเปิดหน้า = ทุกครั้งที่มีคนเปิดหน้าใดก็ได้ · ไม่เก็บข้อมูลระบุตัวตน');
+  c.append(summary, chartBox, foot);
+
+  function draw(first) {
+    const days = stats.days.slice(-ovRange);
+    const prev = stats.days.slice(-ovRange * 2, -ovRange);
+    const k = ovMetric;
+    const total = days.reduce((a, d) => a + d[k], 0);
+    const before = prev.reduce((a, d) => a + d[k], 0);
+    const today = days[days.length - 1][k];
+
+    clear(summary);
+    const big = el('div', 'ov-sum__main');
+    big.appendChild(el('b', 'num', total.toLocaleString('th-TH')));
+    big.appendChild(el('span', null, `${METRIC[k]}รวม ${ovRange} วันล่าสุด`));
+    if (before) {
+      const pct = Math.round(((total - before) / before) * 100);
+      big.appendChild(el('em', 'ov-delta ' + (pct >= 0 ? 'up' : 'down'),
+        `${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct)}% จาก ${ovRange} วันก่อนหน้า`));
+    }
+    summary.appendChild(big);
+    const side = el('div', 'ov-sum__side');
+    const mini = (n, t) => {
+      const m = el('div', 'ov-mini');
+      m.append(el('b', 'num', n.toLocaleString('th-TH')), el('span', null, t));
+      return m;
+    };
+    side.append(mini(today, 'วันนี้'),
+                mini(Math.round((total / ovRange) * 10) / 10, 'เฉลี่ยต่อวัน'));
+    summary.appendChild(side);
+
+    clear(chartBox);
+    chartBox.appendChild(total
+      ? areaChart(days, k, first)
+      : el('div', 'chart-empty', `ยังไม่มี${METRIC[k]}ในช่วง ${ovRange} วันนี้ — ตัวเลขจะขึ้นหลังมีคนเปิดเว็บ`));
+  }
+  draw(true);
+  return c;
+}
+
+/* ค่าสูงสุดของแกนให้เป็นเลขกลม ๆ อ่านง่าย */
+function niceMax(v) {
+  if (v <= 4) return 4;
+  const p = 10 ** Math.floor(Math.log10(v));
+  const n = [1, 2, 2.5, 5, 10].find((m) => m * p >= v);
+  return n * p;
+}
+
+/* เส้นโค้งแบบ monotone — โค้งนุ่มแต่ไม่พุ่งเกินจุดข้อมูลหรือจมต่ำกว่าศูนย์ */
+function smoothPath(pts) {
+  const n = pts.length;
+  if (n < 2) return '';
+  const dx = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++) {
+    dx[i] = pts[i + 1][0] - pts[i][0];
+    m[i] = (pts[i + 1][1] - pts[i][1]) / dx[i];
+  }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9) { const r = 3 / Math.sqrt(s); t[i] = r * a * m[i]; t[i + 1] = r * b * m[i]; }
+  }
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += ` C${pts[i][0] + h},${pts[i][1] + t[i] * h} ${pts[i + 1][0] - h},${pts[i + 1][1] - t[i + 1] * h} ${pts[i + 1][0]},${pts[i + 1][1]}`;
+  }
+  return d;
+}
+
+/* กราฟพื้นที่ — SVG ยืดเต็มกว้าง (preserveAspectRatio=none) จึงห้ามมีตัวหนังสือข้างใน
+   ตัวเลขแกน จุด เส้นชี้ และกล่องบอกค่า เป็น HTML ทั้งหมด ตัวอักษรจึงไม่ถูกยืด */
+function areaChart(days, k, reveal) {
   const NS = 'http://www.w3.org/2000/svg';
-  const W = 100, H = 100, gap = 1.6;
+  const n = days.length;
+  const max = niceMax(Math.max(...days.map((d) => d[k])));
+  const X = (i) => (n === 1 ? 50 : (i / (n - 1)) * 100);
+  const Y = (v) => 100 - (v / max) * 100;
+  const pts = days.map((d, i) => [X(i), Y(d[k])]);
+
+  const box = el('div', 'area');
+  const plot = el('div', 'area__plot');
+  box.appendChild(plot);
+
+  /* เส้นแกนนอน + ตัวเลข */
+  [1, 0.5, 0].forEach((f) => {
+    const g = el('div', 'area__grid');
+    g.style.top = (100 - f * 100) + '%';
+    g.appendChild(el('span', 'num', String(Math.round(max * f))));
+    plot.appendChild(g);
+  });
+
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('class', 'chart');
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('viewBox', '0 0 100 100');
   svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('class', 'area__svg' + (reveal ? ' is-reveal' : ''));
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label',
-    `กราฟผู้เข้าชม ${days.length} วันล่าสุด สูงสุด ${max} ครั้งต่อวัน`);
-
-  [0, 0.5, 1].forEach((f) => {
-    const l = document.createElementNS(NS, 'line');
-    l.setAttribute('class', 'grid');
-    l.setAttribute('x1', 0); l.setAttribute('x2', W);
-    l.setAttribute('y1', H * f); l.setAttribute('y2', H * f);
-    l.setAttribute('vector-effect', 'non-scaling-stroke');
-    svg.appendChild(l);
+  svg.setAttribute('aria-label', `${METRIC[k]}รายวัน ${n} วันล่าสุด สูงสุด ${Math.max(...days.map((d) => d[k]))} ต่อวัน`);
+  const defs = document.createElementNS(NS, 'defs');
+  const gid = 'areaFill' + Math.random().toString(36).slice(2, 7);
+  const lg = document.createElementNS(NS, 'linearGradient');
+  lg.setAttribute('id', gid); lg.setAttribute('x1', 0); lg.setAttribute('y1', 0);
+  lg.setAttribute('x2', 0); lg.setAttribute('y2', 1);
+  [[0, '.32'], [1, '0']].forEach(([o, op]) => {
+    const s = document.createElementNS(NS, 'stop');
+    s.setAttribute('offset', o); s.setAttribute('stop-color', '#7C3AED'); s.setAttribute('stop-opacity', op);
+    lg.appendChild(s);
   });
+  defs.appendChild(lg); svg.appendChild(defs);
 
-  const bw = (W - gap * (days.length - 1)) / days.length;
-  days.forEach(([day, v], i) => {
-    const h = Math.max(v.views ? 2 : 0, (v.views / max) * H);
-    const r = document.createElementNS(NS, 'rect');
-    r.setAttribute('class', 'bar' + (day === todayKey ? ' today' : ''));
-    r.setAttribute('x', i * (bw + gap));
-    r.setAttribute('y', H - h);
-    r.setAttribute('width', bw);
-    r.setAttribute('height', h);
-    const t = document.createElementNS(NS, 'title');
-    t.textContent = `${thDay(day)} · เปิด ${v.views} ครั้ง · ผู้เข้าชม ${v.visitors} คน`;
-    r.appendChild(t);
-    svg.appendChild(r);
+  const line = smoothPath(pts);
+  const fill = document.createElementNS(NS, 'path');
+  fill.setAttribute('d', `${line} L100,100 L0,100 Z`);
+  fill.setAttribute('fill', `url(#${gid})`);
+  const stroke = document.createElementNS(NS, 'path');
+  stroke.setAttribute('d', line);
+  stroke.setAttribute('class', 'area__line');
+  stroke.setAttribute('vector-effect', 'non-scaling-stroke');
+  svg.append(fill, stroke);
+  plot.appendChild(svg);
+
+  /* จุดวันนี้ */
+  const today = el('span', 'area__dot area__dot--today');
+  today.style.left = X(n - 1) + '%'; today.style.top = Y(days[n - 1][k]) + '%';
+  plot.appendChild(today);
+
+  /* ชี้แล้วเห็นค่าของวันนั้น */
+  const guide = el('span', 'area__guide');
+  const dot = el('span', 'area__dot');
+  const tip = el('div', 'area__tip');
+  plot.append(guide, dot, tip);
+  function show(i) {
+    const d = days[i];
+    plot.classList.add('is-hover');
+    guide.style.left = dot.style.left = X(i) + '%';
+    dot.style.top = Y(d[k]) + '%';
+    clear(tip);
+    tip.appendChild(el('b', null, dayLabel(d.day, { weekday: 'short', day: 'numeric', month: 'short' })));
+    tip.appendChild(el('span', null, `ผู้เข้าชม ${d.visitors.toLocaleString('th-TH')} · เปิดหน้า ${d.views.toLocaleString('th-TH')}`));
+    tip.style.left = X(i) + '%';
+    tip.classList.toggle('is-left', X(i) > 70);
+    tip.classList.toggle('is-right', X(i) < 30);
+  }
+  plot.addEventListener('pointermove', (e) => {
+    const r = plot.getBoundingClientRect();
+    show(Math.max(0, Math.min(n - 1, Math.round(((e.clientX - r.left) / r.width) * (n - 1)))));
   });
+  plot.addEventListener('pointerleave', () => plot.classList.remove('is-hover'));
 
-  const box = el('div', 'bars');
-  box.appendChild(svg);
-
-  /* วันที่ใต้แท่ง — ตัวเลขวันอย่างเดียวเพื่อไม่ให้แน่นเกินไป
-     แล้วบอกช่วงวันเต็ม ๆ ไว้บรรทัดล่าง */
-  const axis = el('div', 'bars__axis');
-  axis.style.gridTemplateColumns = `repeat(${days.length}, 1fr)`;
-  days.forEach(([day]) => axis.appendChild(el('span', null, String(new Date(day).getDate()))));
+  /* วันที่ใต้กราฟ — ไม่ใส่ทุกวัน เดี๋ยวแน่นเกิน */
+  const axis = el('div', 'area__axis');
+  const step = n <= 7 ? 1 : n <= 14 ? 2 : 5;
+  days.forEach((d, i) => {
+    if ((n - 1 - i) % step) return;
+    const t = el('span', 'num', i === n - 1 ? 'วันนี้' : dayLabel(d.day));
+    t.style.left = X(i) + '%';
+    axis.appendChild(t);
+  });
   box.appendChild(axis);
-  box.appendChild(el('div', 'bars__cap',
-    `${thDay(days[0][0])} – ${thDay(todayKey)} · แท่งสุดท้ายคือวันนี้`));
   return box;
+}
+
+/* ── หน้ายอดนิยม ── */
+function topPagesCard(stats) {
+  const c = card('ov-top', 'หน้ายอดนิยม', el('span', 'note', '14 วันล่าสุด · นับการเปิดหน้า'));
+  if (stats.error) { c.appendChild(el('div', 'chart-empty', 'ยังไม่มีข้อมูล')); return c; }
+  const from = bkkDay(13);
+  const list = [...stats.byPath.entries()]
+    .map(([p, m]) => [p, [...m.entries()].filter(([d]) => d >= from).reduce((a, [, v]) => a + v, 0)])
+    .filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  if (!list.length) { c.appendChild(el('div', 'chart-empty', 'ยังไม่มีคนเปิดหน้าไหนในช่วงนี้')); return c; }
+  const sum = list.reduce((a, [, v]) => a + v, 0);
+  const wrap = el('ol', 'ov-pages');
+  list.forEach(([p, v]) => {
+    const li = el('li');
+    const row = el('div', 'ov-pages__row');
+    row.appendChild(el('span', 'ov-pages__nm', SITE_PAGES[p] || p));
+    row.appendChild(el('span', 'ov-pages__n num', v.toLocaleString('th-TH')));
+    row.appendChild(el('span', 'ov-pages__pct num', Math.round((v / sum) * 100) + '%'));
+    const bar = el('span', 'ov-pages__bar');
+    const fillEl = el('span');
+    fillEl.style.width = Math.max(3, (v / list[0][1]) * 100) + '%';
+    bar.appendChild(fillEl);
+    li.append(row, bar);
+    wrap.appendChild(li);
+  });
+  c.appendChild(wrap);
+  return c;
+}
+
+/* ── ชั้นนับเนื้อหา ── */
+function shelf(content) {
+  const s = el('div', 'ov-shelf');
+  Object.entries(SCHEMA).forEach(([k, sc]) => {
+    const st = content[k] || { total: 0, drafts: 0 };
+    const b = el('button', 'ov-chip');
+    b.type = 'button';
+    const ic = el('span', 'ov-chip__ic'); ic.appendChild(navIcon(k));
+    const tx = el('span', 'ov-chip__tx');
+    tx.appendChild(el('b', 'num', String(st.total)));
+    tx.appendChild(el('span', null, sc.label));
+    b.append(ic, tx);
+    if (st.drafts) b.appendChild(el('span', 'ov-chip__draft', `ร่าง ${st.drafts}`));
+    b.addEventListener('click', () => go(k));
+    s.appendChild(b);
+  });
+  return s;
+}
+
+/* ── งานค้าง + ทางลัด ── */
+function todoCard(content, emptyAlbums) {
+  const c = card('ov-todo', 'รอจัดการ');
+  const list = el('ul', 'ov-todo__list');
+  const item = (text, sub, to) => {
+    const li = el('li');
+    const b = el('button', 'ov-todo__item');
+    b.type = 'button';
+    const t = el('span', 'ov-todo__tx');
+    t.appendChild(el('b', null, text));
+    if (sub) t.appendChild(el('span', null, sub));
+    b.append(el('span', 'ov-todo__dot'), t, el('span', 'ov-todo__go', '›'));
+    b.addEventListener('click', () => go(to));
+    li.appendChild(b); list.appendChild(li);
+  };
+  /* อัลบั้มที่ยังไม่มีรูปขึ้นเว็บแล้วเห็นแค่ปก — กับดักที่คนใหม่ตกบ่อยที่สุด จึงขึ้นก่อน */
+  if (emptyAlbums.length) {
+    item(`อัลบั้ม ${emptyAlbums.length} รายการยังไม่มีรูป`,
+      emptyAlbums.slice(0, 2).join(' · ') + (emptyAlbums.length > 2 ? ' …' : ''), 'albums');
+  }
+  Object.entries(SCHEMA).forEach(([k, sc]) => {
+    const n = content[k]?.drafts || 0;
+    if (n) item(`${sc.label}: ร่าง ${n} รายการ`, 'ยังไม่ขึ้นหน้าเว็บ', k);
+  });
+  if (list.children.length) c.appendChild(list);
+  else c.appendChild(el('p', 'ov-todo__clear', 'ไม่มีอะไรค้าง ทุกอย่างขึ้นเว็บเรียบร้อย'));
+
+  const quick = el('div', 'ov-quick');
+  quick.appendChild(el('span', 'ov-quick__lb', 'เพิ่มใหม่'));
+  const btns = el('div', 'ov-quick__btns');
+  [['activities', 'กิจกรรม'], ['docs', 'เอกสาร'], ['albums', 'อัลบั้ม'], ['places', 'สถานที่']].forEach(([t, lb]) => {
+    const b = el('button', 'btn btn--ghost btn--sm', '+ ' + lb);
+    b.type = 'button';
+    b.addEventListener('click', async () => { await go(t); openForm(t, null); });
+    btns.appendChild(b);
+  });
+  quick.appendChild(btns);
+  c.appendChild(quick);
+  return c;
+}
+
+/* ── ความเคลื่อนไหวล่าสุด ── */
+function feedCard(rows) {
+  const more = el('button', 'linkbtn', 'ดูทั้งหมด');
+  more.addEventListener('click', () => go('audit'));
+  const c = card('ov-feed', 'แก้ไขล่าสุด', more);
+  if (!rows.length) { c.appendChild(el('div', 'chart-empty', 'ยังไม่มีใครแก้ไขอะไร')); return c; }
+  const ul = el('ul', 'feed');
+  rows.forEach((r) => {
+    const who = String(r.actor || '—').split('@')[0];
+    const li = el('li', 'feed__item');
+    const av = el('span', 'feed__av feed__av--' + (r.action || 'update'), who.charAt(0).toUpperCase());
+    av.setAttribute('aria-hidden', 'true');
+    const body = el('div', 'feed__body');
+    const line = el('p', 'feed__line');
+    line.append(el('b', null, who), document.createTextNode(' ' + (ACTION_TH[r.action] || r.action) + ' '),
+                el('span', 'feed__where', (SCHEMA[r.table_name] || {}).label || r.table_name || ''));
+    body.append(line, el('p', 'feed__what', r.summary || '—'));
+    const time = el('time', 'feed__time', relTime(r.at));
+    time.dateTime = r.at;
+    time.title = new Date(r.at).toLocaleString('th-TH');
+    li.append(av, body, time);
+    ul.appendChild(li);
+  });
+  c.appendChild(ul);
+  return c;
 }
 
 const ACTION_TH = { insert: 'เพิ่ม', update: 'แก้ไข', delete: 'ลบ' };
 
+/* ══════════════════════════════════════════════════════════════
+   ตัวอย่างบนเว็บจริง — เปิดหน้าที่รายการนั้นไปแสดง พร้อม ?preview
+   หน้าเว็บจะดึงข้อมูลด้วยสิทธิ์ผู้ดูแลที่ล็อกอินอยู่ จึงเห็น "ร่าง" ด้วย (คนอื่นไม่เห็น)
+   ══════════════════════════════════════════════════════════════ */
+const PREVIEW_PAGE = {
+  activities: '/activities.html', docs: '/knowledge.html', albums: '/gallery.html',
+  places: '/halal-map.html', members: '/about.html', settings: '/',
+};
+const previewUrl = (t) => (PREVIEW_PAGE[t] || '/') + '?preview';
+function previewLink(t, label = 'ดูตัวอย่างบนเว็บ') {
+  const a = el('a', 'btn btn--ghost');
+  a.href = previewUrl(t); a.target = '_blank'; a.rel = 'noopener';
+  a.title = 'เปิดหน้าเว็บจริงที่รวมรายการที่เป็นร่างไว้ด้วย · คนทั่วไปยังไม่เห็นร่าง';
+  a.append(el('span', null, label), icon('out'));
+  return a;
+}
+
+/* ไอคอนเส้นเล็ก ๆ ที่ใช้ในหน้าจัดการ */
+const UI_ICONS = {
+  out: 'M14 4h6v6M20 4l-9 9M10 5H4v15h15v-6',
+  search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
+  plus: 'M12 5v14M5 12h14',
+  close: 'M6 6l12 12M18 6L6 18',
+  photo: 'M3 6h14v12H3zM7 3h14v12M3 15l4-4 3 3 2-2 5 5',
+  pin: 'M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95z',
+  chev: 'M9 6l6 6-6 6',
+  trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+  image: 'M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9h.01',
+};
+function icon(name, cls) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const s = document.createElementNS(NS, 'svg');
+  s.setAttribute('viewBox', '0 0 24 24');
+  s.setAttribute('aria-hidden', 'true');
+  s.setAttribute('class', 'ic' + (cls ? ' ' + cls : ''));
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', UI_ICONS[name]);
+  s.appendChild(p);
+  return s;
+}
+
+/* หัวหน้า: ชื่อ + คำอธิบายสั้น + ปุ่มด้านขวา */
+function pageHead(title, sub, ...actions) {
+  const h = el('div', 'pg-head');
+  const t = el('div', 'pg-head__tx');
+  t.appendChild(el('h2', null, title));
+  if (sub) t.appendChild(el('p', 'pg-sub', sub));
+  h.appendChild(t);
+  if (actions.length) {
+    const a = el('div', 'pg-head__acts');
+    actions.filter(Boolean).forEach((x) => a.appendChild(x));
+    h.appendChild(a);
+  }
+  return h;
+}
+
+/* ปุ่มกลุ่มแบบแคปซูล — คืน element ที่มี .value ให้อ่านค่าปัจจุบัน */
+function segmented(options, value, onChange, label, cls = '') {
+  const g = el('div', 'seg ' + cls);
+  g.setAttribute('role', 'group');
+  g.setAttribute('aria-label', label);
+  g.value = value;
+  options.forEach((o) => {
+    const b = el('button');
+    b.type = 'button';
+    b.dataset.v = o.v;
+    b.appendChild(el('span', null, o.label));
+    if (o.count != null) b.appendChild(el('span', 'seg__n', String(o.count)));
+    if (o.title) b.title = o.title;
+    b.setAttribute('aria-pressed', String(o.v === value));
+    b.addEventListener('click', () => {
+      g.value = o.v;
+      g.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      onChange(o.v);
+    });
+    g.appendChild(b);
+  });
+  return g;
+}
+
 /* ── รายการ ── */
+/* บรรทัดรองใต้ชื่อของแต่ละชนิด — ให้รู้ว่าเป็นรายการไหนโดยไม่ต้องเปิด */
+const ROW_META = {
+  activities: (r) => [fmtDate(r.date), r.location],
+  docs: (r) => [fmtDate(r.date), r.file_id ? 'มีไฟล์ PDF' : 'ยังไม่มีไฟล์'],
+  albums: (r, ctx) => [fmtDate(r.date), ctx.photos ? ctx.photos + ' รูป' : null],
+  places: (r) => [r.type, r.coords || (r.map_url ? 'มีลิงก์แผนที่' : 'ยังไม่มีแผนที่')],
+  members: (r) => [r.title, r.sort_order != null ? 'ลำดับ ' + r.sort_order : null],
+};
+const IMG_KEY = { activities: 'cover_id', albums: 'cover_id', members: 'cover_id', docs: 'file_id' };
+const ADD_LABEL = { activities: 'เพิ่มกิจกรรม', docs: 'เพิ่มเอกสาร', albums: 'สร้างอัลบั้ม', places: 'เพิ่มสถานที่', members: 'เพิ่มกรรมการ' };
+
 async function renderList(main, table) {
   const s = SCHEMA[table];
   const [col, dir] = s.order.split('.');
   const { data, error } = await db.from(table).select('*').order(col, { ascending: dir === 'asc' });
   if (error) throw error;
-
-  /* อัลบั้ม: รูปที่ขึ้นเว็บมาจากตาราง album_photos ไม่ใช่จากโฟลเดอร์ Drive
-     จึงต้องเห็นตั้งแต่หน้ารายการว่าอัลบั้มไหนยังไม่มีรูปสักใบ */
   const photoCount = s.photos ? await albumPhotoCounts() : null;
 
   clear(main);
-  const head = el('div', 'head');
-  head.appendChild(el('h2', null, s.label));
-  const add = el('button', 'btn btn--primary', '+ เพิ่มใหม่');
+  const nPub = data.filter((r) => r.status === 'published').length;
+  const add = el('button', 'btn btn--primary');
+  add.append(icon('plus'), el('span', null, ADD_LABEL[table] || 'เพิ่มใหม่'));
   add.addEventListener('click', () => openForm(table, null));
-  head.appendChild(add);
-  main.appendChild(head);
+  main.appendChild(pageHead(s.label,
+    data.length ? `${data.length} รายการ · ขึ้นเว็บอยู่ ${nPub}` : 'ยังไม่มีรายการ',
+    previewLink(table), add));
 
-  const tools = el('div', 'tools');
-  const search = el('input'); search.type = 'search'; search.placeholder = 'ค้นหา…';
-  const filter = el('select');
-  filter.appendChild(new Option('ทุกสถานะ', ''));
-  STATUS.forEach((x) => filter.appendChild(new Option(x.label, x.v)));
-  tools.append(search, filter);
-  let onlyPinned = null;
+  /* ตัวกรอง: สถานะเป็นแท็บพร้อมจำนวน · ค้นหา · (กิจกรรม) เฉพาะที่ปักหมุด */
+  const st = { status: '', q: '', pinned: false };
+  const count = (v) => data.filter((r) => r.status === v).length;
+  const bar = el('div', 'filters');
+  bar.appendChild(segmented(
+    [{ v: '', label: 'ทั้งหมด', count: data.length }]
+      .concat(STATUS.map((x) => ({ v: x.v, label: x.label, count: count(x.v) }))),
+    '', (v) => { st.status = v; draw(); }, 'กรองตามสถานะ'));
+  const sw = el('label', 'search');
+  sw.appendChild(icon('search'));
+  const search = el('input');
+  search.type = 'search'; search.placeholder = 'ค้นหาชื่อ…';
+  search.setAttribute('aria-label', 'ค้นหาในรายการ');
+  search.addEventListener('input', () => { st.q = search.value.trim().toLowerCase(); draw(); });
+  sw.appendChild(search);
+  bar.appendChild(sw);
   if (table === 'activities') {
-    onlyPinned = el('select');
-    onlyPinned.appendChild(new Option('ทั้งหมด', ''));
-    onlyPinned.appendChild(new Option('เฉพาะที่ปักหมุด', '1'));
-    tools.appendChild(onlyPinned);
+    const pin = el('button', 'chip-toggle');
+    pin.type = 'button';
+    pin.setAttribute('aria-pressed', 'false');
+    pin.append(icon('pin'), el('span', null, 'เฉพาะที่ปักหมุด'));
+    pin.addEventListener('click', () => {
+      st.pinned = !st.pinned;
+      pin.setAttribute('aria-pressed', String(st.pinned));
+      draw();
+    });
+    bar.appendChild(pin);
   }
-  main.appendChild(tools);
+  main.appendChild(bar);
 
-  const card = el('div', 'card'); const wrap = el('div', 'tablewrap');
-  const tb = el('table'); const thead = el('thead'); const hr = el('tr');
-  s.cols.forEach(([, label]) => hr.appendChild(el('th', null, label)));
-  hr.appendChild(el('th', null, ''));
-  thead.appendChild(hr); tb.appendChild(thead);
-  const body = el('tbody'); tb.appendChild(body);
-  wrap.appendChild(tb); card.appendChild(wrap); main.appendChild(card);
+  const listBox = el('div', 'rows');
+  main.appendChild(listBox);
+
+  function row(r) {
+    const li = el('div', 'row');
+    const btn = el('button', 'row__main');
+    btn.type = 'button';
+    btn.addEventListener('click', () => openForm(table, r));
+
+    const k = IMG_KEY[table];
+    if (k) {
+      const th = el('span', 'row__thumb' + (table === 'members' ? ' row__thumb--round' : ''));
+      if (r[k]) {
+        const im = el('img');
+        im.referrerPolicy = 'no-referrer'; im.loading = 'lazy'; im.alt = '';
+        im.src = driveThumb(r[k]);
+        th.appendChild(im);
+      } else th.appendChild(icon('image'));
+      btn.appendChild(th);
+    }
+
+    const tx = el('span', 'row__tx');
+    const t = el('span', 'row__title');
+    t.appendChild(el('span', null, r[s.title] || '(ไม่มีชื่อ)'));
+    if (table === 'activities' && r.featured) {
+      const p = el('span', 'pin');
+      p.title = 'ปักหมุดเป็นกิจกรรมเด่น';
+      p.append(starSvg(), el('span', null, 'เด่น'));
+      t.appendChild(p);
+    }
+    tx.appendChild(t);
+    const meta = (ROW_META[table] || (() => []))(r, { photos: photoCount && photoCount.get(r.id) })
+      .filter((x) => x && x !== '—');
+    if (table === 'albums' && !(photoCount && photoCount.get(r.id))) meta.push('ยังไม่มีรูป');
+    if (meta.length) tx.appendChild(el('span', 'row__meta', meta.join(' · ')));
+    btn.appendChild(tx);
+
+    btn.appendChild(el('span', 'tag tag--' + r.status, (STATUS.find((x) => x.v === r.status) || {}).label || r.status));
+    btn.appendChild(icon('chev', 'row__go'));
+    li.appendChild(btn);
+
+    if (s.photos) {
+      const ph = el('button', 'btn btn--ghost btn--sm row__side');
+      ph.type = 'button';
+      ph.append(icon('photo'), el('span', null, 'จัดการรูป'));
+      ph.addEventListener('click', () => openPhotos(r));
+      li.appendChild(ph);
+    }
+    return li;
+  }
 
   function draw() {
-    clear(body);
-    const q = search.value.trim().toLowerCase();
-    const st = filter.value;
+    clear(listBox);
     const rows = data.filter((r) =>
-      (!st || r.status === st) &&
-      (!onlyPinned || !onlyPinned.value || r.featured) &&
-      (!q || String(r[s.title] || '').toLowerCase().includes(q)));
+      (!st.status || r.status === st.status) &&
+      (!st.pinned || r.featured) &&
+      (!st.q || String(r[s.title] || '').toLowerCase().includes(st.q)));
     if (!rows.length) {
-      clear(card); card.appendChild(el('div', 'empty', 'ไม่มีรายการที่ตรงกับที่ค้นหา'));
+      const e = el('div', 'empty-state');
+      if (!data.length) {
+        e.appendChild(el('b', null, `ยังไม่มี${s.label}`));
+        e.appendChild(el('span', null, 'เริ่มจากเพิ่มรายการแรก — บันทึกเป็นร่างไว้ก่อนแล้วกดดูตัวอย่างได้'));
+        const b = el('button', 'btn btn--primary');
+        b.append(icon('plus'), el('span', null, ADD_LABEL[table] || 'เพิ่มใหม่'));
+        b.addEventListener('click', () => openForm(table, null));
+        e.appendChild(b);
+      } else {
+        e.appendChild(el('b', null, 'ไม่พบรายการที่ตรงกับตัวกรอง'));
+        e.appendChild(el('span', null, 'ลองเปลี่ยนคำค้นหรือเลือก "ทั้งหมด"'));
+      }
+      listBox.appendChild(e);
       return;
     }
-    if (!card.contains(wrap)) { clear(card); card.appendChild(wrap); }
-    rows.forEach((r) => {
-      const tr = el('tr');
-      s.cols.forEach(([k, , kind]) => {
-        const td = el('td');
-        if (kind === 'img') {
-          const im = el('img', 'thumb');
-          im.referrerPolicy = 'no-referrer'; im.loading = 'lazy'; im.alt = '';
-          if (r[k]) im.src = driveThumb(r[k]);
-          td.appendChild(im);
-        } else if (kind === 'status') {
-          td.appendChild(el('span', 'tag tag--' + r[k], (STATUS.find((x) => x.v === r[k]) || {}).label || r[k]));
-        } else if (k === 'date') {
-          td.textContent = fmtDate(r[k]);
-        } else if (kind === 'photocount') {
-          const n = (photoCount && photoCount.get(r.id)) || 0;
-          td.appendChild(n
-            ? el('span', null, n + ' รูป')
-            : el('span', 'tag tag--draft', 'ยังไม่มีรูป'));
-        } else if (kind === 'title+featured') {
-          td.className = 'title';
-          const line = el('span', 'titleline');
-          line.appendChild(el('span', null, r[k] ?? '—'));
-          /* ปักหมุด = กิจกรรมเด่นที่หน้าแรกหยิบขึ้นมาโชว์ก่อน
-             ต้องเห็นได้จากหน้ารายการโดยไม่ต้องเปิดเข้าไปดูทีละอัน */
-          if (r.featured) {
-            const pin = el('span', 'pin');
-            pin.title = 'ปักหมุดเป็นกิจกรรมเด่น';
-            pin.appendChild(starSvg());
-            pin.appendChild(el('span', null, 'เด่น'));
-            line.appendChild(pin);
-          }
-          td.appendChild(line);
-        } else {
-          td.textContent = r[k] ?? '—';
-          if (k === s.title) td.className = 'title';
-        }
-        tr.appendChild(td);
-      });
-      const act = el('td'); const box = el('div', 'rowacts');
-      if (s.photos) {
-        const ph = el('button', 'btn btn--ghost btn--sm', 'จัดการรูป');
-        ph.addEventListener('click', () => openPhotos(r));
-        box.appendChild(ph);
-      }
-      const edit = el('button', 'btn btn--ghost btn--sm', 'แก้ไข');
-      edit.addEventListener('click', () => openForm(table, r));
-      box.appendChild(edit); act.appendChild(box); tr.appendChild(act);
-      body.appendChild(tr);
-    });
+    rows.forEach((r) => listBox.appendChild(row(r)));
   }
-  search.addEventListener('input', draw);
-  filter.addEventListener('change', draw);
-  if (onlyPinned) onlyPinned.addEventListener('change', draw);
   draw();
 }
 
@@ -651,7 +1165,8 @@ async function renderList(main, table) {
    หน้านี้คือที่เดียวที่เขียนตารางนั้น — ไม่มีหน้านี้ อัลบั้มใหม่จะมีแต่ปก
    ══════════════════════════════════════════════════════════════ */
 async function albumPhotoCounts() {
-  const { data } = await db.from('album_photos').select('album_id');
+  const { data, error } = await db.from('album_photos').select('album_id');
+  if (error) throw error;
   const m = new Map();
   (data || []).forEach((p) => m.set(p.album_id, (m.get(p.album_id) || 0) + 1));
   return m;
@@ -663,9 +1178,11 @@ function openPhotos(album) {
   const scrim = el('div', 'scrim');
   const panel = el('div', 'panel panel--wide');
   const head = el('div', 'panel__head');
-  head.appendChild(el('h3', null, 'รูปในอัลบั้ม · ' + (album.title || '')));
-  const close = el('button', 'btn btn--ghost btn--sm', 'ปิด');
-  head.appendChild(close); panel.appendChild(head);
+  const ht = el('div', 'panel__title');
+  ht.append(el('span', 'panel__kicker', 'รูปในอัลบั้ม'), el('h3', null, album.title || ''));
+  const close = el('button', 'iconbtn-round');
+  close.type = 'button'; close.setAttribute('aria-label', 'ปิด'); close.appendChild(icon('close'));
+  head.append(ht, close); panel.appendChild(head);
 
   const body = el('div', 'panel__body'); panel.appendChild(body);
   body.appendChild(el('p', 'sub',
@@ -715,7 +1232,7 @@ function openPhotos(album) {
   foot.appendChild(done); panel.appendChild(foot);
 
   function shut() {
-    scrim.remove(); panel.remove();
+    closeLayer(scrim, panel);
     document.removeEventListener('keydown', esc);
     go('albums');                       // กลับไปหน้ารายการเพื่อให้ตัวเลขจำนวนรูปตรง
   }
@@ -835,139 +1352,354 @@ function openPhotos(album) {
   load();
 }
 
-/* ── ฟอร์มเพิ่ม/แก้ไข ── */
+/* ── ฟอร์มเพิ่ม/แก้ไข ──
+   สถานะอยู่บนสุด เพราะเป็นตัวตัดสินว่าคนทั่วไปจะเห็นหรือไม่
+   ปุ่ม "บันทึกและดูตัวอย่าง" = บันทึกแล้วเปิดหน้าเว็บจริงในโหมดตัวอย่าง (เห็นร่างด้วย) โดยไม่ปิดฟอร์ม */
+const STATUS_HINT = {
+  published: 'ขึ้นหน้าเว็บ คนทั่วไปเห็น',
+  draft: 'ยังไม่ขึ้นเว็บ เห็นเฉพาะผู้ดูแลในโหมดตัวอย่าง',
+  archived: 'ซ่อนจากหน้าเว็บ เก็บไว้ดูย้อนหลัง',
+};
+const SAVE_LABEL = { published: 'บันทึกและเผยแพร่', draft: 'บันทึกร่าง', archived: 'บันทึก' };
+
 function openForm(table, row) {
   const s = SCHEMA[table];
-  const isNew = !row;
-  const val = { ...(row || {}) };
-  if (isNew) val.status = 'draft';
+  let isNew = !row;
+  let current = { ...(row || {}) };
+  let dirty = false;
+  if (isNew) current.status = 'draft';
 
   const scrim = el('div', 'scrim');
-  const panel = el('div', 'panel');
-  const head = el('div', 'panel__head');
-  head.appendChild(el('h3', null, (isNew ? 'เพิ่ม' : 'แก้ไข') + s.label));
-  const close = el('button', 'btn btn--ghost btn--sm', 'ปิด');
-  head.appendChild(close); panel.appendChild(head);
+  const panel = el('div', 'panel panel--form');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
 
-  const body = el('div', 'panel__body'); panel.appendChild(body);
+  const head = el('div', 'panel__head');
+  const ht = el('div', 'panel__title');
+  ht.appendChild(el('span', 'panel__kicker', s.label));
+  const h3 = el('h3', null, isNew ? (ADD_LABEL[table] || 'เพิ่มใหม่') : (row[s.title] || 'แก้ไข'));
+  h3.id = 'formTitle';
+  panel.setAttribute('aria-labelledby', 'formTitle');
+  ht.appendChild(h3);
+  const close = el('button', 'iconbtn-round');
+  close.type = 'button';
+  close.setAttribute('aria-label', 'ปิด');
+  close.appendChild(icon('close'));
+  head.append(ht, close);
+  panel.appendChild(head);
+
+  /* แถบสถานะ */
+  const statusBar = el('div', 'statusbar');
+  const statusHint = el('p', 'statusbar__hint', STATUS_HINT[current.status]);
+  const statusSeg = segmented(STATUS.map((x) => ({ v: x.v, label: x.label })), current.status || 'draft', (v) => {
+    statusHint.textContent = STATUS_HINT[v];
+    statusSeg.dataset.state = v;
+    save.textContent = SAVE_LABEL[v];
+    markDirty();
+  }, 'สถานะ', 'seg--status');
+  statusSeg.dataset.state = current.status || 'draft';
+  statusBar.append(statusSeg, statusHint);
+  panel.appendChild(statusBar);
+
+  const body = el('div', 'panel__body');
+  panel.appendChild(body);
   const inputs = {};
 
-  s.fields.forEach((f) => {
-    const wrap = el('div', f.type === 'bool' ? 'field check' : 'field');
+  s.fields.filter((f) => f.type !== 'status').forEach((f) => {
     const id = 'f_' + f.k;
-    const lab = el('label', null, f.label + (f.required ? ' *' : ''));
+    const wrap = el('div', 'field' + (f.type === 'bool' ? ' field--switch' : '') + (f.type === 'drive' ? ' field--drive' : ''));
+    const lab = el('label', null, f.label);
     lab.htmlFor = id;
+    if (f.required) lab.appendChild(el('span', 'req', ' *'));
 
     let input;
-    if (f.type === 'textarea') { input = el('textarea'); input.value = val[f.k] ?? ''; }
-    else if (f.type === 'bool') { input = el('input'); input.type = 'checkbox'; input.checked = !!val[f.k]; }
+    const v = current[f.k];
+    if (f.type === 'textarea') { input = el('textarea'); input.value = v ?? ''; }
+    else if (f.type === 'bool') { input = el('input'); input.type = 'checkbox'; input.checked = !!v; input.setAttribute('role', 'switch'); }
     else if (f.type === 'select') {
       input = el('select');
       input.appendChild(new Option('— เลือก —', ''));
       f.options.forEach((o) => input.appendChild(new Option(o, o)));
-      input.value = val[f.k] ?? '';
-    } else if (f.type === 'status') {
-      input = el('select');
-      STATUS.forEach((x) => input.appendChild(new Option(x.label, x.v)));
-      input.value = val[f.k] ?? 'draft';
-    } else if (f.type === 'number') { input = el('input'); input.type = 'number'; input.value = val[f.k] ?? ''; }
-    else if (f.type === 'date') { input = el('input'); input.type = 'date'; input.value = val[f.k] ?? ''; }
-    else { input = el('input'); input.type = 'text'; input.value = val[f.k] ?? ''; }
+      input.value = v ?? '';
+    } else if (f.type === 'number') { input = el('input'); input.type = 'number'; input.value = v ?? ''; }
+    else if (f.type === 'date') { input = el('input'); input.type = 'date'; input.value = v ?? ''; }
+    else { input = el('input'); input.type = 'text'; input.value = v ?? ''; }
     input.id = id;
+    if (f.required) input.required = true;
     inputs[f.k] = input;
+    input.addEventListener('input', markDirty);
+    input.addEventListener('change', markDirty);
 
-    if (f.type === 'bool') { wrap.append(input, lab); }
-    else if (f.type === 'drive') {
+    if (f.type === 'bool') {
+      const tx = el('div', 'switch__tx');
+      tx.appendChild(lab);
+      if (f.k === 'featured') tx.appendChild(el('span', 'hint', 'กิจกรรมที่ยังไม่ถึงวันขึ้นเว็บอยู่แล้ว · ปักหมุดเพื่อให้ขึ้นเป็นใบแรกในการ์ดใหญ่หน้าแรกและหน้ากิจกรรม'));
+      const sw = el('span', 'switch');
+      sw.append(input, el('span', 'switch__track'));
+      wrap.append(tx, sw);
+    } else if (f.type === 'drive') {
       wrap.appendChild(lab);
-      const dv = el('div', 'drive');
-      const prev = el('img', 'drive__prev');
-      prev.referrerPolicy = 'no-referrer'; prev.alt = '';
-      if (val[f.k]) prev.src = driveThumb(val[f.k]);
-      const col = el('div', 'drive__in');
-      col.appendChild(input);
-      col.appendChild(el('span', 'hint', f.hint || 'วางลิงก์ Drive ได้เลย ระบบจะดึงรหัสไฟล์ให้เอง · ไฟล์ต้องตั้งแชร์ "ทุกคนที่มีลิงก์"'));
-      input.addEventListener('input', () => {
-        const id2 = driveId(input.value);
-        if (id2) prev.src = driveThumb(id2); else prev.removeAttribute('src');
-      });
-      dv.append(prev, col); wrap.appendChild(dv);
+      /* รูปตัวอย่างใหญ่พอให้เห็นว่าเลือกรูปถูก — สัดส่วนตามที่หน้าเว็บใช้จริง */
+      const prev = el('div', 'drive-prev' + (table === 'members' ? ' drive-prev--square' : ''));
+      const img = el('img');
+      img.referrerPolicy = 'no-referrer'; img.alt = '';
+      const empty = el('span', 'drive-prev__empty');
+      empty.append(icon('image'), el('span', null, 'ยังไม่มีรูป · วางลิงก์ Google Drive ด้านล่าง'));
+      prev.append(img, empty);
+      const show = (raw) => {
+        const idv = driveId(raw);
+        if (idv) { img.src = driveThumb(idv); prev.classList.add('has-img'); }
+        else { img.removeAttribute('src'); prev.classList.remove('has-img'); }
+      };
+      img.addEventListener('error', () => prev.classList.remove('has-img'));
+      show(v);
+      input.placeholder = 'https://drive.google.com/file/d/…';
+      input.addEventListener('input', () => show(input.value));
+      wrap.append(prev, input,
+        el('span', 'hint', f.hint || 'วางลิงก์ Drive ได้เลย ระบบดึงรหัสไฟล์ให้เอง · ไฟล์ต้องตั้งแชร์ "ทุกคนที่มีลิงก์"'));
     } else {
-      wrap.appendChild(lab); wrap.appendChild(input);
+      wrap.append(lab, input);
       if (f.hint) wrap.appendChild(el('span', 'hint', f.hint));
     }
     body.appendChild(wrap);
   });
 
-  if (!isNew && row.updated_by) {
-    body.appendChild(el('span', 'hint', `แก้ไขล่าสุดโดย ${row.updated_by}`));
+  const foot = el('div', 'panel__foot');
+  const info = el('span', 'panel__info',
+    !isNew && row.updated_by ? `แก้ไขล่าสุดโดย ${String(row.updated_by).split('@')[0]}` : '');
+  const previewBtn = el('button', 'btn btn--ghost');
+  previewBtn.type = 'button';
+  previewBtn.append(el('span', null, 'บันทึกและดูตัวอย่าง'), icon('out'));
+  const save = el('button', 'btn btn--primary', SAVE_LABEL[current.status] || 'บันทึก');
+  save.type = 'button';
+  foot.append(info, previewBtn, save);
+  panel.appendChild(foot);
+
+  function markDirty() {
+    if (dirty) return;
+    dirty = true;
+    info.textContent = 'มีการแก้ไขที่ยังไม่บันทึก';
+    info.classList.add('is-dirty');
   }
 
-  const foot = el('div', 'panel__foot');
-  const cancel = el('button', 'btn btn--ghost', 'ยกเลิก');
-  const save = el('button', 'btn btn--primary', 'บันทึก');
-  foot.append(cancel, save); panel.appendChild(foot);
+  const guard = { isDirty: () => dirty, discard: () => shut(true) };
+  unsaved.add(guard);
+  function shut(force) {
+    if (dirty && !force && !confirm('ปิดโดยไม่บันทึก? การแก้ไขที่ทำไว้จะหายไป')) return;
+    unsaved.delete(guard);
+    closeLayer(scrim, panel);
+    document.removeEventListener('keydown', keys);
+  }
+  function keys(e) {
+    if (e.key === 'Escape') shut();
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      if (!e.repeat) submit(false);
+    }
+  }
+  close.addEventListener('click', () => shut());
+  scrim.addEventListener('click', () => shut());
+  document.addEventListener('keydown', keys);
 
-  function shut() { scrim.remove(); panel.remove(); document.removeEventListener('keydown', esc); }
-  function esc(e) { if (e.key === 'Escape') shut(); }
-  [close, cancel, scrim].forEach((n) => n.addEventListener('click', shut));
-  document.addEventListener('keydown', esc);
-
-  save.addEventListener('click', async () => {
-    const payload = {};
+  /* กันบันทึกซ้อน — ปุ่มบันทึก ปุ่มดูตัวอย่าง และ Ctrl/Cmd+S ใช้ล็อกเดียวกัน
+     ไม่งั้นรายการใหม่ถูก insert สองแถวเมื่อกดติดกัน */
+  let saving = false;
+  async function submit(andPreview) {
+    if (saving) return;
+    const payload = { status: statusSeg.value };
     for (const f of s.fields) {
+      if (f.type === 'status') continue;
       const i = inputs[f.k];
       let v = f.type === 'bool' ? i.checked : i.value.trim();
       if (f.type === 'drive') v = driveId(v);
       if (f.type === 'number') v = v === '' ? null : Number(v);
       if (v === '' && f.type !== 'bool') v = null;
       if (f.required && (v === null || v === '')) {
-        toast(`กรุณากรอก "${f.label}"`, true); i.focus(); return;
+        toast(`กรุณากรอก "${f.label}"`, true);
+        i.focus();
+        return;
       }
       payload[f.k] = v;
     }
-    save.disabled = true; save.textContent = 'กำลังบันทึก…';
-    const q = isNew ? db.from(table).insert(payload) : db.from(table).update(payload).eq('id', row.id);
-    const { error } = await q;
-    save.disabled = false; save.textContent = 'บันทึก';
-    if (error) { toast('บันทึกไม่สำเร็จ: ' + error.message, true); return; }
-    shut();
-    toast(isNew ? 'เพิ่มแล้ว' : 'บันทึกแล้ว');
+
+    /* เปิดแท็บไว้ก่อน "ระหว่างที่ยังอยู่ในจังหวะคลิก" ไม่งั้นเบราว์เซอร์จะบล็อกป๊อปอัป
+       แล้วค่อยพาไปหน้าตัวอย่างเมื่อบันทึกเสร็จ */
+    const win = andPreview ? window.open('about:blank', '_blank') : null;
+    const busy = andPreview ? previewBtn : save;
+    const oldText = busy.firstChild.textContent;
+    saving = true;
+    save.disabled = previewBtn.disabled = true;
+    busy.firstChild.textContent = 'กำลังบันทึก…';
+
+    const q = isNew
+      ? db.from(table).insert(payload).select().single()
+      : db.from(table).update(payload).eq('id', current.id).select().single();
+    const { data, error } = await q;
+    saving = false;
+    save.disabled = previewBtn.disabled = false;
+    busy.firstChild.textContent = oldText;
+
+    if (error) {
+      if (win) win.close();
+      toast('บันทึกไม่สำเร็จ: ' + error.message, true);
+      return;
+    }
+    const wasNew = isNew;
+    current = data || { ...current, ...payload };
+    isNew = false;
+    dirty = false;
+    info.classList.remove('is-dirty');
+    info.textContent = 'บันทึกแล้ว · ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    h3.textContent = current[s.title] || h3.textContent;
+
     await refreshCounts();
-    go(table);
-  });
+    go(table);                                   // หน้ารายการข้างหลังอัปเดตตาม (ฟอร์มยังเปิดอยู่)
+    if (andPreview) {
+      const msg = payload.status === 'published' ? 'บันทึกแล้ว · หน้าเว็บจริงอัปเดตภายใน ~3 นาที' : 'บันทึกร่างแล้ว';
+      if (win) {
+        win.opener = null;
+        win.location.href = previewUrl(table);
+        toast(msg + ' · เปิดหน้าตัวอย่างในแท็บใหม่แล้ว');
+      } else {
+        /* เบราว์เซอร์บล็อกป๊อปอัป — ให้ลิงก์กดเปิดเองแทน ฟอร์มยังเปิดค้างไว้ */
+        toastLink(msg, previewUrl(table), 'เปิดหน้าตัวอย่าง');
+      }
+    } else {
+      shut(true);
+      toast(payload.status === 'published'
+        ? (wasNew ? 'เพิ่มและเผยแพร่แล้ว · ขึ้นเว็บภายใน ~3 นาที' : 'บันทึกแล้ว · ขึ้นเว็บภายใน ~3 นาที')
+        : 'บันทึกแล้ว');
+    }
+  }
+  save.addEventListener('click', () => submit(false));
+  previewBtn.addEventListener('click', () => submit(true));
 
   document.body.append(scrim, panel);
-  const first = body.querySelector('input,textarea,select');
+  const first = body.querySelector('input:not([type=checkbox]),textarea,select');
   if (first) first.focus();
 }
 
-/* ── ตั้งค่าเว็บ ── */
+/* ── ตั้งค่าเว็บ ──
+   เดิมโชว์ชื่อคีย์ดิบ ๆ (club_youtube, halal_map_url) ตอนนี้มีชื่อและคำอธิบายภาษาคน
+   คีย์ใหม่ที่ยังไม่มีคำอธิบายยังแก้ได้ ไปอยู่กลุ่ม "อื่น ๆ" */
+const PRAYER_METHODS = [
+  ['2', 'ISNA — อเมริกาเหนือ (ค่าเริ่มต้นของเว็บ)'], ['3', 'Muslim World League'], ['4', 'Umm al-Qura, Makkah'],
+  ['5', 'Egyptian General Authority'], ['1', 'University of Islamic Sciences, Karachi'],
+  ['11', 'Majlis Ugama Islam Singapura'], ['17', 'JAKIM (มาเลเซีย)'], ['20', 'KEMENAG (อินโดนีเซีย)'],
+];
+const SETTINGS_META = {
+  club_email:     { g: 'ช่องทางติดต่อ', label: 'อีเมลชมรม', hint: 'แสดงในหน้าเกี่ยวกับเราและท้ายเว็บ' },
+  club_facebook:  { g: 'ช่องทางติดต่อ', label: 'Facebook', hint: 'ลิงก์เพจแบบเต็ม เช่น https://facebook.com/…' },
+  club_instagram: { g: 'ช่องทางติดต่อ', label: 'Instagram', hint: 'ลิงก์โปรไฟล์แบบเต็ม' },
+  club_line:      { g: 'ช่องทางติดต่อ', label: 'LINE', hint: 'ใส่ @ไอดี หรือลิงก์ line.me ก็ได้' },
+  club_youtube:   { g: 'ช่องทางติดต่อ', label: 'YouTube', hint: 'ลิงก์ช่อง เช่น https://www.youtube.com/@muslimcmu' },
+  halal_map_url:  { g: 'แผนที่', label: 'แผนที่ฮาลาล', hint: 'ลิงก์ฝัง (embed) ของ Google My Maps ที่แสดงในหน้าสถานที่ฮาลาล' },
+  map_embed_url:  { g: 'แผนที่', label: 'แผนที่ที่ตั้งชมรม', hint: 'ลิงก์ฝังของ Google Maps ในหน้าเกี่ยวกับเรา · เว้นว่างได้' },
+  prayer_method:  { g: 'เวลาละหมาด', label: 'วิธีคำนวณเวลาละหมาด', type: 'select', options: PRAYER_METHODS,
+                    hint: 'เปลี่ยนแล้วเวลาบนหน้าแรกจะเปลี่ยนตาม · ถ้าไม่แน่ใจให้คงค่าเดิม' },
+  about_hero_id:  { g: 'รูปภาพ', label: 'รูปหัวหน้าเกี่ยวกับเรา', type: 'drive' },
+  logo_id:        { g: 'รูปภาพ', label: 'โลโก้', type: 'drive', hint: 'เว้นว่างไว้ = ใช้โลโก้เดิมของเว็บ' },
+};
+const SETTINGS_GROUPS = ['ช่องทางติดต่อ', 'แผนที่', 'เวลาละหมาด', 'รูปภาพ', 'อื่น ๆ'];
+
 async function renderSettings(main) {
   const { data, error } = await db.from('settings').select('*').order('key');
   if (error) throw error;
   clear(main);
-  main.appendChild(el('div', 'head')).appendChild(el('h2', null, 'ตั้งค่าเว็บ'));
-  main.appendChild(el('p', 'sub', 'ค่าเหล่านี้แสดงบนหน้าเว็บ เช่น อีเมลติดต่อและลิงก์โซเชียล'));
+  main.appendChild(pageHead('ตั้งค่าเว็บ', 'ข้อมูลที่ใช้ร่วมกันทุกหน้า เช่น ช่องทางติดต่อและแผนที่', previewLink('settings', 'ดูหน้าเว็บ')));
 
-  const card = el('div', 'card');
-  const box = el('div'); box.style.padding = '20px';
-  const inputs = {};
-  data.forEach((r) => {
-    const w = el('div', 'field'); w.style.marginBottom = '14px';
-    const lab = el('label', null, r.key); lab.htmlFor = 's_' + r.key;
-    const i = el('input'); i.type = 'text'; i.value = r.value ?? ''; i.id = 's_' + r.key;
-    inputs[r.key] = i;
-    w.append(lab, i); box.appendChild(w);
+  const orig = {}, inputs = {};
+  data.forEach((r) => { orig[r.key] = r.value ?? ''; });
+
+  const wrap = el('div', 'settings');
+  SETTINGS_GROUPS.forEach((g) => {
+    const rows = data.filter((r) => ((SETTINGS_META[r.key] || {}).g || 'อื่น ๆ') === g);
+    if (!rows.length) return;
+    const sec = el('section', 'set-card');
+    sec.appendChild(el('h3', null, g));
+    rows.forEach((r) => {
+      const m = SETTINGS_META[r.key] || { label: r.key };
+      const id = 's_' + r.key;
+      const line = el('div', 'set-row');
+      const tx = el('div', 'set-row__tx');
+      const lab = el('label', null, m.label); lab.htmlFor = id;
+      tx.appendChild(lab);
+      if (m.hint) tx.appendChild(el('span', 'hint', m.hint));
+      const field = el('div', 'set-row__in');
+      let i;
+      if (m.type === 'select') {
+        i = el('select');
+        const opts = m.options.slice();
+        if (orig[r.key] && !opts.some(([v]) => v === orig[r.key])) opts.push([orig[r.key], 'ค่าที่ตั้งไว้ (' + orig[r.key] + ')']);
+        opts.forEach(([v, t]) => i.appendChild(new Option(t, v)));
+      } else { i = el('input'); i.type = 'text'; }
+      i.id = id; i.value = orig[r.key];
+      field.appendChild(i);
+      if (m.type === 'drive') {
+        const pv = el('img', 'set-row__img');
+        pv.referrerPolicy = 'no-referrer'; pv.alt = '';
+        const upd = () => { const v = driveId(i.value); if (v) { pv.src = driveThumb(v); pv.hidden = false; } else pv.hidden = true; };
+        i.addEventListener('input', upd); upd();
+        field.prepend(pv);
+      }
+      inputs[r.key] = i;
+      i.addEventListener('input', sync); i.addEventListener('change', sync);
+      line.append(tx, field);
+      sec.appendChild(line);
+    });
+    wrap.appendChild(sec);
   });
-  const save = el('button', 'btn btn--primary', 'บันทึกทั้งหมด');
+  main.appendChild(wrap);
+
+  /* แถบบันทึกลอยล่างจอ โผล่เฉพาะตอนมีของที่ยังไม่บันทึก */
+  const bar = el('div', 'savebar');
+  const msg = el('span', 'savebar__msg');
+  const reset = el('button', 'btn btn--ghost btn--sm', 'ยกเลิกการแก้ไข');
+  const save = el('button', 'btn btn--primary btn--sm', 'บันทึก');
+  bar.append(msg, reset, save);
+  main.appendChild(bar);
+
+  const changed = () => Object.keys(inputs).filter((k) => inputs[k].value.trim() !== orig[k]);
+  /* ผูกกับหน้านี้ (page:true) — go() ถอดออกเองเมื่อออกจากหน้า */
+  const guard = { page: true, isDirty: () => changed().length > 0, discard: () => unsaved.delete(guard) };
+  unsaved.add(guard);
+  function sync() {
+    const n = changed().length;
+    bar.classList.toggle('is-on', n > 0);
+    msg.textContent = `แก้ไข ${n} ช่อง ยังไม่ได้บันทึก`;
+  }
+  reset.addEventListener('click', () => {
+    Object.keys(inputs).forEach((k) => { inputs[k].value = orig[k]; inputs[k].dispatchEvent(new Event('input')); });
+    sync();
+  });
+  /* ตรวจก่อนบันทึก: ลิงก์ต้องเป็น https:// (หน้าเว็บจะไม่ใช้ลิงก์แบบอื่นอยู่แล้ว) และอีเมลต้องเป็นรูปแบบอีเมล */
+  function invalid(key, v) {
+    if (!v) return '';
+    if (key === 'club_email') return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? '' : 'อีเมลไม่ถูกต้อง';
+    if (key === 'club_line') return /^@[\w.-]+$/.test(v) || /^https:\/\/\S+$/i.test(v) ? '' : 'ใส่ @ไอดี หรือลิงก์ที่ขึ้นต้นด้วย https://';
+    if (/^club_|_url$/.test(key)) return /^https:\/\/\S+$/i.test(v) ? '' : 'ลิงก์ต้องขึ้นต้นด้วย https://';
+    return '';
+  }
   save.addEventListener('click', async () => {
+    const keys = changed();
+    if (!keys.length) return;
+    for (const k of keys) {
+      const why = invalid(k, inputs[k].value.trim());
+      if (why) {
+        toast(`${(SETTINGS_META[k] || {}).label || k}: ${why}`, true);
+        inputs[k].focus();
+        return;
+      }
+    }
     save.disabled = true;
-    const rows = Object.entries(inputs).map(([key, i]) => ({ key, value: i.value.trim() }));
+    const rows = keys.map((key) => ({ key, value: inputs[key].value.trim() }));
     const { error: e2 } = await db.from('settings').upsert(rows, { onConflict: 'key' });
     save.disabled = false;
-    toast(e2 ? 'บันทึกไม่สำเร็จ: ' + e2.message : 'บันทึกแล้ว', !!e2);
+    if (e2) { toast('บันทึกไม่สำเร็จ: ' + e2.message, true); return; }
+    rows.forEach((r) => { orig[r.key] = r.value; });
+    sync();
+    toast('บันทึกแล้ว · ขึ้นเว็บภายใน ~3 นาที');
   });
-  box.appendChild(save); card.appendChild(box); main.appendChild(card);
 }
 
 /* ── ผู้ดูแลระบบ ── */
@@ -975,59 +1707,67 @@ async function renderAdmins(main) {
   const { data, error } = await db.from('admins').select('*').order('role').order('created_at');
   if (error) throw error;
   clear(main);
-  const head = el('div', 'head'); head.appendChild(el('h2', null, 'ผู้ดูแลระบบ'));
-  main.appendChild(head);
-
   const owners = data.filter((r) => r.role === 'owner');
+  main.appendChild(pageHead('ผู้ดูแลระบบ',
+    `${data.length} คน · เฉพาะอีเมลในรายชื่อนี้เท่านั้นที่เข้าหลังบ้านได้`));
 
-  main.appendChild(el('p', 'sub',
-    'คนที่อยู่ในรายการนี้เท่านั้นที่เข้าหลังบ้านได้ · '
-    + 'เจ้าของระบบเท่านั้นที่เพิ่ม ถอด หรือเปลี่ยนระดับสิทธิ์ของคนอื่นได้ '
-    + '— ผู้แก้ไขแก้เนื้อหาได้ทุกอย่างเหมือนกัน แต่แตะรายชื่อนี้ไม่ได้'));
+  /* อธิบายระดับสิทธิ์ไว้ตรงนี้เลย คนใหม่จะได้ไม่ต้องเดา */
+  const legend = el('div', 'role-legend');
+  [['owner', 'เจ้าของระบบ', 'แก้เนื้อหาได้ทั้งหมด และเพิ่ม ถอด หรือเปลี่ยนสิทธิ์คนอื่นได้'],
+   ['editor', 'ผู้แก้ไข', 'แก้เนื้อหาได้ทั้งหมด แต่แตะรายชื่อผู้ดูแลไม่ได้']].forEach(([k, t, d]) => {
+    const it = el('div', 'role-legend__item');
+    it.append(el('span', 'tag tag--' + k, t), el('span', null, d));
+    legend.appendChild(it);
+  });
+  main.appendChild(legend);
 
   if (isOwner()) {
-    const tools = el('div', 'tools');
-    const em = el('input'); em.type = 'text'; em.placeholder = 'อีเมล Google ของคนใหม่';
+    const form = el('form', 'invite');
+    form.appendChild(el('h3', null, 'เพิ่มผู้ดูแล'));
+    const row = el('div', 'invite__row');
+    const em = el('input'); em.type = 'email'; em.placeholder = 'อีเมล Google'; em.required = true;
+    em.setAttribute('aria-label', 'อีเมล Google ของคนใหม่');
     const nm = el('input'); nm.type = 'text'; nm.placeholder = 'ชื่อ (ไม่บังคับ)';
-    const rl = el('select');
-    ROLES.forEach((x) => rl.appendChild(new Option(x.label, x.v)));
-    rl.value = 'editor';                       // ค่าเริ่มต้นคือสิทธิ์น้อยที่สุดเสมอ
+    nm.setAttribute('aria-label', 'ชื่อ');
+    /* ค่าเริ่มต้นคือสิทธิ์น้อยที่สุดเสมอ */
+    const rl = segmented(ROLES.map((x) => ({ v: x.v, label: x.label })), 'editor', () => {}, 'ระดับสิทธิ์');
     const add = el('button', 'btn btn--primary', 'เพิ่ม');
-    add.addEventListener('click', async () => {
+    add.type = 'submit';
+    row.append(em, nm, rl, add);
+    form.appendChild(row);
+    form.appendChild(el('span', 'hint', 'คนที่เพิ่มเข้าสู่ระบบด้วยบัญชี Google ของอีเมลนี้ได้ทันที'));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
       const email = em.value.trim().toLowerCase();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('อีเมลไม่ถูกต้อง', true); return; }
-      const { error: e2 } = await db.from('admins')
-        .insert({ email, name: nm.value.trim() || null, role: rl.value });
-      toast(e2 ? 'เพิ่มไม่สำเร็จ: ' + e2.message : 'เพิ่มแล้ว', !!e2);
+      add.disabled = true;
+      const { error: e2 } = await db.from('admins').insert({ email, name: nm.value.trim() || null, role: rl.value });
+      add.disabled = false;
+      toast(e2 ? 'เพิ่มไม่สำเร็จ: ' + e2.message : 'เพิ่ม ' + email + ' แล้ว', !!e2);
       if (!e2) go('admins');
     });
-    tools.append(em, nm, rl, add); main.appendChild(tools);
+    main.appendChild(form);
   } else {
     main.appendChild(el('div', 'notice',
-      'คุณเป็น "ผู้แก้ไข" จึงดูรายชื่อได้อย่างเดียว · '
-      + 'ต้องการเพิ่มหรือถอดใครให้บอกเจ้าของระบบ: '
+      'คุณเป็น "ผู้แก้ไข" จึงดูรายชื่อได้อย่างเดียว · ต้องการเพิ่มหรือถอดใครให้บอกเจ้าของระบบ: '
       + (owners.map((o) => o.email).join(', ') || 'ยังไม่มีเจ้าของระบบ')));
   }
 
-  const card = el('div', 'card'); const wrap = el('div', 'tablewrap'); const tb = el('table');
-  const th = el('thead'); const hr = el('tr');
-  ['อีเมล', 'ชื่อ', 'ระดับสิทธิ์', 'เพิ่มเมื่อ', ''].forEach((h) => hr.appendChild(el('th', null, h)));
-  th.appendChild(hr); tb.appendChild(th);
-  const body = el('tbody');
+  const grid = el('div', 'people');
   data.forEach((r) => {
-    const tr = el('tr');
-    const mail = el('td', 'title');
-    const line = el('span', 'titleline');
-    line.appendChild(el('span', null, r.email));
-    if (r.email === me.email) line.appendChild(el('span', 'tag tag--you', 'คุณ'));
-    mail.appendChild(line);
-    tr.appendChild(mail);
-    tr.appendChild(el('td', null, r.name || '—'));
+    const c = el('div', 'person' + (r.email === me.email ? ' is-me' : ''));
+    const who = r.name || r.email.split('@')[0];
+    c.appendChild(el('span', 'person__av person__av--' + r.role, who.charAt(0).toUpperCase()));
+    const tx = el('div', 'person__tx');
+    const nmLine = el('b', null, who);
+    if (r.email === me.email) nmLine.appendChild(el('span', 'tag tag--you', 'คุณ'));
+    tx.append(nmLine, el('span', null, r.email), el('span', 'person__since', 'เพิ่มเมื่อ ' + fmtDate(r.created_at)));
+    c.appendChild(tx);
 
-    /* ระดับสิทธิ์: เจ้าของเปลี่ยนได้จากตรงนี้เลย คนอื่นเห็นเป็นป้ายเฉย ๆ */
-    const roleTd = el('td');
+    const acts = el('div', 'person__acts');
     if (isOwner()) {
       const sel = el('select', 'rolesel');
+      sel.setAttribute('aria-label', 'ระดับสิทธิ์ของ ' + r.email);
       ROLES.forEach((x) => sel.appendChild(new Option(x.label, x.v)));
       sel.value = r.role;
       sel.addEventListener('change', async () => {
@@ -1044,63 +1784,112 @@ async function renderAdmins(main) {
         toast(e4 ? 'เปลี่ยนไม่สำเร็จ: ' + e4.message : 'เปลี่ยนเป็น ' + ROLE_TH[to] + ' แล้ว', !!e4);
         if (e4) sel.value = r.role; else go('admins');
       });
-      roleTd.appendChild(sel);
+      acts.appendChild(sel);
+      if (r.email !== me.email) {
+        const del = el('button', 'iconbtn-round iconbtn-round--danger');
+        del.type = 'button';
+        del.title = 'ถอดสิทธิ์'; del.setAttribute('aria-label', 'ถอดสิทธิ์ ' + r.email);
+        del.appendChild(icon('trash'));
+        del.addEventListener('click', async () => {
+          if (r.role === 'owner' && owners.length < 2) { toast('ถอดเจ้าของระบบคนสุดท้ายไม่ได้', true); return; }
+          if (!confirm(`ถอดสิทธิ์ ${r.email} ออกจากระบบหลังบ้าน?`)) return;
+          const { error: e3 } = await db.from('admins').delete().eq('email', r.email);
+          toast(e3 ? 'ไม่สำเร็จ: ' + e3.message : 'ถอดสิทธิ์แล้ว', !!e3);
+          if (!e3) go('admins');
+        });
+        acts.appendChild(del);
+      }
     } else {
-      roleTd.appendChild(el('span', 'tag tag--' + r.role, ROLE_TH[r.role] || r.role));
+      acts.appendChild(el('span', 'tag tag--' + r.role, ROLE_TH[r.role] || r.role));
     }
-    tr.appendChild(roleTd);
-    tr.appendChild(el('td', null, fmtDate(r.created_at)));
-
-    const act = el('td'); const box = el('div', 'rowacts');
-    if (isOwner() && r.email !== me.email) {
-      const del = el('button', 'btn btn--ghost btn--sm', 'ถอดสิทธิ์');
-      del.addEventListener('click', async () => {
-        if (r.role === 'owner' && owners.length < 2) {
-          toast('ถอดเจ้าของระบบคนสุดท้ายไม่ได้', true); return;
-        }
-        if (!confirm(`ถอดสิทธิ์ ${r.email} ออกจากระบบหลังบ้าน?`)) return;
-        const { error: e3 } = await db.from('admins').delete().eq('email', r.email);
-        toast(e3 ? 'ไม่สำเร็จ: ' + e3.message : 'ถอดสิทธิ์แล้ว', !!e3);
-        if (!e3) go('admins');
-      });
-      box.appendChild(del);
-    }
-    act.appendChild(box); tr.appendChild(act); body.appendChild(tr);
+    c.appendChild(acts);
+    grid.appendChild(c);
   });
-  tb.appendChild(body); wrap.appendChild(tb); card.appendChild(wrap); main.appendChild(card);
+  main.appendChild(grid);
 }
 
-/* ── ประวัติการแก้ไข ── */
+/* ── ประวัติการแก้ไข ──
+   จัดกลุ่มตามวัน อ่านไล่ลงมาเหมือนไทม์ไลน์ · ชื่อช่องที่เปลี่ยนแปลงเป็นภาษาคน */
+const FIELD_TH = Object.values(SCHEMA).reduce((m, s) => {
+  s.fields.forEach((f) => { m[f.k] = f.label; });
+  return m;
+}, { updated_by: 'ผู้แก้ไข', role: 'ระดับสิทธิ์', value: 'ค่า', name: 'ชื่อ' });
+const TABLE_TH = { ...Object.fromEntries(Object.entries(SCHEMA).map(([k, s]) => [k, s.label])),
+  settings: 'ตั้งค่าเว็บ', admins: 'ผู้ดูแลระบบ', album_photos: 'รูปในอัลบั้ม' };
+
 async function renderAudit(main) {
   const { data, error } = await db.from('audit_log')
     .select('*').order('at', { ascending: false }).limit(200);
   if (error) throw error;
   clear(main);
-  main.appendChild(el('div', 'head')).appendChild(el('h2', null, 'ประวัติการแก้ไข'));
-  main.appendChild(el('p', 'sub', 'บันทึกอัตโนมัติจากฐานข้อมูล แก้ไขหรือลบไม่ได้ · แสดง 200 รายการล่าสุด'));
+  main.appendChild(pageHead('ประวัติการแก้ไข', 'บันทึกอัตโนมัติจากฐานข้อมูล แก้ไขหรือลบไม่ได้ · 200 รายการล่าสุด'));
 
-  if (!data.length) {
-    const c = el('div', 'card'); c.appendChild(el('div', 'empty', 'ยังไม่มีประวัติ'));
-    main.appendChild(c); return;
+  const tables = [...new Set(data.map((r) => r.table_name))];
+  const st = { t: '' };
+  const filters = el('div', 'filters');
+  filters.appendChild(segmented(
+    [{ v: '', label: 'ทั้งหมด', count: data.length }]
+      .concat(tables.map((t) => ({ v: t, label: TABLE_TH[t] || t, count: data.filter((r) => r.table_name === t).length }))),
+    '', (v) => { st.t = v; draw(); }, 'กรองตามหมวด', 'seg--wrap'));
+  main.appendChild(filters);
+
+  const box = el('div', 'timeline');
+  main.appendChild(box);
+
+  const dayKey = (iso) => new Date(new Date(iso).getTime() + 7 * 3600e3).toISOString().slice(0, 10);
+  function dayTitle(k) {
+    if (k === bkkDay()) return 'วันนี้';
+    if (k === bkkDay(1)) return 'เมื่อวาน';
+    return dayLabel(k, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
-  const card = el('div', 'card'); const wrap = el('div', 'tablewrap'); const tb = el('table');
-  const th = el('thead'); const hr = el('tr');
-  ['เมื่อไหร่', 'ใคร', 'ทำอะไร', 'ที่ไหน', 'รายการ', 'เปลี่ยนอะไร'].forEach((h) => hr.appendChild(el('th', null, h)));
-  th.appendChild(hr); tb.appendChild(th);
-  const body = el('tbody');
-  data.forEach((r) => {
-    const tr = el('tr');
-    tr.appendChild(el('td', null, new Date(r.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })));
-    tr.appendChild(el('td', null, r.actor || '—'));
-    tr.appendChild(el('td', null, ACTION_TH[r.action] || r.action));
-    tr.appendChild(el('td', null, (SCHEMA[r.table_name] || {}).label || r.table_name));
-    tr.appendChild(el('td', null, r.summary || '—'));
-    tr.appendChild(el('td', null, r.changed ? Object.keys(r.changed).join(', ') : '—'));
-    body.appendChild(tr);
-  });
-  tb.appendChild(body); wrap.appendChild(tb); card.appendChild(wrap); main.appendChild(card);
+
+  function draw() {
+    clear(box);
+    const rows = data.filter((r) => !st.t || r.table_name === st.t);
+    if (!rows.length) {
+      const e = el('div', 'empty-state');
+      e.append(el('b', null, 'ยังไม่มีประวัติ'), el('span', null, 'ทุกการเพิ่ม แก้ไข และลบจะถูกบันทึกไว้ที่นี่โดยอัตโนมัติ'));
+      box.appendChild(e);
+      return;
+    }
+    let lastDay = '', list = null;
+    rows.forEach((r) => {
+      const k = dayKey(r.at);
+      if (k !== lastDay) {
+        lastDay = k;
+        const g = el('section', 'tl-day');
+        g.appendChild(el('h3', 'tl-day__h', dayTitle(k)));
+        list = el('ul', 'feed tl-list');
+        g.appendChild(list);
+        box.appendChild(g);
+      }
+      const who = String(r.actor || '—').split('@')[0];
+      const li = el('li', 'feed__item');
+      li.appendChild(el('span', 'feed__av feed__av--' + (r.action || 'update'), who.charAt(0).toUpperCase()));
+      const b = el('div', 'feed__body');
+      const line = el('p', 'feed__line');
+      line.append(el('b', null, who), document.createTextNode(' ' + (ACTION_TH[r.action] || r.action) + ' '),
+                  el('span', 'feed__where', TABLE_TH[r.table_name] || r.table_name));
+      /* ตั้งค่าเว็บเก็บ summary เป็นชื่อคีย์ (club_youtube) — แปลงเป็นชื่อที่หน้าตั้งค่าใช้ */
+      const what = r.table_name === 'settings' && SETTINGS_META[r.summary] ? SETTINGS_META[r.summary].label : r.summary;
+      b.append(line, el('p', 'feed__what', what || '—'));
+      const keys = r.changed ? Object.keys(r.changed).filter((x) => !['updated_at', 'updated_by', 'id'].includes(x)) : [];
+      if (keys.length) {
+        const chips = el('div', 'tl-chips');
+        keys.slice(0, 6).forEach((x) => chips.appendChild(el('span', 'tl-chip', FIELD_TH[x] || x)));
+        if (keys.length > 6) chips.appendChild(el('span', 'tl-chip', '+' + (keys.length - 6)));
+        b.appendChild(chips);
+      }
+      const t = el('time', 'feed__time', new Date(r.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }));
+      t.dateTime = r.at;
+      li.append(b, t);
+      list.appendChild(li);
+    });
+  }
+  draw();
 }
 
 /* เริ่มทำงาน — และตอบสนองตอนกลับมาจากหน้าล็อกอินของ Google */
-db.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN') boot(); });
+/* เลื่อน boot ออกไปนอก callback — supabase-js ค้างได้ถ้าเรียก db.* ซ้อนใน onAuthStateChange */
+db.auth.onAuthStateChange((event) => { if (event === 'SIGNED_IN') setTimeout(boot, 0); });
 boot();
