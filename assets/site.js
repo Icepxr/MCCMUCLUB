@@ -187,7 +187,10 @@
      ล้มเหลวเมื่อไหร่ก็เงียบ ๆ ไป สถิติไม่ควรทำให้หน้าเว็บพัง */
   (function () {
     if (!window.MCCMU_SUPABASE) return;          // ยังไม่ตั้งค่า → ไม่ต้องนับ
-    var today = new Date().toISOString().slice(0, 10);
+    /* ไม่นับตอนเปิดไฟล์ในเครื่องหรือรันบน localhost — เคยทำให้ path แบบ /Users/... ปนในสถิติจริง */
+    if (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+    /* วันตามเวลาไทยให้ตรงกับที่ฐานข้อมูลแบ่งวัน (เดิมใช้ UTC คนที่เข้าก่อน 7 โมงเช้าจึงไม่ถูกนับเป็นคนใหม่) */
+    var today = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
     var key = 'mccmu_seen_' + today;
     var fresh = false;
     try {

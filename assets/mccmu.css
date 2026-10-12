@@ -348,17 +348,39 @@ html[lang="en"] .en{ display:none; }
 .hero__dot.is-active{background:var(--gold-soft);width:22px;border-radius:5px;}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 
+/* ── เวลาละหมาดวันนี้: เส้นเวลาของวัน ──
+   ข้อความไทยในแถบนี้ไม่ใส่ letter-spacing/ตัวพิมพ์ใหญ่ — สระและวรรณยุกต์จะหลุดจากพยัญชนะ */
 .pstrip{background:#fff;color:var(--ink);border-bottom:1px solid var(--line);}
-.pstrip__in{display:flex;align-items:center;gap:24px;padding:20px 0;flex-wrap:wrap;}
-.pstrip__date{min-width:190px;}
-.pstrip .eyebrow{color:var(--teal);}
-.pstrip__greg{font-family:var(--font-display);font-weight:600;font-size:17px;margin-top:4px;}
-.pstrip__times{display:flex;gap:10px;flex:1;flex-wrap:wrap;}
-.ptime{flex:1;min-width:88px;text-align:center;padding:11px 8px;border-radius:14px;border:1px solid var(--line);background:var(--lilac-50);}
-.ptime span{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
-.ptime strong{font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--grape-700);}
-.ptime.next{background:var(--gold);border-color:var(--gold);box-shadow:0 14px 28px -20px rgba(231,176,8,.8);}
-.ptime.next span{color:#745600;}.ptime.next strong{color:#2e2100;}
+.pstrip__in{display:grid;grid-template-columns:minmax(240px,320px) minmax(0,1fr);align-items:center;gap:20px 48px;padding-block:26px;}
+.pstrip .eyebrow{color:var(--teal);letter-spacing:0;text-transform:none;font-size:13.5px;}
+.pstrip__date p{margin:0;}
+.pstrip__greg{font-family:var(--font-display);font-weight:600;font-size:19px;line-height:1.3;margin-top:8px !important;}
+.pstrip__hijri{font-size:14.5px;color:var(--ink-soft);margin-top:2px !important;}
+.pstrip__next{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin-top:12px !important;font-size:14.5px;color:var(--ink-soft);min-height:26px;}
+.pstrip__next b{font-family:var(--font-display);font-weight:600;color:var(--ink);}
+.pstrip__tag{padding:2px 10px;border-radius:999px;background:var(--gold);color:#2e2100;font-family:var(--font-display);font-weight:600;font-size:12.5px;}
+.pstrip__eta{color:var(--teal);font-weight:600;}
+
+.ptrack{--prog:0;position:relative;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));}
+/* ราง + ส่วนที่ผ่านไปแล้ว ลากจากจุดแรกถึงจุดสุดท้าย (กึ่งกลางคอลัมน์แรก–สุดท้าย = 10%–90%) */
+.ptrack::before,.ptrack::after{content:"";position:absolute;top:9px;left:10%;height:3px;border-radius:3px;}
+.ptrack::before{right:10%;background:var(--lilac-100);}
+.ptrack::after{width:calc(80% * var(--prog));background:linear-gradient(90deg,var(--teal-soft),var(--teal));transition:width .6s ease;}
+.pstop{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;min-width:0;}
+.pstop__dot{width:21px;height:21px;border-radius:50%;background:#fff;border:3px solid var(--violet-200);margin-bottom:8px;
+  transition:background .3s ease,border-color .3s ease,box-shadow .3s ease,transform .3s ease;}
+.pstop__name{font-size:14px;color:var(--muted);}
+.pstop__time{font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.25;}
+.pstop.is-past .pstop__dot{background:var(--teal);border-color:var(--teal);}
+.pstop.is-past .pstop__time{color:var(--muted);font-weight:500;}
+.pstop.is-next .pstop__dot{background:var(--gold);border-color:#fff;transform:scale(1.25);
+  box-shadow:0 0 0 2px var(--gold),0 0 0 8px rgba(231,176,8,.18);}
+.pstop.is-next .pstop__name{color:#8a6608;font-weight:600;}
+.pstop.is-next .pstop__time{color:var(--ink);font-size:23px;}
+.pstop--skel{height:72px;}
+.pstop--skel::before{content:"";width:62%;height:58px;border-radius:12px;background:var(--lilac-50);margin-top:14px;}
+.ptrack.is-loading::after{display:none;}
+.pstrip__err{grid-column:1/-1;padding:18px;text-align:center;color:var(--muted);font-size:14px;background:var(--lilac-50);border-radius:12px;}
 .pstrip__link{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-display);font-weight:700;font-size:14.5px;color:var(--teal);white-space:nowrap;}
 .pstrip__link svg{width:16px;height:16px;}
 
@@ -450,12 +472,12 @@ html[lang="en"] .en{ display:none; }
   .hero__meta .vr{display:none;}
   .hero__badge{position:relative;left:auto;bottom:auto;margin-top:-54px;width:calc(100% - 32px);}
   /* มือถือ: เรียงเป็นคอลัมน์ (วันที่บน · เวลาล่าง) กันการ์ดไปเบียดข้างวันที่แล้วล้นจอ */
-  .pstrip__in{flex-direction:column;align-items:stretch;gap:12px;}
-  .pstrip__date{min-width:0;}
-  .pstrip__times{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;width:100%;}
-  .ptime{min-width:0;padding:9px 3px;border-radius:12px;}
-  .ptime span{font-size:9.5px;letter-spacing:.02em;}
-  .ptime strong{font-size:14.5px;}
+  .pstrip__in{grid-template-columns:minmax(0,1fr);gap:20px;}
+  .pstop__name{font-size:12.5px;}
+  .pstop__time{font-size:16px;}
+  .pstop.is-next .pstop__time{font-size:17.5px;}
+  .pstop__dot{width:17px;height:17px;border-width:2.5px;}
+  .ptrack::before,.ptrack::after{top:7px;}
   .pstrip__link{width:100%;justify-content:center;}
   .quick-row{grid-template-columns:36px 1fr;padding:16px;}
   .svc__card{min-height:220px;}
@@ -830,7 +852,7 @@ img, iframe, svg, video{ max-width:100%; }          /* กันล้นแน�
   .hero__meta strong{ font-size:24px; }
   .row-head{ align-items:flex-start;gap:14px; }
   .feature-evt__body{ padding:24px 20px; }
-  .pstrip__in{ gap:14px;padding:16px 0; }
+  .pstrip__in{ padding-block:20px; }
 }
 
 /* มือถือเล็ก (≤400) */
@@ -1059,3 +1081,18 @@ body{ animation:pageIn .45s ease; }
   .btn--primary::after{ display:none; }
   .svc__go::after{ transition:none; }
 }
+
+/* ── โหมดตัวอย่างจากหลังบ้าน (?preview) ── */
+.pv-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:120;width:min(760px,calc(100% - 24px));
+  display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;padding:12px 14px 12px 18px;border-radius:18px;
+  background:#1C0A3D;color:#EDE9FE;box-shadow:0 20px 50px -18px rgba(28,10,61,.7);border:1px solid rgba(244,214,121,.35);}
+.pv-bar__tx{flex:1;min-width:220px;margin:0;font-size:14px;line-height:1.5;display:flex;flex-direction:column;}
+.pv-bar__tx b{font-family:var(--font-display);color:var(--gold-soft);font-size:14.5px;}
+.pv-bar__acts{display:flex;gap:8px;flex-wrap:wrap;}
+.pv-bar__btn{display:inline-flex;align-items:center;min-height:38px;padding:7px 14px;border-radius:999px;border:0;cursor:pointer;
+  font:inherit;font-size:13.5px;font-weight:600;background:var(--gold);color:#2e2100;}
+.pv-bar__btn--ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);}
+.pv-bar--warn{border-color:rgba(255,160,140,.5);}
+.pv-bar--warn .pv-bar__tx b{color:#FFB4A2;}
+body.is-preview{padding-bottom:110px;}
+body.is-preview .to-top{bottom:110px;}

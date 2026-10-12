@@ -24,6 +24,31 @@ var _SRC = (function () {
   return m ? m[1] : '';
 })();
 
+/* ══════════════════════════════════════════════════════════════════
+   โหมดตัวอย่าง (?preview) — เปิดจากหลังบ้านเพื่อดูหน้าจริงที่รวม "ร่าง" ไว้ด้วย
+   ใช้ token ของผู้ดูแลที่ล็อกอินหลังบ้านไว้ในเบราว์เซอร์เดียวกัน (supabase-js เก็บไว้ใน localStorage)
+   สิทธิ์จริงตัดสินที่ RLS: คนที่ไม่ใช่ผู้ดูแลต่อให้เปิด ?preview ก็เห็นแค่ของที่เผยแพร่แล้ว
+   จำโหมดไว้ใน sessionStorage ให้กดไปหน้าอื่นในแท็บเดียวกันแล้วยังเป็นตัวอย่างอยู่
+   ══════════════════════════════════════════════════════════════════ */
+var _SB_TOKEN_KEY = 'sb-bzbqzohygnraqquabffg-auth-token';
+function _previewToken() {
+  try {
+    var s = JSON.parse(localStorage.getItem(_SB_TOKEN_KEY) || 'null');
+    if (!s || !s.access_token) return '';
+    if (s.expires_at && s.expires_at * 1000 < Date.now()) return '';   // หมดอายุ — หลังบ้านต่ออายุให้เองตอนเปิดค้างไว้
+    return s.access_token;
+  } catch (e) { return ''; }
+}
+/* จำโหมดไว้เฉพาะตอนมี token จริง — เปิด ?preview โดยไม่ได้ล็อกอินจะเห็นแถบเตือนแค่หน้านั้น
+   ไม่ติดค้างไปทุกหน้าในแท็บ */
+MCCMU.PREVIEW = (function () {
+  var asked = /[?&]preview\b/.test(location.search);
+  try {
+    if (asked && _previewToken()) sessionStorage.setItem('mccmu_preview', '1');
+    return asked || sessionStorage.getItem('mccmu_preview') === '1';
+  } catch (e) { return asked; }
+})();
+
 function _query(sheet, params) {
   var qs = '?sheet=' + encodeURIComponent(sheet);
   if (params) Object.keys(params).forEach(function (k) {
@@ -41,14 +66,41 @@ function _handle(r) {
   });
 }
 
+/* ติดป้าย "ร่าง ·" หน้าชื่อของที่ยังไม่เผยแพร่ ให้เห็นชัดว่าอันไหนคนทั่วไปยังไม่เห็น */
+function _markDrafts(data) {
+  function mark(r) {
+    if (!r || r.status !== 'draft') return r;
+    ['title_th', 'title', 'name'].forEach(function (k) { if (r[k]) r[k] = 'ร่าง · ' + r[k]; });
+    return r;
+  }
+  if (Array.isArray(data)) data.forEach(mark);
+  else if (data && typeof data === 'object') Object.keys(data).forEach(function (k) {
+    if (Array.isArray(data[k])) data[k].forEach(mark);
+  });
+  return data;
+}
+
 /* ── core fetch ── ยิงผ่าน proxy edge-cache ก่อน (บนโฮสต์), ล่ม → fallback ยิง Apps Script ตรง ── */
 MCCMU.get = function (sheet, params) {
   var qs = _query(sheet, params);
   var onHost = (location.protocol === 'http:' || location.protocol === 'https:');
-  if (!onHost) return fetch(MCCMU.API_URL + qs).then(_handle);   // file:// → ตรง
-  return fetch(MCCMU.PROXY_URL + qs).then(_handle).catch(function () {
-    return fetch(MCCMU.API_URL + qs).then(_handle);              // proxy ไม่พร้อม → ตรง
-  });
+  if (!onHost) return fetch(MCCMU.API_URL + qs).then(_handle);   // file:// (เปิดไฟล์ในเครื่อง) → Apps Script ตรง
+  function publicFetch() { return fetch(MCCMU.PROXY_URL + qs).then(_handle); }
+  /* โหมดตัวอย่างแต่ไม่มี token หรือ token ถูกปฏิเสธ → ใช้ข้อมูลสาธารณะตามปกติ แล้วเปลี่ยนแถบเป็นคำเตือน
+     หน้าเว็บต้องใช้งานได้เสมอ ไม่ใช่ว่างเปล่าทั้งหน้า */
+  var tok = MCCMU.PREVIEW && _previewToken();
+  if (tok) {
+    return fetch(MCCMU.PROXY_URL + qs + '&preview=1', { headers: { authorization: 'Bearer ' + tok }, cache: 'no-store' })
+      .then(_handle).then(_markDrafts)
+      .catch(function () {
+        MCCMU._previewFailed = true;
+        if (MCCMU.previewBar) MCCMU.previewBar();
+        return publicFetch();
+      });
+  }
+  /* ไม่ถอยไปใช้ Apps Script แล้ว — ข้อมูลในชีตเก่ากว่าฐานข้อมูลจริงมาก (ขาดกิจกรรมและร้านใหม่)
+     ถ้าดึงไม่ได้ _loadAll จะใช้ของที่เก็บไว้ในเครื่องแทน หรือให้แต่ละส่วนแสดงข้อความโหลดไม่สำเร็จ */
+  return publicFetch();
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -76,13 +128,16 @@ function _writeCache(data) {
   try { window.localStorage.setItem(LS_KEY, JSON.stringify({ t: Date.now(), data: data })); } catch (e) {}
 }
 function _fetchAll() {
-  return MCCMU.get('all').then(function (data) { _writeCache(data); return data; });
+  return MCCMU.get('all').then(function (data) {
+    if (!MCCMU.PREVIEW) _writeCache(data);    // ข้อมูลตัวอย่างมีร่างปน ห้ามเก็บลง cache ปกติ
+    return data;
+  });
 }
 
 MCCMU._loadAll = function () {
   if (MCCMU._allPromise) return MCCMU._allPromise;
 
-  var bypass = /[?&#]fresh\b/.test(location.search + location.hash);
+  var bypass = MCCMU.PREVIEW || /[?&#]fresh\b/.test(location.search + location.hash);
   var c = bypass ? null : _readCache();
 
   if (c) {
@@ -139,10 +194,30 @@ MCCMU.getMembers = function (opts) {
     return opts.limit ? items.slice(0, opts.limit) : items;
   });
 };
-/* albums ยังยิงตรง (หนักเพราะอ่าน Drive) — เรียกเฉพาะหน้าที่ใช้ */
+/* Cache public album metadata across page visits; never cache image binaries here. */
 MCCMU.getAlbums = function (opts) {
   opts = opts || {};
-  return MCCMU.get('albums', { status: (opts && opts.status) || 'published' });
+  var status = opts.status || 'published';
+  var key = 'mccmu_albums_v2_' + (_SRC || 'sheets') + '_' + status;
+  var fresh = opts.fresh || MCCMU.PREVIEW || /[?&#]fresh\b/.test(location.search + location.hash);
+  MCCMU._albumRequests = MCCMU._albumRequests || {};
+  if (!fresh && MCCMU._albumRequests[key]) return MCCMU._albumRequests[key];
+  if (!fresh) {
+    try {
+      var cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+      if (cached && Array.isArray(cached.data) && Date.now() - cached.t < 180000) {
+        return Promise.resolve(cached.data);
+      }
+    } catch (e) {}
+  }
+  var request = MCCMU.get('albums', { status: status }).then(function (items) {
+    if (!Array.isArray(items)) throw new Error('Invalid album response');
+    if (!MCCMU.PREVIEW) try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), data: items })); } catch (e) {}
+    return items;
+  });
+  MCCMU._albumRequests[key] = request;
+  request.then(function () { delete MCCMU._albumRequests[key]; }, function () { delete MCCMU._albumRequests[key]; });
+  return request;
 };
 MCCMU.getPlaces = function (opts) {
   opts = opts || {};
@@ -424,22 +499,28 @@ function _setFeatHeading(mode) {
   h.textContent = 'กิจกรรมล่าสุดที่ผ่านมา';
   var eyebrow = sec && _q('.eyebrow', sec);
   if (eyebrow) eyebrow.replaceChildren(document.createTextNode('ย้อนดู '), _el('span', 'en', 'Recap'));
+  /* ป้ายจุดกะพริบ "เร็ว ๆ นี้" บนการ์ด (หน้ากิจกรรม) ต้องเปลี่ยนตามด้วย ไม่งั้นงานที่จบแล้วยังดูเหมือนกำลังจะมา */
+  if (sec) sec.querySelectorAll('.feat-upcoming').forEach(function (p) {
+    p.replaceChildren(document.createTextNode('กิจกรรมล่าสุดที่ผ่านมา'));
+  });
 }
 
-/* ── กิจกรรมเด่น — featured=yes ที่ยังไม่ถึงวันงานทั้งหมด (สูงสุด 5)
+/* ── กิจกรรมที่กำลังจะมาถึง (สูงสุด 5) — ที่ปักหมุดเป็นกิจกรรมเด่นขึ้นก่อน แล้วตามด้วยกิจกรรมอื่นที่ยังไม่ถึงวัน
+   เดิมพอมีกิจกรรมเด่นสักอัน กิจกรรมที่ไม่ได้ปักหมุดจะไม่ขึ้นที่ไหนเลยจนกว่าจะเลยวันงาน
    มี >1 → แสดงเป็นสไลด์เลื่อนได้ (ต้องมี wrapper .feat-slider ในหน้า เช่น home) ── */
 MCCMU.renderFeatured = function (sel) {
   var box = _q(sel); if (!box) return;
   MCCMU.getActivities({}).then(function (items) {
-    var feat = items.filter(function (d) {
-      return String(d.featured).toLowerCase() === 'yes' || d.featured === true;
-    });
-    var pool = feat.length ? feat : items;
+    var isFeat = function (d) { return String(d.featured).toLowerCase() === 'yes' || d.featured === true; };
     var today = new Date(); today.setHours(0, 0, 0, 0);
-    var upcoming = pool.filter(function (d) { return d.date && new Date(d.date) >= today; })
-                       .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    var byDate = function (a, b) { return a.date < b.date ? -1 : 1; };
+    var future = items.filter(function (d) { return d.date && new Date(d.date) >= today; }).sort(byDate);
+    var upcoming = future.filter(isFeat).concat(future.filter(function (d) { return !isFeat(d); }));
+    var past = items.filter(function (d) { return d.date && new Date(d.date) < today; }).sort(byDate);
+    var pastFeat = past.filter(isFeat);
     var list = upcoming.length ? upcoming.slice(0, 5)
-             : (pool.length ? [pool[pool.length - 1]] : []); // ไม่มีงานล่วงหน้า → ใบล่าสุดใบเดียว
+             : (pastFeat.length ? [pastFeat[pastFeat.length - 1]]          // ไม่มีงานล่วงหน้า → งานเด่นล่าสุดใบเดียว
+             : (past.length ? [past[past.length - 1]] : []));
     if (!list.length) { _setFeatHeading('none'); return; }
     /* ใบที่โชว์เป็นงานที่จบไปแล้ว → เปลี่ยนหัวข้อ ไม่ให้อ่านว่า "เร็ว ๆ นี้" ทั้งที่ผ่านไปแล้ว */
     _setFeatHeading(upcoming.length ? 'upcoming' : 'past');
@@ -619,6 +700,7 @@ MCCMU.renderKnowledgePicks = function (sel, n) {
    1 อัลบัม = 1 โฟลเดอร์กิจกรรม → การ์ดปก → คลิกเปิดดูรูปทั้งหมดใน viewer
    ใช้ overlay เดิม (#lb / #lbImg / #lbCap / #lbClose) ── */
 MCCMU.renderGallery = function (gridSel, tabsSel) {
+  if (window.MCCMUGallery) return window.MCCMUGallery.mount(gridSel, tabsSel);
   var grid = _q(gridSel); if (!grid) return;
   var tabs = tabsSel && _q(tabsSel);
   var albums = [];
@@ -723,7 +805,7 @@ MCCMU.renderMembers = function (gridSel) {
     return m;
   });
   MCCMU.getMembers().then(function (items) {
-    if (!items.length) return; // เงียบไว้ ถ้ายังไม่ใส่ข้อมูล
+    if (!items.length) return _emptyMsg(grid, 'ยังไม่มีรายชื่อกรรมการ');   // ไม่ปล่อยกล่องโหลดกะพริบค้าง
     _clear(grid);
     items.forEach(function (d) {
       var m = _el('div', 'member');
@@ -734,7 +816,10 @@ MCCMU.renderMembers = function (gridSel) {
       grid.appendChild(m);
     });
     _initCarousel(grid, { prev: '#memberPrev', next: '#memberNext' }); // แถวเดียว + ปุ่มเลื่อน
-  }).catch(function (err) { console.error('[MCCMU] members:', err); });
+  }).catch(function (err) {
+    console.error('[MCCMU] members:', err);
+    _emptyMsg(grid, 'โหลดรายชื่อกรรมการไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง');
+  });
 };
 
 /* ── ร้านฮาลาล / มัสยิด (หน้า halal-map · carousel #foodTrack / #masjidTrack) ── */
@@ -867,32 +952,123 @@ MCCMU.renderPlaces = function () {
 };
 
 /* ── เวลาละหมาดแถบหน้าแรก (#pTimes / #pToday) ── */
+/* ── เวลาละหมาดวันนี้ (หน้าแรก) ──
+   แสดงเป็นเส้นเวลาของวัน: ผ่านไปแล้ว · ถัดไป (สีทอง) · ยังไม่ถึง
+   ทุกอย่างคิดตามเวลาเชียงใหม่ ไม่ใช่นาฬิกาเครื่องคนดู (นักศึกษาต่างชาติอาจตั้งเขตเวลาบ้านเกิดไว้)
+   ข้อความเขียนเป็นภาษาไทยเสมอ แล้วให้ i18n.js แปลเป็นอังกฤษ (กติกาวันที่/ฮิจเราะฮ์/นับถอยหลังอยู่ที่นั่น) */
+var _HIJRI_TH = ['มุฮัรรอม', 'ศอฟัร', 'รอบีอุลเอาวัล', 'รอบีอุษษานี', 'ญุมาดัลอูลา', 'ญุมาดัษษานียะฮ์',
+                 'รอญับ', 'ชะอ์บาน', 'รอมะฎอน', 'เชาวาล', 'ซุลเกาะอ์ดะฮ์', 'ซุลหิจญะฮ์'];
+var _DAY_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+var _MON_TH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+var _MON_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function _bkkNow() { return new Date(Date.now() + 7 * 3600e3); }   // อ่านค่าด้วย getUTC* เท่านั้น
+function _hhmm(t) { var m = String(t || '').match(/(\d{1,2}):(\d{2})/); return m ? m[1].padStart(2, '0') + ':' + m[2] : ''; }
+function _toMin(t) { var x = _hhmm(t).split(':'); return x.length === 2 ? (+x[0]) * 60 + (+x[1]) : NaN; }
+function _eta(diff) {
+  var h = Math.floor(diff / 60), m = diff % 60;
+  if (!h) return 'อีก ' + m + ' นาที';
+  return m ? 'อีก ' + h + ' ชม. ' + m + ' นาที' : 'อีก ' + h + ' ชม.';
+}
+/* aladhan ส่งมาเป็น "01-05-1448 Jumādá al-ūlá 1448" — ใช้แค่ตัวเลขหน้าสุด แล้วตั้งชื่อเดือนเอง */
+function _hijriTH(raw) {
+  var m = String(raw || '').match(/^(\d{1,2})-(\d{1,2})-(\d{3,4})/);
+  if (!m || !_HIJRI_TH[+m[2] - 1]) return '';
+  return (+m[1]) + ' ' + _HIJRI_TH[+m[2] - 1] + ' ฮ.ศ. ' + m[3];
+}
+
 MCCMU.renderPrayerStrip = function () {
-  var wrap = document.getElementById('pTimes');
-  if (!wrap) return;
-  MCCMU.getPrayerTimes().then(function (p) {
-    var order = [['ฟัจร์', p.Fajr], ['ดุฮ์ร', p.Dhuhr], ['อัศร์', p.Asr], ['มัฆริบ', p.Maghrib], ['อิชาอ์', p.Isha]];
-    var now = new Date(); var mins = now.getHours() * 60 + now.getMinutes();
-    function toMin(t) { var x = (t || '').split(':'); return (+x[0]) * 60 + (+x[1]); }
-    var nextIdx = order.findIndex(function (t) { return toMin(t[1]) > mins; });
-    if (nextIdx < 0) nextIdx = 0;
-    _clear(wrap);
-    order.forEach(function (t, i) {
-      var d = _el('div', 'ptime' + (i === nextIdx ? ' next' : ''));
-      d.appendChild(_el('span', null, t[0]));
-      d.appendChild(_el('strong', null, t[1] || '—'));
-      wrap.appendChild(d);
+  var track = document.getElementById('pTimes');
+  if (!track) return;
+  var today = document.getElementById('pToday');
+  var hijri = document.getElementById('pHijri');
+  var next = document.getElementById('pNext');
+
+  var b = _bkkNow();
+  if (today) today.textContent = 'วัน' + _DAY_TH[b.getUTCDay()] + 'ที่ ' + b.getUTCDate() + ' '
+    + _MON_TH[b.getUTCMonth()] + ' ' + (b.getUTCFullYear() + 543);
+
+  /* โครงรอข้อมูล — ไม่ใส่เวลาสมมติ เวลาละหมาดที่ผิดแม้แวบเดียวก็ไม่ควรเห็น */
+  _clear(track);
+  track.classList.add('is-loading');
+  for (var i = 0; i < 5; i++) track.appendChild(_el('li', 'pstop pstop--skel'));
+
+  function draw(p) {
+    var list = [['ฟัจร์', p.Fajr], ['ดุฮ์ร', p.Dhuhr], ['อัศร์', p.Asr], ['มัฆริบ', p.Maghrib], ['อิชาอ์', p.Isha]]
+      .map(function (x) { return { name: x[0], time: _hhmm(x[1]), min: _toMin(x[1]) }; });
+    if (list.some(function (x) { return isNaN(x.min); })) throw new Error('bad prayer times');
+
+    _clear(track);
+    track.classList.remove('is-loading');
+    list.forEach(function (x) {
+      var li = _el('li', 'pstop');
+      li.appendChild(_el('span', 'pstop__dot'));
+      li.appendChild(_el('span', 'pstop__name', x.name));
+      li.appendChild(_el('strong', 'pstop__time', x.time));
+      x.li = li;
+      track.appendChild(li);
     });
-    var pToday = document.getElementById('pToday');
-    if (pToday && p.date) pToday.textContent = p.date + (p.hijri ? ' · ' + p.hijri : '');
-  }).catch(function (err) { console.error('[MCCMU] prayer:', err); });
+    if (hijri) hijri.textContent = _hijriTH(p.hijri);
+
+    function tick() {
+      var n = _bkkNow(), mins = n.getUTCHours() * 60 + n.getUTCMinutes();
+      var idx = -1;
+      for (var k = 0; k < list.length; k++) if (list[k].min > mins) { idx = k; break; }
+      var tomorrow = idx < 0;
+      if (tomorrow) idx = 0;
+
+      /* เส้นความคืบหน้า: 0 = ก่อนฟัจร์ · 1 = หลังอิชาอ์ เติมตามสัดส่วนเวลาจริงระหว่างสองเวลา */
+      var prog = 0;
+      if (tomorrow) prog = 1;
+      else if (idx > 0) {
+        var a = list[idx - 1].min, z = list[idx].min;
+        prog = (idx - 1 + (mins - a) / (z - a)) / (list.length - 1);
+      }
+      track.style.setProperty('--prog', prog.toFixed(4));
+
+      list.forEach(function (x, k) {
+        x.li.classList.toggle('is-past', x.min <= mins && !(tomorrow && k === 0));
+        x.li.classList.toggle('is-next', k === idx);
+        if (k === idx) x.li.setAttribute('aria-current', 'time'); else x.li.removeAttribute('aria-current');
+      });
+
+      if (next) {
+        _clear(next);
+        next.appendChild(_el('span', 'pstrip__tag', 'ถัดไป'));
+        next.appendChild(_el('b', null, list[idx].name));
+        if (tomorrow) next.appendChild(_el('span', null, 'พรุ่งนี้'));
+        next.appendChild(_el('span', 'pstrip__eta', _eta((list[idx].min - mins + 1440) % 1440)));
+      }
+    }
+    tick();
+    clearInterval(MCCMU._prayerTimer);
+    MCCMU._prayerTimer = setInterval(tick, 30000);
+  }
+
+  MCCMU.getPrayerTimes().then(function (p) {
+    /* ข้อมูลรวมถูก cache ไว้ในเครื่อง ถ้าข้ามเที่ยงคืนมาแล้วจะเป็นเวลาของเมื่อวาน → ขอของวันนี้ใหม่ */
+    var want = b.getUTCDate() + ' ' + _MON_EN[b.getUTCMonth()] + ' ' + b.getUTCFullYear();
+    if (p && p.date && String(p.date).replace(/^0/, '') !== want) {
+      var dd = String(b.getUTCDate()).padStart(2, '0') + '-' + String(b.getUTCMonth() + 1).padStart(2, '0') + '-' + b.getUTCFullYear();
+      return MCCMU.getPrayerTimes(dd).catch(function () { return p; });
+    }
+    return p;
+  }).then(draw).catch(function (err) {
+    console.error('[MCCMU] prayer:', err);
+    _clear(track);
+    track.classList.remove('is-loading');
+    track.appendChild(_el('li', 'pstrip__err', 'โหลดเวลาละหมาดไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง'));
+  });
 };
 
 /* ── ปรับลิงก์โซเชียล/อีเมล/โลโก้ จาก settings (ทุกหน้า) ── */
 MCCMU.applySettings = function () {
   MCCMU.getSettings().then(function (s) {
+    /* ลิงก์โซเชียลมาจากหน้าตั้งค่าที่ผู้ดูแลพิมพ์เอง — รับเฉพาะ https เท่านั้น
+       กัน javascript:/data: และลิงก์ที่ลืมใส่ https:// (กลายเป็นลิงก์ภายในที่พัง) */
     function setHref(label, url) {
-      if (!url) return;
+      url = String(url || '').trim();
+      if (!/^https:\/\/[^\s]+$/i.test(url)) return;
       document.querySelectorAll('a[aria-label="' + label + '"]').forEach(function (a) {
         a.href = url; a.target = '_blank'; a.rel = 'noopener';
       });
@@ -905,7 +1081,7 @@ MCCMU.applySettings = function () {
       : s.club_line);
 
     /* อีเมล (footer/contact) */
-    if (s.club_email) document.querySelectorAll('a[href^="mailto:"]').forEach(function (a) {
+    if (s.club_email && /^[^@\s<>"']+@[^@\s<>"']+\.[^@\s<>"']+$/.test(s.club_email)) document.querySelectorAll('a[href^="mailto:"]').forEach(function (a) {
       a.href = 'mailto:' + s.club_email; a.textContent = s.club_email;
     });
     /* LINE id (แสดงในหน้า contact) */
@@ -932,16 +1108,16 @@ MCCMU.MAP_FALLBACK = 'https://www.google.com/maps?q=' +
 MCCMU.renderContactMap = function () {
   var box = document.getElementById('contactMap');
   if (!box) return;
-  MCCMU.getSettings().then(function (s) {
-    var url = s.map_embed_url;
-    /* ชีตยังว่าง → ใช้แผนที่สำรอง จะได้ไม่ค้างเป็นตารางเปล่า */
+  function show(url) {
+    /* ชีตยังว่าง หรือโหลดตั้งค่าไม่ได้ → ใช้แผนที่สำรอง จะได้ไม่ค้างเป็นกล่องเปล่า */
     if (!url || !/^https:\/\//.test(url)) url = MCCMU.MAP_FALLBACK;
     var ifr = document.createElement('iframe');
     ifr.src = url; ifr.loading = 'lazy'; ifr.title = 'แผนที่ที่ตั้งชมรม';
     ifr.style.cssText = 'width:100%;height:100%;min-height:260px;border:0;border-radius:12px';
     ifr.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
     box.replaceChildren(ifr);
-  }).catch(function () {});
+  }
+  MCCMU.getSettings().then(function (s) { show(s.map_embed_url); }).catch(function () { show(''); });
 };
 
 
@@ -1014,8 +1190,37 @@ function _initCarousel(track, opts) {
 /* ══════════════════════════════════════════════════════════════════
    AUTO DISPATCH  ตาม <body data-page="...">
    ══════════════════════════════════════════════════════════════════ */
+/* แถบบอกว่ากำลังอยู่ในโหมดตัวอย่าง — ติดล่างจอตลอด กันคนลืมว่าที่เห็นยังไม่ใช่หน้าจริง */
+MCCMU.previewBar = function () {
+  if (!MCCMU.PREVIEW || !document.body) return;
+  var old = document.querySelector('.pv-bar');
+  if (old) old.remove();
+  var ok = !!_previewToken() && !MCCMU._previewFailed;
+  var bar = _el('div', 'pv-bar' + (ok ? '' : ' pv-bar--warn'));
+  bar.setAttribute('role', 'status');
+  var tx = _el('p', 'pv-bar__tx');
+  tx.appendChild(_el('b', null, ok ? 'โหมดตัวอย่าง' : 'ดูตัวอย่างไม่ได้'));
+  tx.appendChild(_el('span', null, ok
+    ? 'รายการที่ขึ้นต้นด้วย "ร่าง ·" คนทั่วไปยังไม่เห็นจนกว่าจะกดเผยแพร่'
+    : 'ตอนนี้แสดงเฉพาะที่เผยแพร่แล้ว — เข้าสู่ระบบหลังบ้านในเบราว์เซอร์นี้ก่อน หรือเซสชันหมดอายุแล้ว'));
+  var acts = _el('div', 'pv-bar__acts');
+  var admin = _el('a', 'pv-bar__btn', ok ? 'กลับหลังบ้าน' : 'เข้าสู่ระบบ');
+  admin.href = '/admin';
+  var exit = _el('button', 'pv-bar__btn pv-bar__btn--ghost', 'ออกจากโหมดตัวอย่าง');
+  exit.type = 'button';
+  exit.addEventListener('click', function () {
+    try { sessionStorage.removeItem('mccmu_preview'); } catch (e) {}
+    location.href = location.pathname + location.hash;
+  });
+  acts.append(admin, exit);
+  bar.append(tx, acts);
+  document.body.appendChild(bar);
+  document.body.classList.add('is-preview');
+};
+
 MCCMU.init = function () {
   var page = (document.body && document.body.getAttribute('data-page')) || '';
+  MCCMU.previewBar();
   MCCMU.applySettings(); // ทุกหน้า (footer/social/logo)
 
   switch (page) {
@@ -1029,6 +1234,9 @@ MCCMU.init = function () {
       MCCMU.renderFeatured('#featuredEvt');
       MCCMU.renderPastCarousel('#pastTrack');  // กิจกรรมที่ผ่านมา (carousel)
       MCCMU.renderGallery('#gal'); // อัลบัมภาพ (ยุบจากหน้า gallery เดิม)
+      break;
+    case 'gallery':
+      MCCMU.renderGallery('#albumGrid');
       break;
     /* knowledge: หน้ามี renderer ของตัวเอง (template+lightbox) ดึงผ่าน MCCMU.getDocs() */
     case 'about':

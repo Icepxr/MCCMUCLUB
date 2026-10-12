@@ -1,0 +1,175 @@
+/* ============================================================
+   อัลบั้มภาพ — ใช้ทั้งหน้า gallery.html และส่วนอัลบั้มในหน้ากิจกรรม
+   ภาษาเดียวกับทั้งเว็บ: ปุ่มและชิปทรงแคปซูล การ์ดมุมโค้ง 18px เงานุ่ม
+   ลายเซ็นของการ์ด = ปกวางบนกองรูปจริงจากอัลบั้มนั้น ชี้แล้วกองรูปคลี่ออกเล็กน้อย
+   ============================================================ */
+
+/* ── หมวด (โชว์เฉพาะเมื่ออัลบั้มมีหมวด) ── */
+.album-categories { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px; }
+.album-categories[hidden] { display:none; }
+.album-filter {
+  min-height:40px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);
+  background:#fff;color:var(--ink-soft);font-size:14px;font-weight:500;cursor:pointer;
+  transition:background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.album-filter:hover { border-color:var(--violet-300);color:var(--grape-600); }
+.album-filter[aria-pressed="true"] { background:var(--grape-600);border-color:var(--grape-600);color:#fff;
+  box-shadow:0 10px 22px -12px rgba(124,58,237,.6); }
+
+/* ── การ์ดอัลบั้ม ── */
+.album-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:46px 32px; }
+.album-card { display:flex;flex-direction:column;min-width:0;padding:0;border:0;background:none;
+  color:var(--ink);text-align:left;cursor:pointer; }
+.album-card:disabled { cursor:default; }
+
+/* เผื่อขอบรอบปกไว้ให้รูปที่ซ้อนอยู่ข้างหลังโผล่ออกมาได้ */
+.album-card__media { position:relative;display:block;aspect-ratio:4/3;margin:12px 14px 0 10px; }
+.album-card__cover, .album-card__sheet { position:absolute;inset:0;overflow:hidden; }
+.album-card__cover { z-index:2;border-radius:18px;background:var(--lilac-100);
+  box-shadow:0 22px 40px -26px rgba(59,21,120,.6), 0 2px 6px rgba(59,21,120,.08);
+  transition:transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease; }
+.album-card__cover img { width:100%;height:100%;object-fit:cover;opacity:0;
+  transition:opacity .35s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+.album-card__cover img.is-loaded { opacity:1; }
+
+/* รูปถัดไปในอัลบั้ม วางเหมือนรูปอัดที่มีขอบขาว เอียงนิด ๆ อยู่ใต้ปก */
+.album-card__sheet { border:4px solid #fff;border-radius:16px;
+  background:linear-gradient(160deg,var(--lilac-100),var(--violet-200));
+  box-shadow:0 12px 26px -16px rgba(59,21,120,.55);
+  transition:transform .5s cubic-bezier(.2,.8,.2,1); }
+.album-card__sheet img { width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease; }
+.album-card__sheet img.is-loaded { opacity:.95; }
+.album-card__sheet--a { z-index:1;transform:translate(7px,-6px) rotate(3.5deg); }
+.album-card__sheet--b { z-index:0;transform:translate(-6px,-3px) rotate(-3.5deg); }
+
+.album-card:not(:disabled):hover .album-card__cover { transform:translateY(-4px);
+  box-shadow:0 30px 50px -28px rgba(59,21,120,.65), 0 2px 6px rgba(59,21,120,.08); }
+.album-card:not(:disabled):hover .album-card__cover img { transform:scale(1.04); }
+.album-card:not(:disabled):hover .album-card__sheet--a { transform:translate(18px,-12px) rotate(7deg); }
+.album-card:not(:disabled):hover .album-card__sheet--b { transform:translate(-16px,-8px) rotate(-7deg); }
+
+.album-card__count { position:absolute;left:12px;bottom:12px;z-index:3;display:inline-flex;align-items:center;gap:6px;
+  padding:5px 11px 5px 9px;border-radius:999px;font-size:12.5px;font-weight:500;color:#fff;
+  background:rgba(28,10,61,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px); }
+.album-card__count svg { width:14px;height:14px; }
+
+.album-card__body { display:block;width:100%;padding:20px 4px 0; }
+.album-card__meta { display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;font-size:13px;color:var(--muted); }
+.album-card__cat { padding:2px 10px;border-radius:999px;background:var(--lilac-50);border:1px solid var(--line);
+  color:var(--grape-600);font-size:12px;font-weight:500; }
+.album-card__title { display:block;font-family:var(--font-display);font-size:19px;font-weight:600;line-height:1.4;
+  color:var(--ink);overflow-wrap:anywhere;transition:color .2s ease; }
+.album-card:not(:disabled):hover .album-card__title { color:var(--grape-700); }
+.album-card__description { margin-top:6px;font-size:14px;line-height:1.65;color:var(--ink-soft);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+.album-card__empty { display:inline-block;margin-top:10px;padding:2px 10px;border-radius:999px;
+  background:var(--lilac-50);color:var(--muted);font-size:12.5px; }
+.album-card:disabled .album-card__media { opacity:.55; }
+
+.album-skeleton { aspect-ratio:4/3;margin:12px 14px 0 10px;border-radius:18px; }
+.album-empty { grid-column:1/-1;padding:56px 24px;text-align:center;color:var(--muted);
+  background:#fff;border:1px dashed var(--violet-200);border-radius:20px; }
+.album-empty .btn { margin-top:18px; }
+.album-card__cover.has-image-error::before { content:'MCCMU';position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--font-display);color:var(--violet-300); }
+
+/* ── หน้าต่างดูรูป ──
+   native dialog กันคนกดของข้างหลังและวนโฟกัสคีย์บอร์ดอยู่ในหน้าต่างให้เอง */
+.album-dialog { position:fixed;inset:0;width:100%;height:100%;height:100dvh;max-width:none;max-height:none;padding:0;margin:0;border:0;background:var(--lilac-50);color:var(--ink);overflow:hidden; }
+.album-dialog[open] { display:flex;flex-direction:column; }
+.album-dialog::backdrop { background:#1C0A3D; }
+.album-dialog__header { display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:24px;padding:16px 28px;border-bottom:1px solid var(--line);background:#fff; }
+.album-dialog__heading { min-width:0; }
+.album-dialog__header h2 { font-family:var(--font-display);font-size:20px;line-height:1.45;overflow-wrap:anywhere; }
+.album-dialog__count { font-size:13px;color:var(--muted);margin-top:2px; }
+.album-dialog__actions { display:flex;gap:8px;flex-shrink:0; }
+.album-control { display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:999px;border:1px solid var(--line);color:var(--ink-soft);background:#fff;cursor:pointer;flex-shrink:0;transition:background .2s ease, border-color .2s ease, color .2s ease; }
+.album-control svg { width:20px;height:20px; }
+.album-control:hover { background:var(--lilac-50);border-color:var(--violet-300);color:var(--grape-600); }
+.album-control:disabled { opacity:.25;cursor:default; }
+.album-control[aria-pressed="true"] { background:var(--lilac-100);color:var(--grape-700); }
+.album-overview { flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:28px;scrollbar-gutter:stable; }
+.album-photo-grid { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;max-width:1600px;margin-inline:auto; }
+.album-photo { position:relative;aspect-ratio:4/3;border:0;padding:0;border-radius:14px;overflow:hidden;background:var(--lilac-100);cursor:pointer;content-visibility:auto;contain-intrinsic-size:auto 180px;transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease; }
+.album-photo:hover { transform:translateY(-3px);box-shadow:0 18px 32px -20px rgba(59,21,120,.6); }
+.album-photo img { width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s; }
+.album-photo img.is-loaded { opacity:1; }
+.album-photo__number { position:absolute;bottom:8px;right:8px;font-size:11px;color:#fff;background:rgba(28,10,61,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:2px 8px;border-radius:999px; }
+.album-photo.has-image-error::before { content:'ดูภาพ';position:absolute;inset:0;display:grid;place-items:center;font-size:13px; }
+.album-more { display:block;margin:28px auto 0;padding:12px 26px;border:1px solid var(--line);background:#fff;border-radius:999px;color:var(--grape-700);font-weight:600;cursor:pointer; }
+.album-more:hover { border-color:var(--violet-300); }
+.album-photo-pane { flex:1;min-height:0;display:flex;flex-direction:column;background:radial-gradient(80% 70% at 50% 40%,#2A1057,#1C0A3D 75%); }
+.album-frame { position:relative;flex:1;min-height:0;display:flex;padding:18px 80px; }
+.album-stage { position:relative;width:100%;min-height:0;overflow:auto;display:grid;place-items:center;touch-action:pan-y pinch-zoom; }
+.album-stage img { grid-area:1/1;width:100%;height:100%;min-height:0;object-fit:contain;display:block; }
+.album-stage__full { opacity:0;transition:opacity .2s;z-index:1; }
+.album-stage.is-ready .album-stage__full { opacity:1; }
+.album-stage.is-ready .album-stage__preview { visibility:hidden; }
+.album-stage.is-zoomed { place-items:start;grid-template-columns:200%;grid-template-rows:200%;touch-action:pan-x pan-y pinch-zoom; }
+.album-stage.is-zoomed img { width:100%;height:100%;max-width:none; }
+.album-stage__message { position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:12px;padding:8px 16px;border-radius:999px;background:rgba(28,10,61,.9);color:#fff;font-size:13px;max-width:95%; }
+.album-stage.is-ready .album-stage__message { display:none; }
+.album-retry { background:#fff;color:var(--grape-900);border:0;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap; }
+.album-stage__prev,.album-stage__next { position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;
+  border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px); }
+.album-stage__prev { left:18px; }
+.album-stage__next { right:18px; }
+.album-stage__prev:hover,.album-stage__next:hover { background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff; }
+.album-filmstrip { display:flex;justify-content:center;gap:8px;flex-shrink:0;padding:12px 16px 18px;min-height:92px;overflow-x:auto; }
+.album-filmstrip__item { width:78px;height:58px;border:2px solid transparent;padding:0;border-radius:10px;overflow:hidden;opacity:.55;background:#39234f;cursor:pointer;flex:0 0 auto;transition:opacity .2s ease, border-color .2s ease; }
+.album-filmstrip__item:hover { opacity:.85; }
+.album-filmstrip__item[aria-pressed="true"] { opacity:1;border-color:var(--gold-soft); }
+.album-filmstrip__item img { width:100%;height:100%;object-fit:cover; }
+.album-grid img.is-unavailable,.album-dialog img.is-unavailable { visibility:hidden; }
+
+.album-grid *, .album-dialog * { letter-spacing:0; }
+.album-grid [hidden], .album-dialog [hidden] { display:none !important; }
+.album-card:focus-visible { outline:none; }
+.album-card:focus-visible .album-card__cover { outline:3px solid var(--gold);outline-offset:4px; }
+.album-photo:focus-visible, .album-control:focus-visible, .album-filmstrip__item:focus-visible, .album-filter:focus-visible, .album-more:focus-visible { outline:3px solid var(--gold);outline-offset:3px; }
+.album-card, .album-filter, .album-more, .album-control, .album-photo, .album-filmstrip__item, .album-retry { font-family:var(--font-body); }
+.album-filter { font:inherit;font-size:14px;font-weight:500; }
+
+body[data-page="gallery"] .phero { background:linear-gradient(118deg,var(--grape-950),var(--grape-800) 56%,var(--grape-700));padding:64px 0;border-radius:0; }
+body[data-page="gallery"] .phero::after { content:"";position:absolute;inset:0 0 0 auto;width:54%;background:url('photo/hero-activities.jpg') center/cover;mask-image:linear-gradient(90deg,transparent,#000);mix-blend-mode:soft-light;opacity:.6; }
+
+@media (max-width:900px) {
+  .album-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 24px; }
+  .album-photo-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (max-width:620px) {
+  .album-categories { flex-wrap:nowrap;overflow-x:auto;margin-bottom:26px;padding:2px 0;scrollbar-width:none; }
+  .album-categories::-webkit-scrollbar { display:none; }
+  .album-filter { flex-shrink:0; }
+  .album-grid { gap:30px 16px; }
+  .album-card__media, .album-skeleton { margin:8px 8px 0 6px; }
+  .album-card__cover { border-radius:14px; }
+  .album-card__sheet { border-width:3px;border-radius:12px; }
+  .album-card__sheet--a { transform:translate(4px,-4px) rotate(3deg); }
+  .album-card__sheet--b { transform:translate(-4px,-2px) rotate(-3deg); }
+  .album-card__count { left:8px;bottom:8px;font-size:11px;padding:3px 8px 3px 7px; }
+  .album-card__count svg { width:12px;height:12px; }
+  .album-card__body { padding-top:14px; }
+  .album-card__title { font-size:15.5px; }
+  .album-card__meta { font-size:12px;gap:6px; }
+  .album-card__description { display:none; }
+  .album-dialog__header { padding:12px 14px;gap:10px; }
+  .album-dialog__header h2 { font-size:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+  .album-dialog__actions { gap:4px; }
+  .album-dialog__actions .album-control { width:40px;height:40px; }
+  .album-dialog__actions a { display:none; }
+  .album-overview { padding:16px; }
+  .album-photo-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+  .album-photo { border-radius:10px; }
+  .album-frame { padding:12px 0 64px; }
+  .album-stage__prev,.album-stage__next { top:auto;bottom:8px;transform:none;width:46px;height:46px; }
+  .album-stage__prev { left:calc(50% - 54px); }
+  .album-stage__next { right:calc(50% - 54px); }
+  .album-filmstrip { justify-content:flex-start;gap:6px;min-height:76px;padding:10px 12px; }
+  .album-filmstrip__item { width:58px;height:44px;border-radius:8px; }
+  .album-stage__message { font-size:12px;padding:7px 12px;gap:8px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .album-grid *, .album-dialog * { animation:none !important;transition:none !important;scroll-behavior:auto !important; }
+}

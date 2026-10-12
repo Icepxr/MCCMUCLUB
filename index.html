@@ -12,12 +12,12 @@
 <link rel="dns-prefetch" href="https://script.google.com">
 <!-- รูป hero เป็น background-image ใน css (ถูกค้นพบช้า) → บอกเบราว์เซอร์ให้โหลดล่วงหน้า -->
 <link rel="preload" as="image" href="assets/view.jpg" fetchpriority="high">
-<link rel="stylesheet" href="assets/mccmu.css">
+<link rel="stylesheet" href="assets/mccmu.css?v=20261013b">
 <!-- โหลดสคริปต์แบบ defer: ไม่บล็อกการวาดหน้า และรันตามลำดับก่อน DOMContentLoaded -->
 <script>window.MCCMU_SUPABASE={url:"https://bzbqzohygnraqquabffg.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6YnF6b2h5Z25yYXFxdWFiZmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzM3NDEsImV4cCI6MjEwMTkwOTc0MX0.-e1jyLky8H4MS4DGYO6NXD2TrqdXaKSM0qNlmsKXpNI"}</script>
-<script src="assets/site.js" defer></script>
-<script src="assets/api.js" defer></script>
-<script src="assets/i18n.js" defer></script>
+<script src="assets/site.js?v=20261013b" defer></script>
+<script src="assets/api.js?v=20261013b" defer></script>
+<script src="assets/i18n.js?v=20261013b" defer></script>
 </head>
 <body data-page="home">
 <div id="site-nav"></div>
@@ -52,13 +52,16 @@
   </div>
 </section>
 
-<section class="pstrip" id="prayer">
+<section class="pstrip" id="prayer" aria-labelledby="prayerTitle">
   <div class="container pstrip__in">
     <div class="pstrip__date">
-      <span class="eyebrow">เวลาละหมาดวันนี้ · เชียงใหม่</span>
-      <div class="pstrip__greg" id="pToday">—</div>
+      <span class="eyebrow" id="prayerTitle">เวลาละหมาดวันนี้ · เชียงใหม่</span>
+      <p class="pstrip__greg" id="pToday">—</p>
+      <p class="pstrip__hijri" id="pHijri"></p>
+      <p class="pstrip__next" id="pNext" aria-live="polite"></p>
     </div>
-    <div class="pstrip__times" id="pTimes"></div>
+    <!-- เส้นเวลาของวัน — assets/api.js renderPrayerStrip เติมให้ -->
+    <ol class="ptrack" id="pTimes" aria-label="เวลาละหมาด 5 เวลา"></ol>
   </div>
 </section>
 
@@ -160,26 +163,5 @@
 <div id="site-footer"></div>
 
 <!-- ข้อมูลทั้งหน้าโหลดก้อนเดียวผ่าน assets/api.js (?sheet=all + cache) · hero เป็นการ์ดโลโก้ static -->
-<script>
-// today's prayer times (Chiang Mai · placeholder) + highlight next
-(function(){
-  var times = [
-    ['ฟัจร์','Fajr','04:50'],['ดุฮ์ร','Dhuhr','12:25'],['อัศร์','Asr','15:45'],
-    ['มัฆริบ','Maghrib','18:40'],['อิชาอ์','Isha','19:55']
-  ];
-  var now = new Date();
-  var mins = now.getHours()*60+now.getMinutes();
-  var nextIdx = times.findIndex(function(t){var p=t[2].split(':');return (+p[0]*60+ +p[1])>mins;});
-  if(nextIdx<0) nextIdx=0;
-  var wrap=document.getElementById('pTimes');
-  wrap.innerHTML = times.map(function(t,i){
-    return '<div class="ptime'+(i===nextIdx?' next':'')+'"><span>'+t[0]+'</span><strong>'+t[2]+'</strong></div>';
-  }).join('');
-  var th = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-  var thm=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  document.getElementById('pToday').textContent =
-    'วัน'+th[now.getDay()]+'ที่ '+now.getDate()+' '+thm[now.getMonth()]+' '+(now.getFullYear()+543);
-})();
-</script>
 </body>
 </html>

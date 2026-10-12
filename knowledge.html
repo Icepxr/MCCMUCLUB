@@ -9,13 +9,16 @@
 <!-- เปิดคอนเนกชันล่วงหน้าไปยังปลายทางที่ต้องยิงแน่ ๆ (ตัดเวลา DNS+TLS ~200-400ms) -->
 <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://drive.google.com" crossorigin>
+<link rel="preconnect" href="https://i.ytimg.com" crossorigin>
 <link rel="dns-prefetch" href="https://script.google.com">
-<link rel="stylesheet" href="assets/mccmu.css">
+<link rel="stylesheet" href="assets/mccmu.css?v=20261013b">
+<link rel="stylesheet" href="assets/videos.css?v=20261013b">
 <!-- โหลดสคริปต์แบบ defer: ไม่บล็อกการวาดหน้า และรันตามลำดับก่อน DOMContentLoaded -->
 <script>window.MCCMU_SUPABASE={url:"https://bzbqzohygnraqquabffg.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6YnF6b2h5Z25yYXFxdWFiZmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzM3NDEsImV4cCI6MjEwMTkwOTc0MX0.-e1jyLky8H4MS4DGYO6NXD2TrqdXaKSM0qNlmsKXpNI"}</script>
-<script src="assets/site.js" defer></script>
-<script src="assets/api.js" defer></script>
-<script src="assets/i18n.js" defer></script>
+<script src="assets/site.js?v=20261013b" defer></script>
+<script src="assets/api.js?v=20261013b" defer></script>
+<script src="assets/videos.js?v=20261013b" defer></script>
+<script src="assets/i18n.js?v=20261013b" defer></script>
 </head>
 <body data-page="knowledge">
 <div id="site-nav"></div>
@@ -63,8 +66,27 @@
 
     <div id="docEmpty" class="doc-empty" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <p>ยังไม่มีไฟล์ในหมวดนี้</p>
+      <p id="docEmptyMsg">ยังไม่มีไฟล์ในหมวดนี้</p>
+      <button type="button" class="btn btn--ghost btn--sm" id="docRetry" hidden>ลองอีกครั้ง</button>
     </div>
+  </div>
+</section>
+
+<!-- ====================== VIDEOS (ช่อง YouTube ชมรม) ====================== -->
+<section class="section vsec" id="videos" aria-labelledby="videosTitle">
+  <div class="container">
+    <div class="row-head reveal">
+      <div class="s-head">
+        <span class="eyebrow">ฟังย้อนหลัง <span class="en">Talks</span></span>
+        <h2 id="videosTitle" style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">คลิปบรรยายจากชมรม</h2>
+        <p class="lead" style="font-size:17px;margin-top:10px">บรรยายศาสนาและกิจกรรมที่บันทึกไว้ ดูต่อได้ทุกที่ทุกเวลา</p>
+      </div>
+      <a class="btn btn--light btn--sm" href="https://www.youtube.com/@muslimcmu?sub_confirmation=1" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>
+        ติดตามช่อง YouTube
+      </a>
+    </div>
+    <div class="vwrap reveal" id="videoBox" aria-busy="true"></div>
   </div>
 </section>
 
@@ -90,7 +112,8 @@
 </section>
 
 <!-- ====================== LIGHTBOX ====================== -->
-<div id="lightbox" class="lb" role="dialog" aria-modal="true" aria-label="ดูรูปภาพ">
+<!-- inert ตอนปิด: ไม่ให้ปุ่มในกล่องที่ซ่อนอยู่รับโฟกัสหรือถูกอ่านโดยโปรแกรมอ่านหน้าจอ -->
+<div id="lightbox" class="lb" role="dialog" aria-modal="true" aria-label="ดูเอกสาร" inert>
   <button class="lb__close" id="lbClose" aria-label="ปิด">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
   </button>
@@ -362,12 +385,26 @@ function buildCard(d) {
   var track   = document.getElementById('docGrid');
   var empty   = document.getElementById('docEmpty');
   var countEl = document.getElementById('docCount');
+  var emptyMsg = document.getElementById('docEmptyMsg');
+  var retry   = document.getElementById('docRetry');
+
+  /* "ยังไม่มีไฟล์" กับ "โหลดไม่สำเร็จ" ต้องแยกกัน — คนอ่านจะได้รู้ว่าลองใหม่ได้ ไม่ใช่ว่าไม่มีเอกสารจริง */
+  function showEmpty(failed){
+    empty.style.display = 'block';
+    emptyMsg.textContent = failed ? 'โหลดเอกสารไม่สำเร็จ ตรวจการเชื่อมต่อแล้วลองอีกครั้ง' : 'ยังไม่มีไฟล์ในหมวดนี้';
+    retry.hidden = !failed;
+  }
+  retry.addEventListener('click', function(){
+    empty.style.display = 'none';
+    countEl.textContent = 'กำลังโหลด…';
+    loadDocs();
+  });
 
   function render(){
     countEl.textContent = DOCS.length + ' ไฟล์';
     while(track.firstChild) track.removeChild(track.firstChild);
     if(DOCS.length === 0){
-      empty.style.display = 'block';
+      showEmpty(false);
     } else {
       empty.style.display = 'none';
       DOCS.forEach(function(d){ track.appendChild(buildCard(d)); });
@@ -391,7 +428,7 @@ function buildCard(d) {
     }).catch(function(err){
       console.error('[MCCMU] docs:', err);
       countEl.textContent = '';
-      empty.style.display = 'block';
+      showEmpty(true);
     });
   }
   /* deep-link จากหน้าแรก: knowledge.html#doc=<file_id> → เปิด preview ไฟล์นั้นเลย
@@ -418,7 +455,9 @@ var lbStage = document.getElementById('lbStage');
 var lbTxt   = document.getElementById('lbTitle');
 var lbDl    = document.getElementById('lbDownload');
 
+var lbOpener = null;
 function openPreview(d){
+  lbOpener = document.activeElement;
   lbStage.replaceChildren();
   /* ใช้ Drive preview ได้ทั้ง PDF และรูป (ไม่ต้องรู้ type) */
   var ifr = document.createElement('iframe');
@@ -430,18 +469,35 @@ function openPreview(d){
   lbStage.appendChild(ifr);
   lbTxt.textContent = d.title;
   lbDl.href = driveDownload(d.fileId);
+  lb.removeAttribute('inert');
   lb.classList.add('open');
   document.body.style.overflow = 'hidden';
+  document.getElementById('lbClose').focus();
 }
 function closeLightbox(){
+  if (!lb.classList.contains('open')) return;
   lb.classList.remove('open');
+  lb.setAttribute('inert', '');
   document.body.style.overflow = '';
   setTimeout(function(){ lbStage.replaceChildren(); }, 300);
+  /* เปิดมาจากลิงก์ #doc=… → ล้างออก ไม่งั้นรีเฟรชแล้วเด้งเปิดซ้ำ */
+  if (/[#&]doc=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
+  if (lbOpener && lbOpener.isConnected) lbOpener.focus();
 }
 
 document.getElementById('lbClose').addEventListener('click', closeLightbox);
 lb.addEventListener('click', function(e){ if(e.target === lb) closeLightbox(); });
-document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeLightbox(); });
+/* ขังโฟกัสไว้ในกล่องตอนเปิด: Tab วนอยู่ระหว่างปุ่มปิด กรอบเอกสาร และปุ่มดาวน์โหลด */
+document.addEventListener('keydown', function(e){
+  if (!lb.classList.contains('open')) return;
+  if (e.key === 'Escape') { closeLightbox(); return; }
+  if (e.key !== 'Tab') return;
+  var f = Array.prototype.filter.call(lb.querySelectorAll('button, a[href], iframe'), function(n){ return n.offsetParent !== null; });
+  if (!f.length) return;
+  var first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !lb.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && (document.activeElement === last || !lb.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+});
 </script>
 </body>
 </html>

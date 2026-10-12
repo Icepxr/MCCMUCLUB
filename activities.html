@@ -10,12 +10,14 @@
 <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://drive.google.com" crossorigin>
 <link rel="dns-prefetch" href="https://script.google.com">
-<link rel="stylesheet" href="assets/mccmu.css">
+<link rel="stylesheet" href="assets/mccmu.css?v=20261013b">
+<link rel="stylesheet" href="assets/gallery.css?v=20261013b">
 <!-- โหลดสคริปต์แบบ defer: ไม่บล็อกการวาดหน้า และรันตามลำดับก่อน DOMContentLoaded -->
 <script>window.MCCMU_SUPABASE={url:"https://bzbqzohygnraqquabffg.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6YnF6b2h5Z25yYXFxdWFiZmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMzM3NDEsImV4cCI6MjEwMTkwOTc0MX0.-e1jyLky8H4MS4DGYO6NXD2TrqdXaKSM0qNlmsKXpNI"}</script>
-<script src="assets/site.js" defer></script>
-<script src="assets/api.js" defer></script>
-<script src="assets/i18n.js" defer></script>
+<script src="assets/site.js?v=20261013b" defer></script>
+<script src="assets/gallery.js?v=20261013b" defer></script>
+<script src="assets/api.js?v=20261013b" defer></script>
+<script src="assets/i18n.js?v=20261013b" defer></script>
 </head>
 <body data-page="activities">
 <div id="site-nav"></div>
@@ -36,7 +38,7 @@
   <div class="container">
     <div class="row-head reveal" style="margin-bottom:36px">
       <div class="s-head"><span class="eyebrow">ไฮไลต์ <span class="en">Featured</span></span>
-        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">กิจกรรมเด่นเร็ว ๆ นี้</h2></div>
+        <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px" data-feat-heading>กิจกรรมเด่นเร็ว ๆ นี้</h2></div>
     </div>
     <!-- กิจกรรมเด่น: ดึงจากชีต activities (featured=yes แถวล่าสุด) — assets/api.js renderFeatured -->
     <div class="feature-evt card reveal" id="featuredEvt">
@@ -81,29 +83,18 @@
 </section>
 
 <!-- ====================== GALLERY (ยุบจากหน้าอัลบัมภาพเดิม) ====================== -->
-<section class="section section--soft" id="gallery" style="padding-top:54px">
+<section class="section section--soft" id="gallery" data-gallery style="padding-top:54px">
   <div class="container">
-    <div class="row-head reveal" style="align-items:flex-start">
+    <div class="row-head reveal" style="align-items:flex-start;margin-bottom:36px">
       <div class="s-head"><span class="eyebrow">ความทรงจำของเรา <span class="en">Gallery</span></span>
         <h2 style="font-size:clamp(26px,3.4vw,38px);margin-top:12px">อัลบัมภาพกิจกรรม</h2>
-        <p class="lead" style="margin-top:12px;max-width:560px">บรรยากาศจริงจากกิจกรรมที่สมาชิกช่วยกันสร้างตลอดปี — คลิกที่อัลบัมเพื่อดูภาพทั้งหมด</p></div>
-      <div class="carousel__nav">
-        <button class="carousel__btn" id="galPrev" type="button" aria-label="ก่อนหน้า">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
-        <button class="carousel__btn" id="galNext" type="button" aria-label="ถัดไป">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
-      </div>
+        <p class="lead" style="margin-top:12px;max-width:560px">บรรยากาศจริงจากกิจกรรมที่สมาชิกช่วยกันสร้างตลอดปี</p></div>
+      <a class="btn btn--ghost btn--sm" href="gallery.html">อัลบั้มทั้งหมด ↗</a>
     </div>
-    <div class="carousel reveal" style="margin-top:24px"><div class="carousel__track" id="gal"></div></div>
+    <div class="album-categories" data-album-categories role="group" aria-label="หมวดอัลบั้ม" hidden></div>
+    <div class="album-grid" id="gal"></div>
   </div>
 </section>
-
-<!-- lightbox สำหรับแกลเลอรี -->
-<div class="lightbox" id="lb">
-  <button class="lb-close" id="lbClose" aria-label="ปิด">&times;</button>
-  <div class="lb-stage"><div class="ph" id="lbImg" style="width:min(80vw,720px);aspect-ratio:4/3;border-radius:14px"></div>
-    <div class="lb-cap" id="lbCap"></div></div>
-</div>
 
 <div id="site-footer"></div>
 

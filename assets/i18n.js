@@ -12,6 +12,54 @@
 
   /* ---------- dictionary (normalize ช่องว่างเป็น 1 เคาะก่อน lookup) ---------- */
   var MAP = {
+    /* Album browser */
+    'อัลบั้มภาพ': 'Photo albums',
+    'อัลบั้มทั้งหมด ↗': 'All albums ↗',
+    'อัลบั้มทั้งหมด': 'All albums',
+    'ค้นหาอัลบั้ม': 'Search albums',
+    'ชื่อกิจกรรม หมวด หรือปี': 'Activity, category or year',
+    'หมวดอัลบั้ม': 'Album categories',
+    'กำลังโหลดอัลบั้ม…': 'Loading albums…',
+    'ภาพทั้งหมด': 'All photos',
+    'เลือกภาพ': 'Choose a photo',
+    'ขยายภาพ': 'Zoom photo',
+    'เปิดภาพในแท็บใหม่': 'Open photo in a new tab',
+    'ปิดอัลบั้ม': 'Close album',
+    'รูปก่อนหน้า': 'Previous photo',
+    'รูปถัดไป': 'Next photo',
+    'กำลังโหลดภาพ…': 'Loading photo…',
+    'โหลดภาพคมชัดไม่สำเร็จ': 'Unable to load the full photo',
+    'ลองอีกครั้ง': 'Try again',
+    'ดูภาพเพิ่มเติม': 'More photos',
+    'ดูภาพ': 'View photo',
+    'ไม่พบอัลบั้มที่ตรงกับการค้นหา': 'No albums match your search',
+    'ยังไม่มีอัลบั้มภาพ': 'No albums yet',
+    'ไม่สามารถโหลดอัลบั้มได้ในขณะนี้': 'Unable to load albums right now',
+    'เปิดอัลบั้ม ↗': 'Open album ↗',
+    'ยังไม่มีภาพ': 'No photos yet',
+    'ช่วงเวลาที่ได้เรียนรู้ ลงมือทำ และเติบโตไปด้วยกัน': 'Learning, creating and growing together.',
+    'ความทรงจำของพี่น้องมุสลิมในรั้ว มช.': 'Memories from our Muslim community at CMU.',
+    'ทั้งหมด': 'All',
+    'บรรยากาศจริงจากกิจกรรมที่สมาชิกช่วยกันสร้างตลอดปี': 'Real moments from the activities our members create together all year',
+    'แผนที่ฮาลาล & มัสยิด รอบ มช.': 'Halal & masjid map around CMU',
+    'ดูรูปภาพ': 'View image',
+    'รูปภาพ': 'Image',
+    'อัลบัม': 'Album',
+    'รูปสมาชิก': 'Member photo',
+    'โหลดเอกสารไม่สำเร็จ ตรวจการเชื่อมต่อแล้วลองอีกครั้ง': "Couldn't load documents — check your connection and try again",
+    'ดูเอกสาร': 'View document',
+    'ยังไม่มีรายชื่อกรรมการ': 'No committee members listed yet',
+    'โหลดรายชื่อกรรมการไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง': "Couldn't load the committee — try refreshing the page",
+    /* Club videos (knowledge) */
+    'ฟังย้อนหลัง': 'Watch again',
+    'คลิปบรรยายจากชมรม': 'Talks from the club',
+    'บรรยายศาสนาและกิจกรรมที่บันทึกไว้ ดูต่อได้ทุกที่ทุกเวลา': 'Recorded talks and activities — watch anytime, anywhere',
+    'ติดตามช่อง YouTube': 'Subscribe on YouTube',
+    'ดูบน YouTube': 'Watch on YouTube',
+    'กำลังเปิด': 'Now playing',
+    'ไปที่ช่อง YouTube': 'Go to our YouTube channel',
+    'ตอนนี้โหลดรายการคลิปไม่ได้ ดูคลิปทั้งหมดได้ที่ช่อง YouTube ของชมรมโดยตรง':
+      "Can't load the video list right now — watch every talk on the club's YouTube channel",
     /* nav / drawer / footer */
     'หน้าแรก': 'Home',
     'กิจกรรม': 'Activities',
@@ -48,6 +96,8 @@
     /* prayer strip */
     'เวลาละหมาดวันนี้ · เชียงใหม่': 'Prayer times today · Chiang Mai',
     'ฟัจร์': 'Fajr', 'ดุฮ์ร': 'Dhuhr', 'อัศร์': 'Asr', 'มัฆริบ': 'Maghrib', 'อิชาอ์': 'Isha',
+    'เวลาละหมาด 5 เวลา': 'Five daily prayers',
+    'โหลดเวลาละหมาดไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง': "Couldn't load prayer times — try refreshing the page",
 
     /* featured */
     'ไฮไลต์': 'Featured',
@@ -196,13 +246,34 @@
   var THM = { 'ม.ค.': 'Jan', 'ก.พ.': 'Feb', 'มี.ค.': 'Mar', 'เม.ย.': 'Apr', 'พ.ค.': 'May', 'มิ.ย.': 'Jun',
               'ก.ค.': 'Jul', 'ส.ค.': 'Aug', 'ก.ย.': 'Sep', 'ต.ค.': 'Oct', 'พ.ย.': 'Nov', 'ธ.ค.': 'Dec' };
   var THD = { 'อาทิตย์': 'Sunday', 'จันทร์': 'Monday', 'อังคาร': 'Tuesday', 'พุธ': 'Wednesday',
-              'พฤหัสบดี': 'Thursday', 'ศุกร์': 'Friday', 'เสาร์': 'Saturday' };
+              'พฤหัสบดี': 'Thursday', 'พฤหัสฯ': 'Thursday', 'ศุกร์': 'Friday', 'เสาร์': 'Saturday' };
+  /* เดือนฮิจเราะฮ์ — สะกดอังกฤษแบบไม่มีเครื่องหมายเสียง อ่านง่ายกว่าแบบที่ API ส่งมา (Jumādá al-ūlá) */
+  var HIJRI_EN = { 'มุฮัรรอม': 'Muharram', 'ศอฟัร': 'Safar', 'รอบีอุลเอาวัล': "Rabi' al-Awwal", 'รอบีอุษษานี': "Rabi' al-Thani",
+    'ญุมาดัลอูลา': 'Jumada al-Ula', 'ญุมาดัษษานียะฮ์': 'Jumada al-Akhirah', 'รอญับ': 'Rajab', 'ชะอ์บาน': "Sha'ban",
+    'รอมะฎอน': 'Ramadan', 'เชาวาล': 'Shawwal', 'ซุลเกาะอ์ดะฮ์': "Dhu al-Qa'dah", 'ซุลหิจญะฮ์': 'Dhu al-Hijjah' };
   var MON_RE = '(ม\\.ค\\.|ก\\.พ\\.|มี\\.ค\\.|เม\\.ย\\.|พ\\.ค\\.|มิ\\.ย\\.|ก\\.ค\\.|ส\\.ค\\.|ก\\.ย\\.|ต\\.ค\\.|พ\\.ย\\.|ธ\\.ค\\.)';
   var RULES = [
+    [/^(\d+) อัลบั้ม$/, function (m) { return m[1] + ' albums'; }],
+    [/^(\d+) รูป$/, function (m) { return m[1] + ' photos'; }],
+    [/^รูปที่ (\d+) \/ (\d+)$/, function (m) { return 'Photo ' + m[1] + ' / ' + m[2]; }],
+    [/^ดูรูปที่ (\d+)$/, function (m) { return 'View photo ' + m[1]; }],
+    [/^รูปที่ (\d+)$/, function (m) { return 'Photo ' + m[1]; }],
     [new RegExp('^(\\d{1,2}) ' + MON_RE + ' (\\d{4})$'),
       function (m) { return m[1] + ' ' + THM[m[2]] + ' ' + (+m[3] - 543); }],
     [new RegExp('^วัน(อาทิตย์|จันทร์|อังคาร|พุธ|พฤหัสบดี|ศุกร์|เสาร์)ที่ (\\d{1,2}) ' + MON_RE + ' (\\d{4})$'),
       function (m) { return THD[m[1]] + ' ' + m[2] + ' ' + THM[m[3]] + ' ' + (+m[4] - 543); }],
+    [new RegExp('^(\\d{1,2}) (' + Object.keys(HIJRI_EN).join('|') + ') ฮ\\.ศ\\. (\\d{3,4})$'),
+      function (m) { return m[1] + ' ' + HIJRI_EN[m[2]] + ' ' + m[3] + ' AH'; }],
+    [/^อีก (\d+) ชม\. (\d+) นาที$/, function (m) { return 'in ' + m[1] + ' hr ' + m[2] + ' min'; }],
+    [/^อีก (\d+) ชม\.$/, function (m) { return 'in ' + m[1] + ' hr'; }],
+    [/^อีก (\d+) นาที$/, function (m) { return 'in ' + m[1] + ' min'; }],
+    /* เดือนย่อลำพัง เช่นป้ายวันที่บนการ์ดกิจกรรมเด่น (ตัวเลขวันอยู่คนละบรรทัด) */
+    [new RegExp('^' + MON_RE + '$'), function (m) { return THM[m[1]]; }],
+    [/^วัน(อาทิตย์|จันทร์|อังคาร|พุธ|พฤหัสบดี|พฤหัสฯ|ศุกร์|เสาร์)นี้$/, function (m) { return 'This ' + THD[m[1]]; }],
+    [/^แผนที่ (.+)$/, function (m) { return 'Map: ' + m[1]; }],
+    [/^([\s\S]+?)\s*· (\d+) รูป$/, function (m) { return m[1] + ' · ' + m[2] + ' photos'; }],
+    [/^เล่นคลิป (.+)$/, function (m) { return 'Play video: ' + m[1]; }],
+    [/^คลิปทั้งหมด (\d+) คลิป$/, function (m) { return 'All videos (' + m[1] + ')'; }],
     [/^(\d+)\s*แห่ง$/, function (m) { return m[1] + ' places'; }],
     [/^(\d+)\s*ไฟล์$/, function (m) { return m[1] + ' files'; }],
     [/^© (\d{4}) ชมรมมุสลิมมหาวิทยาลัยเชียงใหม่ · MCCMU$/, function (m) { return '© ' + m[1] + ' CMU Muslim Club · MCCMU'; }],
@@ -279,8 +350,17 @@
     for (var i = 0; i < muts.length; i++)
       for (var j = 0; j < muts[i].addedNodes.length; j++) walk(muts[i].addedNodes[j]);
   });
-  function enableEN()  { walk(document.body); mo.observe(document.body, { childList: true, subtree: true }); }
-  function disableEN() { mo.disconnect(); restoreThai(); }
+  /* ชื่อแท็บ เช่น "กิจกรรม & ข่าวสาร · MCCMU" — แปลทีละท่อนที่คั่นด้วย · ท่อนที่ไม่รู้จักคงไว้ตามเดิม */
+  var titleOrig = null;
+  function trTitle() {
+    if (titleOrig == null) titleOrig = document.title;
+    document.title = titleOrig.split(' · ').map(function (part) {
+      var tr = translate(part);
+      return tr == null ? part : tr;
+    }).join(' · ');
+  }
+  function enableEN()  { walk(document.body); trTitle(); mo.observe(document.body, { childList: true, subtree: true }); }
+  function disableEN() { mo.disconnect(); restoreThai(); if (titleOrig != null) document.title = titleOrig; }
 
   /* ---------- สลับภาษาแบบมีอนิเมชัน (เฟดเนื้อหา ไม่รีเฟรชหน้า) ---------- */
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
