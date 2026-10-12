@@ -1,0 +1,34 @@
+{
+  "review_date": "2026-10-13",
+  "timezone": "Asia/Bangkok",
+  "git_head": "1a86a2a5be27f526e55e2b59696628419c0a758e",
+  "reviewers": [
+    "frontend_review",
+    "security_review",
+    "data_release_review"
+  ],
+  "application_file_sha256": {
+    "activities.html": "ea8e050beecee2985831b8220494b5bdfb0ac41d4af846db67dbde1f8f71e664",
+    "admin/index.html": "a8e0284ce27b1504ce1f7625e49672e9eb03962a081e8af27b2290ecbd08cfc8",
+    "api/data.js": "276251c238a5bebdda2d1d8ff3ea3410e75e2cc5f449caf13211c70276c28d59",
+    "assets/admin.css": "ebf93e28db7a4d11a93179c2207f3cd702612445cded5a0090e372889971bec6",
+    "assets/admin.js": "53ce21b66e5174ec305b40dfba77baacebe3e1e68fb489f09a0f25be74877b84",
+    "assets/api.js": "e37d048f878d5b8f0cac14c2669c67b309c36b055a1cb23b2f11e24807565bf2",
+    "assets/i18n.js": "856b6fadbb97baa026f6419afa6c23d58d8e86aac877d9b5e8d5cb6f4938a5c5",
+    "assets/mccmu.css": "248a937a4d3df5b6159ca9051dc675b792e46176c96e424d693e81de350423ee",
+    "assets/site.js": "1405ad5cb205c3e7ec725a63060331f308be69ebec12a638808c822ecb5ba626",
+    "index.html": "373763e52e639c3b8369aae9589dca6109409ad61b66ddf840b1e4543437d666",
+    "knowledge.html": "98e4e4cc3c6fb2c4a4a619004387afc21d98b664edc5438429c6c0c6868a8129",
+    "gallery.html": "b04223bd016923d4581169279b5e367c5555a1d60c02812b8bd56739a53f5063",
+    "assets/gallery.js": "e975071311eb2995b852d987b7c3a63039e8a7350b11d42d12594e6670a16187",
+    "assets/gallery.css": "e4570c04614b6a4501d95368b2156fff0aff3fcc7c182c2fc98728ecfe2922cb",
+    "assets/videos.js": "6ac2f8443420a415da86fcb8a411961b2ec9d3bb5c3b7b59a6ba569ec368dda7",
+    "assets/videos.css": "7f9a883aeaf0683e390568c38c57cfcdfa5f137929be3501631854d45f0cad38",
+    "vercel.json": "3796b31682b400df71667e44d6e5e4d8228e9bc36171f8032345ac1cb84f992f"
+  },
+  "live_database_writes_by_review_team": false,
+  "application_deployed_by_review_team": false,
+  "production_places": 29,
+  "production_restaurants": 23,
+  "approved_restaurants_verified": 11
+}

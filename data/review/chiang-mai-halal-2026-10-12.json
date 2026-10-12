@@ -1,0 +1,566 @@
+{
+  "reviewed_on": "2026-10-12",
+  "timezone": "Asia/Bangkok",
+  "purpose": "รายชื่อเสนอเพิ่ม รอผู้ใช้ตรวจสอบก่อนนำเข้าฐานข้อมูลและ deploy",
+  "target_table": "places",
+  "database_written": true,
+  "deployed": true,
+  "deduplication": {
+    "source": "API Google Sheets ของโปรเจกต์ (อ่านอย่างเดียว)",
+    "checked_on": "2026-10-12",
+    "published_places": 18,
+    "published_restaurants": 12,
+    "draft_places": 0,
+    "archived_places": 0,
+    "existing_restaurant_names": [
+      "Halal Kitchen CMU MED-MAHARAJ NAKORN HOSPITAL",
+      "มัตอัมเชียงใหม่",
+      "ทาคาว่า ฮาลาล คูซีน",
+      "ร้านอาหารรวมมิตรฮาลาล",
+      "Aba Kitchen",
+      "ข้าวมันไก่ไปรษณีย์ 2",
+      "ก๋วยเตี๋ยวเนื้อตุ๋น ครัวมัยซาเราะห์(บังมัต)",
+      "โฮงชา Hong Cha Halal",
+      "เพชรอาหารตามสั่ง",
+      "โจ๊ก มุสลิมช้างเผือก",
+      "ร้านรอฟีอีย์",
+      "สภากาแฟ 786"
+    ],
+    "scope": "เทียบ API Google Sheets เมื่อ 12 ต.ค. และ Supabase สาธารณะเมื่อ 13 ต.ค. 2026",
+    "excluded_candidates": [
+      {
+        "name": "Takawa Halal Cuisine",
+        "reason": "มีอยู่แล้วในชื่อ ทาคาว่า ฮาลาล คูซีน"
+      },
+      {
+        "name": "สภากาแฟ 786",
+        "reason": "มีอยู่แล้ว"
+      },
+      {
+        "name": "ข้าวมันไก่ไปรษณีย์ (นาซมีน) 1",
+        "reason": "รอตรวจว่าคนละสาขากับ ข้าวมันไก่ไปรษณีย์ 2 ที่มีอยู่แล้ว"
+      }
+    ],
+    "supabase_checked_on": "2026-10-13",
+    "supabase_published_places": 18
+  },
+  "records": [
+    {
+      "review_id": 1,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "ข้าวซอยอิสลาม",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในบ้านฮ่อ / ไนท์บาซาร์ อำเภอเมืองเชียงใหม่ มีเมนู ข้าวซอยไก่, ข้าวซอยเนื้อ, ข้าวหมกไก่",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B8%AD%E0%B8%B4%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A1%2024%20%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B9%80%E0%B8%88%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%97%E0%B8%A8%201%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "บ้านฮ่อ / ไนท์บาซาร์",
+        "address_from_sources": "24 ซอยเจริญประเทศ 1 อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "053271484",
+          "0823920142"
+        ],
+        "menu_examples": [
+          "ข้าวซอยไก่",
+          "ข้าวซอยเนื้อ",
+          "ข้าวหมกไก่"
+        ],
+        "halal_evidence_type": "directory_category",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/96074YT-ข้าวซอยอิสลาม",
+            "evidence": "Wongnai จัดหมวดอาหารมุสลิม/ฮาลาล"
+          }
+        ],
+        "review_notes": [
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 2,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "ข้าวซอยเฟื่องฟ้า (ฮาลาล)",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในบ้านฮ่อ / ไนท์บาซาร์ อำเภอเมืองเชียงใหม่ มีเมนู ข้าวซอยเนื้อ, ข้าวซอยไก่, ข้าวหมกไก่",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B9%80%E0%B8%9F%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B8%9F%E0%B9%89%E0%B8%B2%20%28%E0%B8%AE%E0%B8%B2%E0%B8%A5%E0%B8%B2%E0%B8%A5%29%20%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B9%80%E0%B8%88%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%97%E0%B8%A8%201%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "บ้านฮ่อ / ไนท์บาซาร์",
+        "address_from_sources": "ซอยเจริญประเทศ 1 อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "0815957030",
+          "0894334351"
+        ],
+        "menu_examples": [
+          "ข้าวซอยเนื้อ",
+          "ข้าวซอยไก่",
+          "ข้าวหมกไก่"
+        ],
+        "halal_evidence_type": "listing_name_and_reviews",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/98113wj-ข้าวซอยเฟื่องฟ้า-ฮาลาล",
+            "evidence": "หน้าร้านระบุฮาลาลในชื่อและรีวิวกล่าวถึงอาหารอิสลาม"
+          }
+        ],
+        "review_notes": [
+          "เลือกหน้าร้านฮาลาลหมายเลข 98113; ไม่ใช่ห้องอาหารเฟื่องฟ้าหรือรายการชื่อคล้ายกัน",
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 3,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "ข้าวซอยป้าไพ",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในวัดเกต อำเภอเมืองเชียงใหม่ มีเมนู ข้าวซอยเนื้อ, ข้าวซอยไก่, ขนมจีบไก่",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B8%9B%E0%B9%89%E0%B8%B2%E0%B9%84%E0%B8%9E%20%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%81%E0%B8%95%201%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "วัดเกต",
+        "address_from_sources": "ซอยหน้าวัดเกต 1 อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "053260929"
+        ],
+        "menu_examples": [
+          "ข้าวซอยเนื้อ",
+          "ข้าวซอยไก่",
+          "ขนมจีบไก่"
+        ],
+        "halal_evidence_type": "directory_category",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/118422kY-ข้าวซอยป้าไพ",
+            "evidence": "Wongnai จัดหมวดอาหารมุสลิม/ฮาลาล"
+          }
+        ],
+        "review_notes": [
+          "หน้าร้านระบุซอยหน้าวัดเกต 1 แต่รีวิวเก่าระบุถนนบำรุงราษฎร์ซอย 2; ต้องยืนยันที่อยู่และตำบลก่อนนำเข้า",
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 4,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "ก๋วยเตี๋ยวไส้ นิศรีอิสลาม (สันติธรรม)",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในสันติธรรม อำเภอเมืองเชียงใหม่ มีเมนู ก๋วยเตี๋ยวเนื้อ, เกาเหลาไส้, เนื้อเปื่อย",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%81%E0%B9%8B%E0%B8%A7%E0%B8%A2%E0%B9%80%E0%B8%95%E0%B8%B5%E0%B9%8B%E0%B8%A2%E0%B8%A7%E0%B9%84%E0%B8%AA%E0%B9%89%20%E0%B8%99%E0%B8%B4%E0%B8%A8%E0%B8%A3%E0%B8%B5%E0%B8%AD%E0%B8%B4%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A1%20%28%E0%B8%AA%E0%B8%B1%E0%B8%99%E0%B8%95%E0%B8%B4%E0%B8%98%E0%B8%A3%E0%B8%A3%E0%B8%A1%29%207%2F15%20%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%A1%E0%B8%A3%E0%B8%81%E0%B8%95%20%E0%B8%95%E0%B8%B3%E0%B8%9A%E0%B8%A5%E0%B8%8A%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%9C%E0%B8%B7%E0%B8%AD%E0%B8%81%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "สันติธรรม",
+        "address_from_sources": "7/15 ถนนมรกต ตำบลช้างเผือก อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "0987473565"
+        ],
+        "menu_examples": [
+          "ก๋วยเตี๋ยวเนื้อ",
+          "เกาเหลาไส้",
+          "เนื้อเปื่อย"
+        ],
+        "halal_evidence_type": "directory_category",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/141394tS-ก๋วยเตี๋ยวไส้-นิศรีอิสลาม-สันติธรรม",
+            "evidence": "Wongnai จัดหมวดอาหารมุสลิม/ฮาลาล"
+          }
+        ],
+        "review_notes": [
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 5,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "สง่าเชิงดอย ข้าวหมกไก่",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในช้างเผือก / ใกล้โรงพยาบาลช้างเผือก อำเภอเมืองเชียงใหม่ มีเมนู ข้าวหมกไก่, ข้าวหมกเนื้อ, ซุปเนื้อ",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AA%E0%B8%87%E0%B9%88%E0%B8%B2%E0%B9%80%E0%B8%8A%E0%B8%B4%E0%B8%87%E0%B8%94%E0%B8%AD%E0%B8%A2%20%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%AB%E0%B8%A1%E0%B8%81%E0%B9%84%E0%B8%81%E0%B9%88%20%E0%B8%8A%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%9C%E0%B8%B7%E0%B8%AD%E0%B8%81%E0%B8%8B%E0%B8%AD%E0%B8%A2%202%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "ช้างเผือก / ใกล้โรงพยาบาลช้างเผือก",
+        "address_from_sources": "ช้างเผือกซอย 2 อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "0914819346",
+          "0861873274",
+          "0877252329"
+        ],
+        "menu_examples": [
+          "ข้าวหมกไก่",
+          "ข้าวหมกเนื้อ",
+          "ซุปเนื้อ"
+        ],
+        "halal_evidence_type": "directory_category",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/129637Bb-สง่าเชิงดอย-ข้าวหมกไก่-حلال",
+            "evidence": "หน้าร้าน OFFICIAL จัดหมวดอาหารมุสลิม/ฮาลาล"
+          }
+        ],
+        "review_notes": [
+          "หลักฐานรีวิวที่อ่านเป็นข้อมูลปี 2022 และก่อนหน้า; ยืนยันที่อยู่และเวลาเปิดปัจจุบัน",
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 6,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "มิรา คูซีน ฮาลาล (Mira Cuisine Halal)",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในท่าศาลา อำเภอเมืองเชียงใหม่ มีเมนู ราเม็ง, ข้าวหน้าเนื้อ, ปลาไข่ทอด",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%A1%E0%B8%B4%E0%B8%A3%E0%B8%B2%20%E0%B8%84%E0%B8%B9%E0%B8%8B%E0%B8%B5%E0%B8%99%20%E0%B8%AE%E0%B8%B2%E0%B8%A5%E0%B8%B2%E0%B8%A5%20%28Mira%20Cuisine%20Halal%29%2074%2F6%20%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B9%81%E0%B8%9E%E0%B8%B0%20%E0%B8%95%E0%B8%B3%E0%B8%9A%E0%B8%A5%E0%B8%97%E0%B9%88%E0%B8%B2%E0%B8%A8%E0%B8%B2%E0%B8%A5%E0%B8%B2%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "ท่าศาลา",
+        "address_from_sources": "74/6 ถนนบ้านแพะ ตำบลท่าศาลา อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "0631148431"
+        ],
+        "menu_examples": [
+          "ราเม็ง",
+          "ข้าวหน้าเนื้อ",
+          "ปลาไข่ทอด"
+        ],
+        "halal_evidence_type": "directory_category",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/310491hZ-มิรา-คูซีน-ฮาลาล",
+            "evidence": "หน้าร้าน OFFICIAL จัดหมวดอาหารมุสลิม/ฮาลาล"
+          }
+        ],
+        "review_notes": [
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 7,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "Yaring Cuisine Halal Restaurant Chiangmai",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในช้างม่อยเก่า / ท่าแพ อำเภอเมืองเชียงใหม่ มีเมนู ข้าวยำ, ข้าวผัดปูไข่ปู, โรตีแกง",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=Yaring%20Cuisine%20Halal%20Restaurant%20Chiangmai%2037%20%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%8A%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%A1%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B9%80%E0%B8%81%E0%B9%88%E0%B8%B2%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "ช้างม่อยเก่า / ท่าแพ",
+        "address_from_sources": "37 ถนนช้างม่อยเก่า อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "0864281424"
+        ],
+        "menu_examples": [
+          "ข้าวยำ",
+          "ข้าวผัดปูไข่ปู",
+          "โรตีแกง"
+        ],
+        "halal_evidence_type": "directory_category",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/260241JQ-yaring-cuisine-halal-restaurant-chiangmai",
+            "evidence": "หน้าร้าน OFFICIAL จัดหมวดอาหารมุสลิม/ฮาลาล"
+          },
+          {
+            "title": "เมนู Wongnai x LINE MAN",
+            "url": "https://www.wongnai.com/delivery/businesses/260241JQ/order",
+            "evidence": "เมนูข้าวผัดปูไข่ปูและอาหารเนื้อตุ๋น"
+          }
+        ],
+        "review_notes": [
+          "เลือกเบอร์จากหน้าร้าน Wongnai; แหล่งอื่นระบุเบอร์ต่างกัน จึงต้องยืนยันเบอร์ก่อนเผยแพร่",
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 8,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "ครัวคุณอา (The R Halal Kitchen)",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในช้างคลาน / ใกล้โรงแรม The Empress อำเภอเมืองเชียงใหม่ มีเมนู อาหารไทย, อาหารเหนือ, ปลาทอดสมุนไพร",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B8%A7%E0%B8%84%E0%B8%B8%E0%B8%93%E0%B8%AD%E0%B8%B2%20%28The%20R%20Halal%20Kitchen%29%20%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B9%80%E0%B8%88%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%97%E0%B8%A8%2012%20%E0%B8%95%E0%B8%B3%E0%B8%9A%E0%B8%A5%E0%B8%8A%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%84%E0%B8%A5%E0%B8%B2%E0%B8%99%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "ช้างคลาน / ใกล้โรงแรม The Empress",
+        "address_from_sources": "ซอยเจริญประเทศ 12 ตำบลช้างคลาน อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "0896412805",
+          "0894964793"
+        ],
+        "menu_examples": [
+          "อาหารไทย",
+          "อาหารเหนือ",
+          "ปลาทอดสมุนไพร"
+        ],
+        "halal_evidence_type": "directory_category",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/174772Wz-ครัวคุณอา",
+            "evidence": "หน้าร้าน OFFICIAL จัดหมวดอาหารมุสลิม/ฮาลาล"
+          }
+        ],
+        "review_notes": [
+          "รีวิวในหน้าที่อ่านเป็นปี 2014–2015; ต้องตรวจว่าร้านยังเปิดและอยู่ตำแหน่งเดิม",
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 9,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "Fatimah Burger House",
+        "type": "ร้านอาหาร",
+        "description": "ร้านเบอร์เกอร์ที่มีรายการในไดเรกทอรีอาหารฮาลาล อำเภอเมืองเชียงใหม่ ตำแหน่งปัจจุบันรอยืนยัน",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=Fatimah%20Burger%20House%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "ย่านช้างคลาน / ไนท์บาซาร์ (รอยืนยัน)",
+        "address_from_sources": "อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [],
+        "menu_examples": [
+          "เบอร์เกอร์"
+        ],
+        "halal_evidence_type": "halal_directory",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "Halal Navi",
+            "url": "https://www.halal-navi.com/restaurant/fatimah-burger-house/dqm0woxulq5w5y21",
+            "evidence": "พบในไดเรกทอรี Halal Navi"
+          },
+          {
+            "title": "Chiang Mai Local (อ่านได้จากผลค้นหาเท่านั้น)",
+            "url": "https://chiangmailocal.com/listing/fatimah-burger-house/",
+            "evidence": "ผลค้นหาระบุ 17 Changklan Road"
+          },
+          {
+            "title": "Satlantis (ผลค้นหา)",
+            "url": "https://www.satlantis.io/location/128692/info",
+            "evidence": "ผลค้นหาระบุซอยเจริญประเทศ 1"
+          }
+        ],
+        "review_notes": [
+          "Halal Navi ระบุ Tha Pae Road แต่แหล่งอื่นระบุ 17 Changklan Road และซอยเจริญประเทศ 1; ยังไม่ยืนยันตำแหน่งปัจจุบัน",
+          "ยังไม่มีเบอร์โทรที่ยืนยันกับร้าน",
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 10,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "place": {
+        "name": "ข้าวซอยอิสลาม (บ้านยาง) และอาหารฮาลาล — หน้ามัสยิดอัตตักวา",
+        "type": "ร้านอาหาร",
+        "description": "ร้านอาหารในวัดเกต / หน้ามัสยิดอัตตักวา อำเภอเมืองเชียงใหม่ มีเมนู ข้าวซอย",
+        "map_url": "https://www.google.com/maps/search/?api=1&query=%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B8%AD%E0%B8%B4%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A1%20%28%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B8%A2%E0%B8%B2%E0%B8%87%29%20%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%AE%E0%B8%B2%E0%B8%A5%E0%B8%B2%E0%B8%A5%20%E2%80%94%20%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B8%A1%E0%B8%B1%E0%B8%AA%E0%B8%A2%E0%B8%B4%E0%B8%94%E0%B8%AD%E0%B8%B1%E0%B8%95%E0%B8%95%E0%B8%B1%E0%B8%81%E0%B8%A7%E0%B8%B2%2031%20%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%81%E0%B8%95%20%E0%B8%95%E0%B8%B3%E0%B8%9A%E0%B8%A5%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%81%E0%B8%95%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B9%80%E0%B8%8A%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88",
+        "coords": "",
+        "status": "draft"
+      },
+      "research": {
+        "area": "วัดเกต / หน้ามัสยิดอัตตักวา",
+        "address_from_sources": "31 ถนนหน้าวัดเกต ตำบลวัดเกต อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่",
+        "phones_from_sources": [
+          "0654274732"
+        ],
+        "menu_examples": [
+          "ข้าวซอย"
+        ],
+        "halal_evidence_type": "owner_statement",
+        "halal_certificate": null,
+        "certificate_verification": "ยังไม่พบใบรับรองปัจจุบันที่ยืนยันกับร้านและสาขานี้ได้ในการค้นครั้งนี้ ไม่ได้แปลว่าร้านไม่มีใบรับรอง",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "ลิงก์ค้นหาชื่อและที่อยู่ ยังไม่ใช่หมุดที่ตรวจสอบแล้ว",
+        "sources": [
+          {
+            "title": "หน้าร้าน Wongnai",
+            "url": "https://www.wongnai.com/restaurants/3276396Mv-ข้าวซอย-อิสลาม-บ้านยาง-และ-อาหาร-ฮาลาล-มัสยิด-อัตตักวา",
+            "evidence": "หน้าร้าน OFFICIAL จัดหมวดฮาลาล และข้อความเจ้าของร้านกล่าวถึงสูตรชาวจีนมุสลิมบ้านยาง"
+          }
+        ],
+        "review_notes": [
+          "หน้าร้านที่อ่านแสดงว่าจะเปิดวันที่ 15 พ.ย. 2026 เวลา 04:00; ต้องตรวจสถานะกับร้านก่อนนำเข้า",
+          "เป็นรายการคนละแห่งกับข้าวซอยอิสลามในซอยเจริญประเทศ 1",
+          "ยืนยันว่าร้านยังเปิดให้บริการ",
+          "ยืนยันสถานะฮาลาลกับร้านหรือหลักฐานรับรองที่ตรงกับสาขา",
+          "ตรวจหมุดแผนที่ก่อนเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    },
+    {
+      "review_id": 11,
+      "review_status": "approved",
+      "approved_for_import": true,
+      "user_requested": true,
+      "place": {
+        "name": "ร้านข้าวซอยอิสลาม (หมื่นด้ามพร้าคต ซอย 5)",
+        "type": "ร้านอาหาร",
+        "description": "ร้านข้าวซอยย่านช้างเผือก ตั้งอยู่ในหมื่นด้ามพร้าคต ซอย 5 Google Maps จัดหมวดเป็นร้านอาหารฮาลาล",
+        "map_url": "https://maps.app.goo.gl/MqV24xdAMEhpqJmR6",
+        "coords": "18.8062104,98.9903524",
+        "status": "draft"
+      },
+      "research": {
+        "name_from_source": "ร้านข้าวซอยอิสลาม",
+        "area": "ช้างเผือก / หมื่นด้ามพร้าคต ซอย 5",
+        "address_from_sources": "หมื่นด้ามพร้าคต ซอย 5 ตำบลช้างเผือก อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่ 50300",
+        "phones_from_sources": [
+          "0834768271"
+        ],
+        "menu_examples": [],
+        "halal_evidence_type": "google_maps_category",
+        "halal_certificate": null,
+        "certificate_verification": "Google Maps จัดหมวดร้านอาหารฮาลาล ยังไม่ได้ตรวจใบรับรองปัจจุบัน",
+        "opening_hours": null,
+        "operation_verified_with_owner": false,
+        "map_verification": "อ่านชื่อ ที่อยู่ เบอร์โทร และหมวดร้านจากหน้า Google Maps ของหมุดที่ผู้ใช้ส่ง; พิกัดดึงจาก !3d/!4d ของสถานที่ในลิงก์ปลายทาง ไม่ใช่พิกัดศูนย์กลางมุมมองแผนที่",
+        "map_feature_id": "0x30da3bf2285705d9:0xa453e87baa473041",
+        "google_maps_place_path": "/g/11n4vnxc7p",
+        "sources": [
+          {
+            "title": "Google Maps — หมุดที่ผู้ใช้ส่ง",
+            "url": "https://maps.app.goo.gl/MqV24xdAMEhpqJmR6",
+            "evidence": "หน้าสถานที่ระบุชื่อ ร้านข้าวซอยอิสลาม หมวดร้านอาหารฮาลาล ที่อยู่หมื่นด้ามพร้าคต ซอย 5 และโทรศัพท์ 0834768271",
+            "accessed_on": "2026-10-12"
+          }
+        ],
+        "review_notes": [
+          "เพิ่มตามคำขอผู้ใช้เมื่อ 12 ต.ค. 2026",
+          "เติมชื่อซอยในชื่อที่เสนอใช้เพื่อแยกจากรายการ 1 ข้าวซอยอิสลามในซอยเจริญประเทศ 1; ชื่อบน Maps คือ ร้านข้าวซอยอิสลาม",
+          "ยังไม่ยืนยันเมนู ราคา และเวลาทำการ",
+          "รอตรวจสอบพร้อมชุดข้อมูลเดิมก่อนนำเข้าและเผยแพร่"
+        ]
+      },
+      "approved_on": "2026-10-13"
+    }
+  ],
+  "approval": {
+    "approved_on": "2026-10-13",
+    "scope": "ผู้ใช้อนุมัติทั้ง 11 ร้านให้นำขึ้นหน้าเว็บ",
+    "user_instruction": "ที่เหลือโอเคละ เอาเข้าหน้าเว็บได้เลย",
+    "publication_verified": false
+  },
+  "import_prepared": true,
+  "live_site_url": "https://mccmuclub.vercel.app"
+}

@@ -1,0 +1,84 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/activities",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/gallery",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/knowledge",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/halal-map",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/about",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/admin",
+    "status": 200,
+    "content_type": "text/html; charset=utf-8",
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/assets/gallery.js",
+    "status": 200,
+    "content_type": "text/javascript; charset=utf-8",
+    "cache": "public, max-age=600, stale-while-revalidate=604800"
+  },
+  {
+    "path": "/assets/videos.js",
+    "status": 200,
+    "content_type": "text/javascript; charset=utf-8",
+    "cache": "public, max-age=600, stale-while-revalidate=604800"
+  },
+  {
+    "path": "/data?sheet=all&src=supabase",
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "cache": "public, max-age=120, s-maxage=180, stale-while-revalidate=60",
+    "ok": true,
+    "data_keys": [
+      "activities",
+      "docs",
+      "settings",
+      "places",
+      "members",
+      "prayer"
+    ]
+  },
+  {
+    "path": "/data?sheet=places&src=supabase",
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "cache": "public, max-age=120, s-maxage=180, stale-while-revalidate=60",
+    "ok": true,
+    "count": 29
+  },
+  {
+    "path": "/data?sheet=places&preview=1",
+    "status": 401,
+    "cache": "no-store"
+  }
+]
