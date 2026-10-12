@@ -1,0 +1,266 @@
+{
+  "lens": "design",
+  "checked": [
+    "Method: own server :8901, own tab. Pages were loaded at 1280x800 and 1440x900. Error, empty and loading states were triggered without editing source: each page's HTML was loaded into a same-origin srcdoc iframe with a fetch stub injected before the site scripts. The stub made /data and Apps Script reject (fail), return ok:true with empty arrays (empty), or never resolve (hang).",
+    "Global, all 6 public pages at 1280 and 1440: no horizontal page overflow (docW <= innerW). .container is 1180px at 1440. No broken <img> after load. One knowledge Drive thumbnail failed at first and recovered through the api.js onerror fallback.",
+    "Global Thai typography: a runtime scan of every element whose own text contains Thai, checking computed letter-spacing > 0.3px or text-transform:uppercase. New CSS (gallery.css, videos.css, admin.css, the prayer strip .pstrip .eyebrow override) has none. Pre-existing offenders are listed in the issues.",
+    "/ (home): hero, prayer timeline (5 stops of 152px, is-next marker, 'ถัดไป … อีก N ชม.' line, hijri date), the featured block switching to 'ย้อนดู Recap' for past events, knowledge picks (3 cards) and the service cards all render correctly. Fail state: the featured and picks sections hide and the prayer strip shows 'โหลดเวลาละหมาดไม่สำเร็จ…'. Both pass. Hang state: skeletons show for picks and the prayer strip, and the featured card shows a loading text.",
+    "/activities: hero, featured card (4:5 poster), past carousel (12 cards, scrollable), new album grid (3 columns, 32px column gap, 46px row gap, equal 388px cards). Fail and empty: the past carousel and album grid show proper messages, and the album grid has a retry button. Both pass. The featured card fails (see issues).",
+    "/gallery: 5 album cards, no clipped titles. The native <dialog> album viewer sits in the top layer above the sticky nav (z 50) and the to-top button (z 60). In the photo stage, prev is disabled with opacity .25 at index 0, the 'กำลังโหลดภาพ…' status clears when the image is ready, the filmstrip windows index±3 by design, and controls are 44-50px. Pass.",
+    "/halal-map: 12 food cards of equal 421px height with no clipped text. Fail shows 'ไม่สามารถโหลดข้อมูลได้ในขณะนี้' and empty shows 'ยังไม่มีข้อมูลในหมวดนี้ — แนะนำเข้ามาได้เลย!'. Pass.",
+    "/knowledge: the docs carousel (14 files) and the new YouTube section (player plus 3-item list) render. The 'กำลังเปิด' badge is shown only on the active item (opacity 0 on the others). videos.css has hover and focus-visible rules (gold outline). Pass. Error/empty wording: see issues.",
+    "/about: renders with no overflow. The members error state is covered in the issues.",
+    "Focus and hover: the public site has no outline:none outside inputs, so the UA focus ring remains. gallery.css and videos.css define focus-visible for every new control. admin.css has a global :focus-visible ring plus field and switch focus. .btn:disabled and .gbtn:disabled are styled. Pass.",
+    "z-index: the admin toast (60) sits above the slide-over panel (50) and scrim (40). The savebar (35) is below the scrim. The public preview bar (120) is above the to-top button (60), and to-top moves to bottom:110px in preview, so they do not overlap. Pass.",
+    "Admin mock, logged out: the login screen (pattern, crest, title 30px white, Google button) has good contrast. The real /admin (logged out) renders the same login with no broken images or overflow at 1440.",
+    "Admin mock, owner: overview (visits chart, todo, shelf, top pages, recent edits), the activities/docs/albums/places/members lists, settings, admins and audit all checked at 1280. None has horizontal overflow, clipped text, Thai letter-spacing or mono font on Thai. Main column max 1240px at 1440.",
+    "Admin form slide-over (activities): 640px panel, body scrolls (1048/582), sticky footer with two actions, status segmented control and switch. The XSS test title renders as inert text. Pass. The cover preview has a crop and resolution issue (see issues).",
+    "Admin album photo manager: adding 2 links in mock memory works, the toast shows, and the 'ปก' badge moves to the photo chosen as cover. Pass. Other tile-state problems are listed in the issues.",
+    "Admin mock_fail: the login screen shows 'ตรวจสอบสิทธิ์ไม่สำเร็จ: …'. List, settings, admins and audit views show an alert. The overview is misleading (see issues).",
+    "Preview bar /activities?preview, no token: the bar shows the dark 'pv-bar--warn' variant with title 'ดูตัวอย่างไม่ได้', a gold 'เข้าสู่ระบบ' button and an 'ออกจากโหมดตัวอย่าง' button. It is 760x69, centred, fixed, z 120. body padding-bottom 110px keeps the footer clear. It is readable and covers nothing important. With a fake token: see issues.",
+    "Production comparison (GET only, https://mccmuclub.vercel.app at 1440): /activities on production shows the same Thai letter-spacing offenders and the same 'กิจกรรมเด่นเร็ว ๆ นี้' label on the 11 Oct event, so both are pre-existing and not regressions. Production / has the old 116px prayer strip, and the local redesign is intentional. No visual regression from the uncommitted work was found."
+  ],
+  "not_tested": [
+    "Pixel-level screenshot review at true 1280/1440 scale. The shared pane scales screenshots down to about 800px wide and sometimes lags behind iframe scroll, so layout findings rely on DOM measurements.",
+    "Safari/WebKit rendering of Thai with letter-spacing, where detachment of vowels and tone marks is usually worse. Only Chromium was available.",
+    "The real /admin after sign-in (forbidden by the brief). The admin was checked through the mock only.",
+    "Preview mode with a valid admin JWT (no sign-in allowed), so draft rendering ('ร่าง ·' prefix) on the public pages was not seen.",
+    "Mobile and tablet widths (owned by the responsive auditor)."
+  ],
+  "issues": [
+    {
+      "title": "Thai text still rendered with letter-spacing and uppercase on every public page",
+      "category": "design",
+      "severity": "MEDIUM",
+      "page": "global",
+      "file": "assets/mccmu.css:86 (.eyebrow), :196 (.brand__en), :506 (.footer h4), :215 (lang toggle); activities.html:140 (.feat-upcoming); about.html:222/232 (.donate-card__tag), :237 (.donate-card__label)",
+      "description": "Runtime scan of computed styles on elements whose own text is Thai. Every Thai .eyebrow gets letter-spacing:2px plus uppercase: 'ไฮไลต์', 'หยิบมาอ่าน', 'บริการของชมรม', 'ย้อนดู', 'เกิดอะไรขึ้นบ้าง', 'ย้อนดูบรรยากาศ', 'ความทรงจำของเรา', 'เรียนรู้ไปด้วยกัน', 'สรุปเนื้อหา · ฮาลาเกาะฮ์', 'ฟังย้อนหลัง', 'แหล่งข้อมูลแนะนำ', 'เกี่ยวกับเรา', 'จุดเริ่มต้น', 'เส้นทางของเรา', 'ร่วมสนับสนุน', 'คณะกรรมการ', 'เราพร้อมรับฟัง', 'กินอุ่นใจ ละหมาดสะดวก', 'กินอุ่นใจ', 'ละหมาดสะดวก'. Other offenders: footer h4 'เมนู/เนื้อหา/ติดต่อเรา' at 1.56px plus uppercase on all pages; header .brand__en 'มหาวิทยาลัยเชียงใหม่' at 1.68px plus uppercase on all pages; /activities p.feat-upcoming 'กิจกรรมเด่นเร็ว ๆ นี้' at 1.2px plus uppercase; /about .donate-card__label 'เลขที่บัญชี/ชื่อบัญชี' at 0.96px plus uppercase and .donate-card__tag 'บัญชีบริจาค' at 0.55px; lang toggle 'ไทย' at 0.48px. The prayer strip already overrides .eyebrow correctly (mccmu.css:353). This contradicts the project's own rule in mccmu.css:352 and admin.css:165. The same styles are on production, so this is pre-existing.",
+      "reproduction_steps": [
+        "Open /about at 1280x800.",
+        "Inspect any section eyebrow, for example 'เกี่ยวกับเรา About us'. The computed letter-spacing is 2px and text-transform is uppercase.",
+        "Clone the eyebrow at 64px. 'เกี่ยวกับเรา' renders as separated letters ('เ ก ี่ ย ว ก ั บ เ ร า'), while the same text with letter-spacing:0 reads as one word."
+      ],
+      "user_impact": "Thai has no spaces between words, so tracking breaks word shape and slows reading on every section label and the footer. In WebKit and older engines, vowels and tone marks detach from their consonants.",
+      "recommended_fix": "Scope the tracking to the Latin part only. For example, set letter-spacing:0 and text-transform:none on .eyebrow, .footer h4, .brand__en, .feat-upcoming and .donate-card__label/__tag, then add .eyebrow .en, .footer h4:lang(en) { letter-spacing:.16em; text-transform:uppercase }. Alternatively wrap the Latin text in <span class=\"en\"> and keep tracking only on .en. Also move .brand__en's Thai text out of the uppercase span.",
+      "evidence": "javascript_tool computed-style scan on /, /activities, /gallery, /halal-map, /knowledge and /about (local :8901), with the same results on https://mccmuclub.vercel.app/activities. A magnified render of the cloned eyebrow at 64px shows the letter-spaced Thai.",
+      "reported_by": "design"
+    },
+    {
+      "title": "/activities featured card stays on 'กำลังโหลดกิจกรรม…' forever when data fails or is empty",
+      "category": "design",
+      "severity": "MEDIUM",
+      "page": "/activities",
+      "file": "assets/api.js:484-492 (_setFeatHeading), :508, :525-527; activities.html:40-60",
+      "description": "On error or with no events, renderFeatured calls _setFeatHeading('none'). That function only acts on [data-feat-heading], which exists on index.html:73 but not in activities.html. On /activities the section is therefore never hidden and never shows an error. The card keeps its initial placeholder text indefinitely: 'กิจกรรมเด่นเร็ว ๆ นี้ | กำลังโหลดกิจกรรม… | รอสักครู่ กำลังดึงข้อมูลกิจกรรมล่าสุด | — | — | —'. It also has a 465px empty poster frame. The same happens in ?preview without a session or with a rejected token.",
+      "reproduction_steps": [
+        "Make /data fail. In the audit, a srcdoc iframe with fetch stubbed to reject /data and script.google.com, or open /activities?preview with no admin session.",
+        "Wait several seconds.",
+        "#featuredEvt still reads 'กำลังโหลดกิจกรรม…' with '—' for the date, time and place. Other blocks on the page do show their error messages."
+      ],
+      "user_impact": "Visitors see a permanent loading spinner text at the top of the activities page and no explanation when the data is unavailable.",
+      "recommended_fix": "Add data-feat-heading to the activities featured <h2>, or make renderFeatured hide box.closest('section') directly in the 'none' and catch paths. Optionally show a short error message instead of hiding.",
+      "evidence": "Harness results: fail mode #featuredEvt.innerText='กิจกรรมเด่นเร็ว ๆ นี้|กำลังโหลดกิจกรรม…|รอสักครู่ กำลังดึงข้อมูลกิจกรรมล่าสุด|—|—|—', section.hidden=false, h=465. Empty mode gave the same. Preview without a token gave the same. The console shows '[MCCMU] featured: …' errors.",
+      "reported_by": "design"
+    },
+    {
+      "title": "/activities labels a past event as 'กิจกรรมเด่นเร็ว ๆ นี้' (coming soon) with a pulsing dot",
+      "category": "design",
+      "severity": "MEDIUM",
+      "page": "/activities",
+      "file": "activities.html:41 (h2) and :53 (p.feat-upcoming, hard-coded); assets/api.js:506-510",
+      "description": "When there are no upcoming events, renderFeatured falls back to the last event and calls _setFeatHeading('past'). On the home page this correctly switches the heading to 'ย้อนดู Recap / กิจกรรมล่าสุดที่ผ่านมา'. /activities has no data-feat-heading hook, so both the section h2 and the in-card label with its animated 'live' dot keep saying 'กิจกรรมเด่นเร็ว ๆ นี้'. Today (13 ต.ค. 2569) the card shows 'บทเรียนจากบรรพชน…' dated 11 ต.ค. 2569. This is also on production, so it is pre-existing.",
+      "reproduction_steps": [
+        "Open /activities on a day after the last featured event.",
+        "Compare with / where the same event is headed 'ย้อนดู Recap · กิจกรรมล่าสุดที่ผ่านมา'."
+      ],
+      "user_impact": "Visitors are told a finished event is coming soon and may plan to attend it.",
+      "recommended_fix": "Add data-feat-heading to activities.html:41 and let _setFeatHeading also hide or retitle .feat-upcoming. For example, toggle the dot off and change the text to 'กิจกรรมล่าสุดที่ผ่านมา' when mode === 'past'.",
+      "evidence": "get_page_text on local / shows 'ย้อนดู RECAP กิจกรรมล่าสุดที่ผ่านมา … 11 ต.ค. 2569'. Local and production /activities #featuredEvt innerText shows 'กิจกรรมเด่นเร็ว ๆ นี้|บทเรียนจากบรรพชน…' with date 11 ต.ค. 2569.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Admin overview shows a false 'all clear' with zero counts when the database calls fail",
+      "category": "design",
+      "severity": "MEDIUM",
+      "page": "/admin (overview)",
+      "file": "assets/admin.js:513-542 (renderOverview), :609-612 (visitsCard), :861 (todo clear), :882 (feed empty)",
+      "description": "With mock_fail, every list view correctly shows 'โหลดข้อมูลไม่สำเร็จ: …', but the overview renders as if it succeeded. Every count reads 0. The green todo box says 'ไม่มีอะไรค้าง ทุกอย่างขึ้นเว็บเรียบร้อย'. Top pages says 'ยังไม่มีข้อมูล' and recent edits says 'ยังไม่มีใครแก้ไขอะไร'. The visits card tells the user to 'ต้องรัน supabase/migrations/0004_page_stats.sql ก่อน', a developer instruction shown for any stats error. Meanwhile the sidebar still shows counts of 4/1/2/1/1, which contradicts the overview.",
+      "reproduction_steps": [
+        "Open /.claude/audit/admin-mock with mock_session=1.",
+        "Set localStorage.mock_fail='1' (after login) and click ภาพรวม.",
+        "Observe zeros, the green 'nothing pending' message and the migration hint."
+      ],
+      "user_impact": "During an outage or with an expired session, an editor is told everything is published and nothing is pending, and sees a confusing developer instruction.",
+      "recommended_fix": "Check each result's error in renderOverview. When content or feed loading fails, render an error alert with a retry button instead of the success empty states. Show the migration hint only when the error is a missing relation (code 42P01) and phrase it for admins.",
+      "evidence": "Screenshot of the overview under mock_fail: the sidebar shows กิจกรรม 4 while the shelf shows 0 กิจกรรม, and the todo box shows 'ไม่มีอะไรค้าง ทุกอย่างขึ้นเว็บเรียบร้อย'. innerText dump under mock_fail: 'ยังเปิดใช้สถิติไม่ได้ — ต้องรัน supabase/migrations/0004_page_stats.sql ก่อน|รอจัดการ|ไม่มีอะไรค้าง…|0|กิจกรร…'.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Preview bar says 'โหมดตัวอย่าง' (working) even when the server rejects the token",
+      "category": "design",
+      "severity": "MEDIUM",
+      "page": "/activities?preview (all pages in preview)",
+      "file": "assets/api.js:1165-1190 (MCCMU.previewBar), :40-47 (_previewToken)",
+      "description": "The bar decides between the ok and warn variants only from whether a non-expired token exists in localStorage. With a token that the server rejects (the fake token got 502 from /data?…&preview=1), the bar shows the normal 'โหมดตัวอย่าง — รายการที่ขึ้นต้นด้วย \"ร่าง ·\" …' with 'กลับหลังบ้าน'. Every block on the page shows generic public error messages, and the featured card is stuck loading (see the related issue). Nothing tells the admin that the preview itself failed.",
+      "reproduction_steps": [
+        "Set localStorage['sb-bzbqzohygnraqquabffg-auth-token'] = {access_token:'fake', expires_at: now+3600}.",
+        "Open /activities?preview.",
+        "The bar is the non-warning variant while the past carousel and albums say 'ไม่สามารถโหลด…ได้ในขณะนี้'."
+      ],
+      "user_impact": "An admin previewing drafts with a revoked or invalid session thinks the site is broken rather than knowing they need to sign in again.",
+      "recommended_fix": "When a preview fetch fails with 401, 403 or 5xx, switch the bar to the pv-bar--warn variant with 'เซสชันหมดอายุ — เข้าสู่ระบบใหม่'. For example, MCCMU.get can dispatch an event or the bar can await MCCMU._loadAll().catch().",
+      "evidence": "Fake token: .pv-bar class='pv-bar', text 'โหมดตัวอย่าง|รายการที่ขึ้นต้นด้วย \"ร่าง ·\"…|กลับหลังบ้าน|ออกจากโหมดตัวอย่าง'. The network log shows GET /data?sheet=all&preview=1 → 502 and GET /data?sheet=albums&status=published&preview=1 → 502.",
+      "reported_by": "design"
+    },
+    {
+      "title": "About page: committee skeletons shimmer forever on error or empty data",
+      "category": "design",
+      "severity": "LOW",
+      "page": "/about",
+      "file": "assets/api.js:784-803 (renderMembers)",
+      "description": "renderMembers draws 4 .skel placeholders. On empty data it returns silently and on error it only logs to the console, so the 4 grey skeleton tiles (240px) stay on the page permanently under the 'คณะกรรมการ' heading.",
+      "reproduction_steps": [
+        "Load /about with /data failing or returning members: [].",
+        "#boardGrid still contains 4 .skel tiles after the request settles."
+      ],
+      "user_impact": "The committee section looks permanently broken or still loading.",
+      "recommended_fix": "On empty or error, hide the section with sec.hidden = true (as renderKnowledgePicks does) or show a short message.",
+      "evidence": "Harness fail and empty modes: #boardGrid innerText '' with h=240 and querySelectorAll('#boardGrid .skel').length === 4.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Error and empty states are swapped in the knowledge docs and YouTube blocks",
+      "category": "design",
+      "severity": "LOW",
+      "page": "/knowledge",
+      "file": "knowledge.html:412-416 (docs catch shows #docEmpty); assets/videos.js:206-212 (empty list goes to fail())",
+      "description": "When the docs fetch fails, the page shows the empty state 'ยังไม่มีไฟล์ในหมวดนี้' with no retry, which tells users there are no files. When the YouTube list is legitimately empty, videos.js throws 'no videos' and shows the failure copy 'ตอนนี้โหลดรายการคลิปไม่ได้…'.",
+      "reproduction_steps": [
+        "Fail mode: #sec-docs shows 'ยังไม่มีไฟล์ในหมวดนี้', the count is blank and there is no retry button.",
+        "Empty mode (/data?sheet=youtube returns []): #videos shows 'ตอนนี้โหลดรายการคลิปไม่ได้ …'."
+      ],
+      "user_impact": "Messages mislead users about whether content exists or the network failed.",
+      "recommended_fix": "Give docs a separate error message with a retry button (as the album grid has). For videos, treat an empty array as an empty state, for example 'ยังไม่มีคลิป — ติดตามช่อง YouTube'.",
+      "evidence": "Harness innerText: fail /knowledge '…เพิ่มล่าสุดก่อน ยังไม่มีไฟล์ในหมวดนี้'. empty /knowledge videos: 'ตอนนี้โหลดรายการคลิปไม่ได้ ดูคลิปทั้งหมดได้ที่ช่อง YouTube ของชมรมโดยตรง'.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Admin cover preview crops 4:5 posters to 16:9 and upscales a 200px thumbnail",
+      "category": "design",
+      "severity": "LOW",
+      "page": "/admin (form slide-over, รูปปก)",
+      "file": "assets/admin.css:655 (.drive-prev aspect-ratio:16/9), :658 (object-fit:cover); assets/admin.js:147 (driveThumb sz=w200)",
+      "description": "The public site shows event posters at 4:5 (.feat-media, poster cards). The admin preview box is 16:9 with object-fit:cover, so a 4:5 poster loses about 55% of its height. It also loads a w200 thumbnail stretched to 590x331, which looks blurry.",
+      "reproduction_steps": [
+        "Admin mock, กิจกรรม, open 'กิจกรรมปฐมนิเทศ…' and scroll to รูปปก.",
+        "The preview img is 590x331 rendered from naturalWidth 200 x naturalHeight 250, with object-fit cover."
+      ],
+      "user_impact": "Editors cannot see how the poster will actually be framed on the site, and the preview looks low quality.",
+      "recommended_fix": "Use aspect-ratio:4/5 (or contain on a neutral background) for poster fields, capped at about 260px wide. Request sz=w600 for the preview.",
+      "evidence": "javascript_tool: {ar:'16 / 9', box:[590,331], nat:[200,250], fit:'cover'}. A screenshot of the slide-over shows the cropped poster.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Album photo manager tiles: move buttons never disabled, and broken images show the browser's broken-image icon",
+      "category": "design",
+      "severity": "LOW",
+      "page": "/admin (อัลบั้มภาพ > จัดการรูป)",
+      "file": "assets/admin.js:1286-1305 (draw), assets/admin.css (no .iconbtn:disabled rule)",
+      "description": "Every tile shows ‹ › ★ ✕ as 33x30 buttons. The first tile's ‹ and the last tile's › are enabled although they can't move, including when the album has a single photo. Photos whose Drive file isn't shared or doesn't exist render the native broken-image glyph with an empty lilac box. There is no placeholder or warning, even though the panel text says unshared files show blank to visitors.",
+      "reproduction_steps": [
+        "Admin mock, อัลบั้มภาพ, click จัดการรูป on 'ละศีลอด 2569'. With 1 photo, ‹ and › are enabled.",
+        "Paste 2 Drive links and click เพิ่มรูปที่วางไว้. The new tiles show broken-image icons (naturalWidth 0) and all ‹ and › buttons have disabled=false."
+      ],
+      "user_impact": "Dead controls, and no clear signal for the exact problem (an unshared Drive file) that the panel warns about.",
+      "recommended_fix": "Set disabled on ‹ when i===0 and on › when i===photos.length-1, and add .iconbtn:disabled{opacity:.35;cursor:default}. Add an img onerror that marks the tile, for example a 'ไฟล์ยังไม่แชร์/เปิดไม่ได้' badge on a neutral placeholder.",
+      "evidence": "javascript_tool: buttons ‹/›/★/✕ 33x30, disabled false. After adding 2 photos the tiles report [[true,200],[true,0],[true,0]] for complete/naturalWidth, and the screenshot shows broken-image icons.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Inconsistent spelling 'อัลบัม' vs 'อัลบั้ม' across site and admin",
+      "category": "design",
+      "severity": "LOW",
+      "page": "global",
+      "file": "assets/site.js:85, index.html:155/157, activities.html:90, assets/api.js:754/779 ('อัลบัม'); activities.html:92/94, gallery.html:7/23/25/29, assets/gallery.js:114/287/323/384, assets/admin.js ('อัลบั้ม')",
+      "description": "The nav, footer, home service card and activities section title use 'อัลบัม(ภาพกิจกรรม)'. The button right next to that title ('อัลบั้มทั้งหมด ↗'), the gallery page title and h1, the gallery messages and the whole admin use 'อัลบั้ม'. Both spellings appear inside one section on /activities.",
+      "reproduction_steps": [
+        "Open /activities and scroll to the gallery section: the h2 says 'อัลบัมภาพกิจกรรม' and the button says 'อัลบั้มทั้งหมด ↗'.",
+        "Click the button: the /gallery h1 says 'อัลบั้มภาพ'."
+      ],
+      "user_impact": "Minor polish problem. It looks unedited.",
+      "recommended_fix": "Pick one spelling ('อัลบั้ม' is the common form) and update site.js, index.html, activities.html:90, api.js messages and the i18n MAP keys together.",
+      "evidence": "The grep output listed in the file field. Gallery iframe page title 'อัลบั้มภาพ · MCCMU' vs home text 'อัลบัมกิจกรรม / เปิดอัลบัม'.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Home skeleton heights don't match loaded content (layout shift)",
+      "category": "design",
+      "severity": "LOW",
+      "page": "/",
+      "file": "assets/api.js:665-670 (picks skeleton), :975 (prayer skeleton)",
+      "description": "The knowledge-picks skeleton is 312px tall but loaded content is 507px, a 195px jump. The prayer track skeleton is 72px against 85px loaded, a 13px jump that pushes everything below the strip near the top of the page.",
+      "reproduction_steps": [
+        "Load / with /data hanging and measure #homePicks (312) and #pTimes (72).",
+        "Load normally and measure again (507 and 85)."
+      ],
+      "user_impact": "Content below jumps when data arrives, a small CLS cost on a cold cache.",
+      "recommended_fix": "Give .card.pick skeletons the same body height (title, 2-line excerpt and button lines), and set .pstop--skel min-height to match .pstop (about 85px).",
+      "evidence": "Hang-mode measurements {picks:{h:312,skel:3}, prayer:{h:72,skel:5}} vs loaded {picks:507, ptimes:85} at 1280x800.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Admin error messages show raw English backend text and the list error replaces the whole page header",
+      "category": "design",
+      "severity": "LOW",
+      "page": "/admin",
+      "file": "assets/admin.js:454-457 (go() catch); login status message",
+      "description": "Errors are rendered as 'โหลดข้อมูลไม่สำเร็จ: ' + err.message, so users see raw English driver text (in the mock, 'simulated network failure'; in production, Supabase/PostgREST messages). The list-view error clears #main entirely, removing the page title and the 'เพิ่ม…' action, and there is no retry. The login screen shows 'ตรวจสอบสิทธิ์ไม่สำเร็จ: simulated network failure' in the same way.",
+      "reproduction_steps": [
+        "Admin mock logged in, set mock_fail=1 and click กิจกรรม: the main area contains only 'โหลดข้อมูลไม่สำเร็จ: simulated network failure'."
+      ],
+      "user_impact": "Thai-speaking editors get untranslated errors and lose navigation context.",
+      "recommended_fix": "Keep the page head, show a Thai summary such as 'เชื่อมต่อฐานข้อมูลไม่ได้ ลองใหม่อีกครั้ง' with a ลองอีกครั้ง button, and put err.message in a <details> or title attribute.",
+      "evidence": "innerText under mock_fail for activities, albums, settings, admins and audit: 'โหลดข้อมูลไม่สำเร็จ: simulated network failure'. Zoomed login screenshot shows the English message.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Admin greeting says 'สวัสดีตอนเช้า' after midnight",
+      "category": "design",
+      "severity": "LOW",
+      "page": "/admin (overview)",
+      "file": "assets/admin.js:497-499 (greetWord)",
+      "description": "greetWord returns 'สวัสดีตอนเช้า' for any hour < 11, so at 00:30 the overview greets 'สวัสดีตอนเช้า Owner'.",
+      "reproduction_steps": [
+        "Open the admin overview between 00:00 and 04:59."
+      ],
+      "user_impact": "Small polish inconsistency.",
+      "recommended_fix": "Return plain 'สวัสดี' for h < 5.",
+      "evidence": "Overview innerText at about 00:30 on 13 Oct 2569: 'สวัสดีตอนเช้า Owner'.",
+      "reported_by": "design"
+    },
+    {
+      "title": "Design tokens drift between the public site and the admin",
+      "category": "design",
+      "severity": "LOW",
+      "page": "global / admin",
+      "file": "assets/mccmu.css:42-44 (--radius 16/10/24); assets/admin.css:16 (--radius 14, --radius-sm 9), :219 (.btn radius 9px)",
+      "description": "Both use Anuphan and IBM Plex Sans Thai with the same violet/gold palette. The corner radii differ (16/10 on the site vs 14/9 in the admin), and buttons differ in shape: the site uses pill buttons ('ติดต่อเรา', 'กิจกรรมล่าสุด') while the admin uses 9px-radius buttons. It is a minor inconsistency since the admin is a separate tool.",
+      "reproduction_steps": [
+        "Compare .btn on / with .btn in the admin mock."
+      ],
+      "user_impact": "Slight visual mismatch when moving from 'เปิดหน้าเว็บ' and the preview back to the admin.",
+      "recommended_fix": "Share the radius tokens (or a small tokens.css) between mccmu.css and admin.css.",
+      "evidence": "The CSS lines listed in the file field.",
+      "reported_by": "design"
+    }
+  ],
+  "notes": [
+    { "text": "During one fresh load, /activities briefly rendered a different dataset (13 activities, last dated 2026-08-01, keys without albums) cached in mccmu_all_v1, while /data?sheet=all returns 19 activities (last 2026-10-11) on every direct fetch. This may be the api.js:91 fallback to Apps Script (older Sheets data) after a transient /data failure. If so, a /data hiccup would show visitors stale content. Not reproduced.", "lens_hint": "functionality" },
+    { "text": "In preview mode with a rejected token, /data?…&preview=1 answers 502 Bad Gateway rather than 401/403.", "lens_hint": "security" },
+    { "text": "In preview mode the gallery requests /data?sheet=albums&status=published&preview=1, so draft albums may never appear in preview.", "lens_hint": "functionality" },
+    { "text": "Every .vitem in the YouTube list contains a 'กำลังเปิด' label hidden only with opacity:0, so screen readers announce 'now playing' on all 3 items.", "lens_hint": "a11y" },
+    { "text": "The header brand text is '˚𝜗𝜚˚ชมรมมุสลิม' (assets/site.js:38). The decorative math glyphs are read aloud by screen readers and copied into the i18n MAP.", "lens_hint": "a11y" },
+    { "text": "Content: the knowledge card title 'Highlight Kutbah' probably should be 'Khutbah'. All 3 home picks show the same date (28 มิ.ย. 2569).", "lens_hint": "userqa" },
+    { "text": "The hero h1 uses line-height about 1.06 (65.7px on 62px Anuphan) for two lines of Thai. No collision was seen in Chromium, but stacked tone marks under upper vowels have little headroom. Worth a check in Safari.", "lens_hint": "design" }
+  ]
+}

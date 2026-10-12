@@ -1,0 +1,243 @@
+{
+  "lens": "performance",
+  "checked": [
+    "Environment: preview_start refused (5-server limit reached by other auditors), so the identical command `node .claude/audit/devserver.mjs . 8906` was run from a background shell on the assigned port 8906, in my own tab only (tab-9). The browser pane stayed hidden all session (tabs_context: 'The Browser pane is currently hidden'; document.visibilityState === 'hidden'). Lazy images, rAF and smooth scroll do not run in that state, so the evidence below uses counts, byte sizes, DOM geometry and code, not paint timings.",
+    "The local devserver does not compress responses, so local transfer = decoded bytes. Compressed sizes were taken from production (curl, Accept-Encoding: br): mccmu.css 16.6KB, api.js 16.1KB, i18n.js 8.6KB, site.js 5.1KB, /data?sheet=all 13.7KB, /data?sheet=albums 15.9KB, admin.js 16.2KB. Brotli works on Vercel (PASS).",
+    "/ (cold, both storages cleared): 16 resources. Decoded bytes: HTML 11.7KB, mccmu.css 64.4KB, JS 114.8KB (site 14.3 + api 66.6 + i18n 33.9), view.jpg 200.1KB (via preload), logos 52.9KB, Google Fonts CSS 15.8KB, 7 woff2 files 105.6KB, /data?sheet=all 67.4KB. Exactly 1 /data call. 4 lazy Drive cards use sz=w800 and render at about 311x233 on desktop. CLS buffered = 0. No long tasks. No console errors.",
+    "/ warm reload: 0 /data calls because the localStorage TTL cache is fresh (PASS). The hero <link rel=preload as=image href=assets/view.jpg fetchpriority=high> matches the CSS background, so view.jpg is fetched once, initiator 'link' (PASS).",
+    "/ stale-cache path: set mccmu_all_v1.t to 26h ago and the prayer date to yesterday. The reload made exactly 2 requests: /data?sheet=all as a background refresh, plus /data?sheet=prayer&date=13-10-2026. The strip showed today's date (PASS, prayer re-fetch path is correct and not duplicated).",
+    "/activities (cold): 18 resources, about 773KB decoded. 2 /data calls: sheet=all (67.4KB) and sheet=albums&status=published (101.6KB, 7 albums / 325 photos). Reload within 180s: 0 /data calls (sessionStorage album cache plus localStorage). 38 <img>, all Drive images loading=lazy and decoding=async. At 1366px, posters are sz=w800 at about 270x338 and album covers sz=w640 at 331x248, which is appropriate. Each album card adds 2 decorative 'sheet' thumbs at w320 (14 extra lazy images).",
+    "/gallery (cold): 17 resources, about 755KB decoded, 2 /data calls (all + albums). The album dialog pages photos in batches through an IntersectionObserver, preloads only the neighbouring photos, and clears src on close (PASS).",
+    "/knowledge (cold): 18 resources, about 615KB decoded. 2 /data calls (all + youtube 2.0KB). Document thumbs are sz=w560 at about 268x357, sized from DPR (PASS). The YouTube player is a click-to-load facade, and no iframe loads until play (PASS). The list uses 3 mqdefault thumbs at 144x81 (PASS). The poster uses maxresdefault at 690x388 (see issue).",
+    "/halal-map (cold): 45 resource entries, including 30 Google Maps iframes (1 overview map + 29 place cards). 1 /data call. hero-halal.jpg 75KB (PASS).",
+    "/about (cold): 16 resources, about 610KB decoded, 1 /data call. 23 member photos at sz=w800 render at 210x210 inside the #boardGrid horizontal carousel. 1 lazy map iframe.",
+    "Duplicate API calls: none found. MCCMU._allPromise dedupes sheet=all within a page. getAlbums dedupes in-flight requests plus a 180s sessionStorage cache. Every page fetches sheet=all once and the next pages reuse localStorage (TTL 3 min, stale-while-revalidate up to 7 days) (PASS).",
+    "/data edge caching on production: 3 consecutive GETs returned x-vercel-cache: HIT, age 6, about 0.15s. Preview responses use 'private, no-store' (code: api/data.js out()) (PASS).",
+    "Fonts are loaded once per surface: public pages through the @import in mccmu.css, admin through a <link> in admin/index.html. admin.css has no @import, so there is no double load (PASS). The issue about the @import chain is separate.",
+    "Scripts: every public script is `defer` and in a stable order (site, [gallery|videos], api, i18n). The CSS has no other @import chains. gallery.css and videos.css load only on their own pages (PASS).",
+    "Admin mock login screen: the dust canvas measures 2828x1696 device px (DPR 2), with up to 90 dots and one radial gradient per dot per frame, in a single rAF loop (60 callbacks/s, all from frame()). After a mock login the rAF callback count over 2s was 0, so frame() returns once #loginView gets .hidden (PASS). Logout reloads the page, so the loop is never duplicated (PASS).",
+    "Admin login CSS (mask:url(lattice.svg) repeat, filter:drop-shadow on .lattice-glow, a 200% .light layer animated 16s infinite under the mask): reviewed, but GPU/compositor cost cannot be measured in a hidden pane. Not reported as an issue.",
+    "Admin DB calls (code, admin.js:330-364, 426-433, 513-584, 998-1004): the login-to-overview path makes 15 PostgREST requests (see issue). No N+1: albumPhotoCounts() is one select of album_photos.album_id for all albums, not one per album (PASS).",
+    "Admin cache-busting: admin.css and admin.js use ?v=20261013a, and production has no ?v (new) (PASS).",
+    "vercel.json caching: images max-age 30d (no ?v, but filenames are stable), HTML max-age=0 must-revalidate, /data s-maxage=180. CSS/JS see issue.",
+    "i18n MutationObserver: it only observes in EN mode (childList, subtree). Appending 2000 <p> nodes with the EN observer active took 23ms with no long tasks (PASS). Language state was restored afterwards.",
+    "Timers: prayer strip setInterval 30s (cleared before re-set, PASS). Featured slider every 6.5s (honours prefers-reduced-motion). _initCarousel every 3.8s per carousel. knowledge.html docs every 3.5s. None are cleared, but each tick is cheap. The cost that matters is that carousel autoplay pulls in lazy content (see the maps and member-photo issues).",
+    "Assets on disk: view.jpg 1600x900 200KB, hero-activities 1800x1203 224KB, hero-about 1600x899 189KB, hero-knowledge 1616x1080 178KB, hero-halal 766x400 75KB, logo_white_bc.png 192x192 33KB, logo_mark.png 144x144 20KB. assets/photo/view.jpg (6000x3375, 9.9MB) and assets/_src/* (about 8.6MB) are gitignored and referenced nowhere.",
+    "Regression check against production: JS/CSS grew modestly (mccmu.css 60.9 to 64.4KB, api.js 54.8 to 66.6KB, i18n.js 26.9 to 33.9KB, site.js 13.6 to 14.3KB raw). New per-page assets: gallery.css+js (34.7KB) on /activities and /gallery, videos.css+js (18.3KB) plus 1 small /data?sheet=youtube on /knowledge. No new duplicate requests. No big performance regression found."
+  ],
+  "not_tested": [
+    "LCP, FCP, real paint and frame timing: the shared Browser pane was hidden for the whole session (visibilityState 'hidden'), so LCP was not reported, lazy images never loaded, and rAF and smooth scroll did not run. Wall-clock timings also overlap with 7 other auditors.",
+    "Exactly how many Google Maps iframes Chrome loads on a visible /halal-map: in the hidden tab even a test lazy iframe placed at top:20000px loaded, so the 30/30 loaded count is a hidden-tab artifact. The issue relies on geometry and code instead.",
+    "GPU/compositor cost of the admin login mask + drop-shadow + animated light layer: not measurable without a visible pane.",
+    "Real admin (/admin) logged in, and the CORS behaviour of the visitor-tracking beacon: tracking is skipped on localhost by design (site.js:191), and signing in is not allowed.",
+    "Transfer sizes of cross-origin Drive, YouTube and Maps resources inside the page (no Timing-Allow-Origin). Representative sizes were measured with curl instead."
+  ],
+  "issues": [
+    {
+      "title": "Halal page embeds 30 Google Maps iframes (one per place card), each about 1MB of Maps JS, and carousel autoplay keeps loading more",
+      "category": "performance",
+      "severity": "MEDIUM",
+      "page": "/halal-map",
+      "file": "assets/api.js:846-856 (_placeCard iframe), assets/api.js:1131-1165 (_initCarousel autoplay), assets/api.js:919",
+      "description": "Every place card gets its own <iframe loading=lazy src=maps.google.com/maps?q=…&output=embed>, and the top overview map is one more. With 29 published places (11 restaurants were imported today), the page has 30 Maps iframes. A single embed, loaded on its own, pulls 8 resources with about 1.05MB of decoded JavaScript (util 321KB, main 307KB, init_embed 257KB, common 132KB, …), plus a 302 hop from maps.google.com to www.google.com/maps/embed and map tiles. Every iframe parses and executes its own copy. Geometry: at 1366x800, 9 iframes sit in the horizontally visible part of the carousels, and all are within Chrome's vertical lazy-load distance (tops 598, 1235, 1909px). At 375x812, 5 do (tops 500, 999, 1689px). So 9 (desktop) or 5 (mobile) full Maps instances start on page load. _initCarousel then calls scrollBy every 3.8s on #foodTrack and #masjidTrack with no check for visibility or reduced motion, so the remaining embeds keep loading while the visitor reads. On a mid-range phone this is likely the heaviest page on the site, and it grows with every place added.",
+      "reproduction_steps": [
+        "Open /halal-map at 375x812 with a cold cache",
+        "In the console: document.querySelectorAll('iframe').length  → 30",
+        "Count the iframes whose getBoundingClientRect() is horizontally inside the viewport → 5 (9 at 1366x800)",
+        "Open https://maps.google.com/maps?q=18.8009%2C98.9525&z=16&output=embed in its own tab and sum performance.getEntriesByType('resource') decodedBodySize → about 1,045KB (JS)"
+      ],
+      "user_impact": "Several MB of third-party JS executed on page load, with more as the carousel auto-advances. This means jank, battery use and mobile data on a core page used by students looking for halal food.",
+      "recommended_fix": "Replace the per-card iframes with a static facade: a small static image or icon plus the existing 'เปิดแผนที่' link, or create the iframe only when the card is tapped. Keep only the single overview map at the top. Also stop _initCarousel autoplay when the track is offscreen (IntersectionObserver) and honour prefers-reduced-motion.",
+      "evidence": "Local /halal-map: 30 iframes (1x 1128x400 overview + 29x 298x186 cards); 21 of 30 horizontally offscreen at 1366px; 5 horizontally visible at 375px. A standalone embed measured 8 resources, 1,045,059 bytes decoded. Code: api.js:848-852 creates an iframe for every place with coords or a name.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Public CSS/JS have no cache-busting, so returning visitors get the new HTML with stale api.js/mccmu.css after this deploy",
+      "category": "performance",
+      "severity": "MEDIUM",
+      "page": "global (public pages)",
+      "file": "vercel.json:16-20; index.html:15-20; activities.html:13-20; knowledge.html:14-21 (no ?v=)",
+      "description": "vercel.json serves /assets/*.css|js with 'public, max-age=600, stale-while-revalidate=604800', and HTML with max-age=0. The public pages reference assets/mccmu.css, assets/api.js, assets/site.js and assets/i18n.js with no version query, unlike admin, which uses ?v=20261013a. For 10 minutes after a deploy, and once more under SWR for anyone who visited in the last 7 days, the browser pairs the fresh HTML with the cached old CSS/JS. This deploy couples them tightly: index.html replaces the prayer markup (removes the inline fallback script, changes #pTimes from a <div> to <ol class=\"ptrack\">, adds #pHijri and #pNext), while the matching renderPrayerStrip and .ptrack styles exist only in the new api.js and mccmu.css.",
+      "reproduction_steps": [
+        "Visit production / (caches the old api.js and mccmu.css)",
+        "Deploy this branch",
+        "Revisit / within 10 minutes, or for the first time within 7 days: the new HTML runs the old cached api.js and mccmu.css"
+      ],
+      "user_impact": "Returning visitors can see a broken or unstyled prayer strip, or other mismatched UI, on their first view after the deploy. It fixes itself on a later load.",
+      "recommended_fix": "Add ?v=YYYYMMDDx to every public <link>/<script> (as admin does) and bump it on each deploy. Or drop stale-while-revalidate for CSS/JS to something short. Or serve versioned or hashed filenames with a long max-age.",
+      "evidence": "curl -I http://localhost:8906/assets/api.js → cache-control: public, max-age=600, stale-while-revalidate=604800 (mirrors vercel.json). `git diff index.html` shows the inline prayer script removed and the #pTimes markup changed. Production api.js is 54,815 bytes vs 66,569 locally.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Drive images over-requested: member photos and mobile posters fetch sz=w800 for 160 to 210px slots, and every Drive URL takes a 302 hop",
+      "category": "performance",
+      "severity": "MEDIUM",
+      "page": "/about, /, /activities",
+      "file": "assets/api.js:239-247 (IMG_W = 800), api/data.js:90-94 (members img(…,800)), api/data.js:38 (drive.google.com/thumbnail)",
+      "description": "_sizeDriveUrl uses a fixed IMG_W=800 for every card. The 23 member photos on /about render at 210x210 (420px at 2x) but request sz=w800. Measured on lh3: 179.7KB at w800 vs 77.4KB at w440, and 122.9KB vs 55.0KB, so 2.2 to 2.3x the bytes. They sit in the #boardGrid horizontal carousel, which auto-advances every 3.8s, so most of them get loaded. At 352 to 375px widths, activity posters render at 160x200 but also fetch w800 (one sample: 130.8KB at w800 vs 40.2KB at w400). Separately, every image URL is drive.google.com/thumbnail?…, which answers 302 → lh3.googleusercontent.com/d/ID=wN, adding a redirect round trip per image. knowledge.html already sizes from DPR (THUMB_W), which is the better pattern.",
+      "reproduction_steps": [
+        "Open /about and run: [...document.images].filter(i=>/drive/.test(i.src)).map(i=>i.src.match(/sz=w\\d+/)[0]+' '+i.getBoundingClientRect().width)  → 23x 'sz=w800 210'",
+        "curl -sL -o /dev/null -w '%{size_download}' 'https://lh3.googleusercontent.com/d/1W1KNajBfKbA1TXMNg6WApU-xc_KH_llB=w800' → 179704; with =w440 → 77404",
+        "curl -s -o /dev/null -w '%{http_code} %{redirect_url}' 'https://drive.google.com/thumbnail?id=…&sz=w800' → 302 https://lh3.googleusercontent.com/d/…=w800"
+      ],
+      "user_impact": "About 1.5 to 2.5MB of avoidable image data on /about when browsing the committee, and slower image appearance on phones.",
+      "recommended_fix": "Pass a per-slot width to _fillImg/_sizeDriveUrl (for example ceil(renderedWidth*min(DPR,2)/40)*40, as knowledge.html does), or use srcset with 2 or 3 widths. Emit lh3.googleusercontent.com/d/ID=wN URLs directly from api/data.js to skip the 302, keeping drive.google.com/thumbnail as the onerror fallback.",
+      "evidence": "DOM: 23 member imgs, all sz=w800, rendered 210px. curl sizes as above. 302 confirmed with curl.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Google Fonts are loaded through an @import inside the render-blocking mccmu.css, with no preconnect, and request an unused weight 300",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "global (public pages)",
+      "file": "assets/mccmu.css:6; index.html:10-12 (preconnects)",
+      "description": "mccmu.css line 6 runs `@import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;…')`. The chain is HTML → mccmu.css (64KB) → fonts.googleapis.com CSS (15.8KB) → woff2. The fonts CSS is discovered only after mccmu.css arrives and blocks rendering. The pages preconnect to lh3.googleusercontent.com and drive.google.com and dns-prefetch the legacy script.google.com, but not to fonts.googleapis.com or fonts.gstatic.com. Weight 300 is requested for both families but used nowhere (CSS weights: 400, 500, 600, 700, 800), which bloats the font CSS with 40 @font-face rules.",
+      "reproduction_steps": [
+        "grep -n '@import' assets/mccmu.css → line 6",
+        "On / cold: resources show fonts.googleapis.com css 15,764B, then 7 woff2 (105.6KB), all initiated by css",
+        "grep font-weight in assets/*.css → no 300"
+      ],
+      "user_impact": "An extra serial DNS+TLS+request before first paint on every first visit, which is noticeable on mobile networks.",
+      "recommended_fix": "Remove the @import. Put <link rel=preconnect href=https://fonts.googleapis.com> and <link rel=preconnect href=https://fonts.gstatic.com crossorigin> plus a <link rel=stylesheet> for the fonts in each page head (as admin/index.html does). Drop weight 300, and drop the script.google.com dns-prefetch if the Apps Script fallback is no longer primary.",
+      "evidence": "document.fonts.size = 40, 13 loaded on /. Resource list on / shows the fonts CSS only after mccmu.css.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Hero and logo images are not right-sized for phones and have no modern-format variants",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "/, /activities, /gallery, /knowledge, /about",
+      "file": "index.html:14, assets/mccmu.css:280,464,563-566,903, assets/gallery.css:135, assets/site.js:27",
+      "description": "The preloaded LCP hero assets/view.jpg (1600x900, 200KB JPEG) goes to all viewports, including 375px phones. The .phero backgrounds are 178 to 224KB JPEGs (hero-activities 1800x1203). No WebP/AVIF or image-set() alternatives exist. The header and footer logo logo_white_bc.png is 192x192 at 33KB but renders at 44 to 52px. The hero badge logo_mark.png is 144x144 at 20KB and renders at 30px.",
+      "reproduction_steps": [
+        "sips -g pixelWidth -g pixelHeight assets/view.jpg assets/photo/hero-*.jpg",
+        "On /, read img.getBoundingClientRect() for the logos → 44x44, 50x50 and 30x30, vs natural 192 and 144"
+      ],
+      "user_impact": "About 150 to 250KB extra on mobile first loads, mostly the LCP image.",
+      "recommended_fix": "Add a mobile hero (for example 800w WebP at about 60KB) through image-set() plus <link rel=preload imagesrcset/imagesizes>. Convert the hero JPEGs to WebP/AVIF. Export the logo at 104px (2x of 52) and compress it, keeping the 192px file only for apple-touch-icon.",
+      "evidence": "Resource sizes on /: view.jpg 200,115B, logo_white_bc.png 33,094B, logo_mark.png 19,758B. Rendered sizes as listed.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Albums endpoint ships every photo of every album (325 photos, 101KB raw) to pages that only render covers",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "/activities, /gallery",
+      "file": "api/data.js:99-121 (shapeAlbums), assets/gallery.js:326-338",
+      "description": "/data?sheet=albums returns all 7 albums with their full photos arrays: 325 entries, each holding name, file_id, thumb_url and image_url, where name equals file_id and both URLs derive from it. That is 101,611B raw (15.9KB br on production). The album grid needs only cover_url, the count and 2 'behind' thumbs. The full list is needed only when an album dialog opens.",
+      "reproduction_steps": [
+        "curl -s 'http://localhost:8906/data?sheet=albums&status=published' | wc -c → 101611",
+        "python: sum(len(a['photos']) for a in data) → 325"
+      ],
+      "user_impact": "Small today (about 16KB compressed), but it grows linearly with every photo added and is parsed on each cold visit to /activities or /gallery.",
+      "recommended_fix": "Return only file_id per photo and build the URLs on the client, or return covers plus counts plus the first 2 ids and fetch an album's photos on open (an album_id parameter).",
+      "evidence": "Measured payload size and photo count above.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "sheet=all runs the aladhan prayer-time call after the Supabase queries, so edge cache misses wait for both in series",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "global (/data?sheet=all)",
+      "file": "api/data.js:173-182",
+      "description": "On an edge cache miss, the handler awaits Promise.all of 5 Supabase queries, then awaits prayerTimes() against api.aladhan.com because it needs settings.prayer_method. Measured: aladhan alone takes about 0.67s cold from here, and a production cache miss took 1.55s versus 0.15s on a HIT. The cache refreshes every 180s (s-maxage) with only 60s of stale-while-revalidate, so some visitors hit the full serial latency. Their first page then waits on it, because there is no localStorage cache yet.",
+      "reproduction_steps": [
+        "curl -w '%{time_total}' https://mccmuclub.vercel.app/data?sheet=all on a MISS (about 1.5s) vs a HIT (about 0.15s)",
+        "Read api/data.js:173-182: prayerTimes awaited after Promise.all"
+      ],
+      "user_impact": "Up to about 0.7s of extra skeleton time for first-time visitors on a cache miss.",
+      "recommended_fix": "Start prayerTimes in parallel. Read prayer_method from the settings promise (settingsP.then(s => prayerTimes('', s.prayer_method))) inside the same Promise.all, or cache the method. A longer stale-while-revalidate (for example 600s) would also hide misses.",
+      "evidence": "Production first request t=1.548s, then 3 HITs at 0.14 to 0.22s with x-vercel-cache: HIT. Local aladhan curl 0.687s and 0.669s.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Admin boot makes 15 DB requests in 3 serial rounds, and 5 of them duplicate counts already fetched",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "/admin (overview, list pages)",
+      "file": "assets/admin.js:331, 362-363, 426-433, 513-519, 564-580, 1001-1003",
+      "description": "After getSession, the boot runs admins (1 request). Then refreshCounts() runs 5 HEAD count queries (one per SCHEMA table). Then go('overview') runs loadStats (1), loadContentStats (5 'select status' queries over the same 5 tables), albums (1), album_photos (1) and audit_log (1). That totals 15 PostgREST requests in 3 sequential rounds before the login curtain lifts. loadContentStats already yields the totals that refreshCounts fetched. On list pages, the albums list awaits select('*') and only then runs albumPhotoCounts(), so 2 serial round trips that could run in parallel.",
+      "reproduction_steps": [
+        "Read the call sites listed above",
+        "With the real admin and DevTools Network open, filter by 'rest/v1' on login: about 15 requests"
+      ],
+      "user_impact": "A slower 'กำลังเตรียมข้อมูล…' wait on login (several serial Supabase round trips), and needless request volume.",
+      "recommended_fix": "Compute the nav counts from loadContentStats (or the reverse) and run refreshCounts and the overview queries in parallel. In renderList, run the table select and albumPhotoCounts() with Promise.all.",
+      "evidence": "Code review of admin.js at the lines above. The mock confirms the overview renders after login (rAF test). Exact request counts could not be captured from the mock because the db client is module-private.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Login-scene pointermove listener keeps rewriting --px/--py on <html> after login, forcing style recalculation on every mouse move in the admin app",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "/admin (logged in)",
+      "file": "assets/admin.js:251-257 (startScene pointermove)",
+      "description": "startScene() adds a window pointermove listener (for fine pointers) that sets --px and --py on document.documentElement. The listener is never removed when the login view hides. Setting a custom property on the root invalidates style for the whole document on every pointer move, even though .scene is then display:none and nothing uses the values. The resize listener that resizes the hidden canvas also stays attached.",
+      "reproduction_steps": [
+        "Open /.claude/audit/admin-mock with localStorage.mock_session='1' and wait until #loginView has .hidden",
+        "Run: document.documentElement.style.getPropertyValue('--px') → ''",
+        "Dispatch a pointermove at (100,100), then read it again → '7.7px'"
+      ],
+      "user_impact": "Small but constant style-recalc work while admins use list and form pages with large DOMs. Mostly a battery and smoothness cost on laptops.",
+      "recommended_fix": "Keep the listener references and remove the pointermove and resize listeners in enterApp() once the login hides (or bail early when #loginView is hidden). Optionally set the variables on #scene instead of <html>.",
+      "evidence": "Measured after mock login: loginHidden=true, sceneDisplay='none', --px went from '' to '7.7px' after one synthetic pointermove. The rAF loop correctly stopped (0 callbacks in 2s).",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Admin imports supabase-js through a floating @2 range, a waterfall of about 9 ESM modules (about 230KB) from jsdelivr",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "/admin",
+      "file": "assets/admin.js:14",
+      "description": "`import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'` currently resolves to 2.117.3 (x-jsd-version), with s-maxage=43200 on the range URL. The entry (12.5KB) imports auth-js (108.9KB), storage-js (45.9KB), realtime-js (33.5KB), postgrest-js (18.2KB) and functions-js (3.5KB), which import tslib, phoenix and iceberg-js. That is a 3-level module waterfall from a third-party origin before admin.js can run. The floating range also means a new supabase-js release can change admin behaviour within 12h with no deploy.",
+      "reproduction_steps": [
+        "curl -sI https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm | grep x-jsd-version → 2.117.3",
+        "Fetch each imported /npm/@supabase/*@2.117.3/+esm and sum the sizes → about 222KB plus tslib, phoenix and iceberg"
+      ],
+      "user_impact": "Slower first admin load, with several serial requests to jsdelivr before the login button works, and unpinned upstream changes.",
+      "recommended_fix": "Pin an exact version (…/supabase-js@2.117.3/+esm) and add <link rel=modulepreload> or preconnect to cdn.jsdelivr.net in admin/index.html. Alternatively, vendor a single bundled ESM file under /assets with ?v= cache-busting.",
+      "evidence": "curl outputs: sb entry 12,500B; auth-js 108,919; functions-js 3,455; postgrest-js 18,163; realtime-js 33,504; storage-js 45,925.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Main YouTube poster always requests maxresdefault (1280x720) even on phones",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "/knowledge",
+      "file": "assets/videos.js:112, 67-80",
+      "description": "The player poster uses thumb(id,'maxresdefault'), which renders at 690x388 on desktop but about 340px wide on phones, where hqdefault (480x360) or sddefault (640x480) would be enough. When a video has no maxres version, the code downloads the 120px grey placeholder first and then hqdefault, so 2 requests.",
+      "reproduction_steps": [
+        "Open /knowledge and inspect .vplayer__img → src …/maxresdefault.jpg, rendered 690x388 at 1366px"
+      ],
+      "user_impact": "Roughly 100KB or more extra on mobile for one image.",
+      "recommended_fix": "Choose the size from the rendered width × DPR (for example sddefault at 640 or less, maxres otherwise), or use <img srcset> with the hq, sd and maxres variants.",
+      "evidence": "DOM on /knowledge: 'maxresdefault.jpg ren~690x388 vplayer__img'.",
+      "reported_by": "performance"
+    },
+    {
+      "title": "Visitor tracking sends a cross-origin POST with a custom apikey header on every page view, which triggers a CORS preflight, and there is no preconnect",
+      "category": "performance",
+      "severity": "LOW",
+      "page": "global (public pages)",
+      "file": "assets/site.js:202-207",
+      "description": "Each page view runs fetch(MCCMU_SUPABASE.url + '/rest/v1/rpc/track_view', {method:'POST', headers:{'content-type':'application/json', apikey:…}}). Both a JSON content-type and the apikey header are non-safelisted, so the browser sends an OPTIONS preflight first. That is 2 requests and a fresh TLS connection to *.supabase.co per page load, with no preconnect hint. The preflight can be cached only if Supabase returns Access-Control-Max-Age.",
+      "reproduction_steps": [
+        "Read site.js:202-207",
+        "On production, open DevTools Network and filter 'track_view': an OPTIONS and a POST per page view (not verifiable on localhost, where tracking is disabled at site.js:191)"
+      ],
+      "user_impact": "Extra connection and request work competing with first-load resources on mobile.",
+      "recommended_fix": "Send it after load (requestIdleCallback), or proxy it through same-origin /data (for example POST /data?track=1, so no CORS), or use navigator.sendBeacon to a same-origin endpoint.",
+      "evidence": "Code as cited. The preflight follows from the CORS spec for non-safelisted headers. Not observed live (see not_tested).",
+      "reported_by": "performance"
+    }
+  ],
+  "notes": [
+    { "text": "assets/photo/view.jpg (6000x3375, 9.9MB) and assets/_src/* (logo PNGs 1.8 to 2.9MB each, about 8.6MB total) are gitignored and unreferenced. A Git-integration deploy skips them, but there is no .vercelignore, so a `vercel` CLI deploy from this working tree could upload them. Unverified.", "lens_hint": "production" },
+    { "text": "_initCarousel (api.js:1131) autoplays every 3.8s with no prefers-reduced-motion check (the featured slider at api.js:478 does check). It applies to the halal, members, gallery-strip and past-events carousels.", "lens_hint": "a11y" },
+    { "text": "gallery.html has no window.MCCMU_SUPABASE inline config, unlike the other public pages, so site.js tracking skips /gallery views (site.js:189).", "lens_hint": "functionality" },
+    { "text": "The album sessionStorage key is 'mccmu_albums_v2_sheets_published' even though the data source is Supabase (_SRC is empty, so it falls back to 'sheets'). Cosmetic only, no collision observed.", "lens_hint": "functionality" },
+    { "text": "i18n setLang clears its `switching` flag inside requestAnimationFrame. While a tab is hidden, rAF never fires, so a second language toggle was ignored in the hidden test tab. Edge case.", "lens_hint": "functionality" },
+    { "text": "drive-image-test.html sits at the repo root and would be deployed as a public page.", "lens_hint": "production" },
+    { "text": "The i18n textOrig Map keeps references to text nodes that the 30s prayer-strip re-render (or any re-render) removes in EN mode. It is a slow, minor memory growth only on very long-open tabs.", "lens_hint": "functionality" }
+  ]
+}

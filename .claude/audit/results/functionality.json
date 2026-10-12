@@ -1,0 +1,306 @@
+{
+  "lens": "functionality",
+  "checked": [
+    "Routes: / /activities /gallery /halal-map /knowledge /about /admin all 200. Each /x.html and /admin/index.html, /admin/, /about/ returns 308 to the clean URL with the query preserved. /nonexistent 404. Every internal a[href] on all 6 pages (index/activities/gallery/halal-map/knowledge/about .html, #prayer, #gallery, #contact, knowledge.html#doc=…) resolves to 200 after one hop, and the anchor ids exist (index.html:55, activities.html:86, about.html:123).",
+    "/data per sheet (status | cache-control | shape): all 200 public,max-age=120,s-maxage=180,swr=60, dict activities/docs/members/places/prayer/settings; activities 200 list[19]; docs 200 list[18]; members 200 list[23]; albums 200 list[7] with photos/count/cover_url; settings 200 dict; places 200 list[29]; prayer 200 dict (date, hijri, 5 times); youtube 200 max-age=600,s-maxage=1800 list[3]; folder without id 400 no-store; empty or unknown sheet 400 no-store.",
+    "Preview API: ?preview=1 without Authorization → 401 no-store. Malformed bearer → 502 no-store (never public-cached).",
+    "api.js cache: no cache → 1 request; fresh (<3 min) → 0 requests; stale (4 min) → returns the old copy immediately and refreshes the cache in the background; >7 days → waits for the network. ?fresh bypass and MCCMU.refresh (remove key + reload) confirmed by code.",
+    "Failure states (fetch overridden for /data and Apps Script): home hides featured and picks and shows the prayer error; gallery shows an error with a working 'ลองอีกครั้ง' retry (7 albums after retry); halal-map shows an error in both tracks plus the default map; knowledge videos show the channel fallback. Issues logged for activities, about and knowledge docs.",
+    "Prayer strip (Asia/Bangkok, Date.now stubbed): before Fajr → next Fajr, no 'พรุ่งนี้', prog 0; at Fajr → Fajr past, next Dhuhr; midday → Asr next, prog 0.3119; at or after Isha and before midnight → 'ฟัจร์ พรุ่งนี้', all past, prog 1, ETA wraps correctly; next-day rollover on load refetches ?sheet=prayer&date=. aria-current='time' on the next stop.",
+    "Album viewer (/activities #gal and /gallery): open → dialog.showModal, body fixed at top:-scrollY, focus on the close button; 48-photo batches ('ดูภาพเพิ่มเติม' → 96 of 154); photo open → focus on the overview button; next/prev buttons and ArrowLeft/Right; prev disabled at photo 1; filmstrip aria-pressed; full image loads (is-ready). With real user activation, Escape #1 → grid and Escape #2 → close. Focus returns to the album card, scroll position restored, body style cleared.",
+    "Knowledge: 18 doc cards; count '18 ไฟล์'; deep link #doc= opens the lightbox with the correct Drive preview iframe and download URL; Escape closes and restores body overflow; card download links point to drive uc?export=download.",
+    "Videos: list click swaps the player to a youtube-nocookie iframe with autoplay; aria-current moves to the clicked item; the /data?sheet=youtube failure fallback renders the channel link.",
+    "Featured slider (home, injected local cache): 3 slides sorted by date, 3 dots, prev/next wrap-around, clones have no duplicate ids, nav hidden when there is 1 slide. Past carousel next button scrolled (0→180). Smooth-scroll results are limited because the tab was in the background.",
+    "TH/EN toggle on all 6 pages: static UI fully translated (remaining Thai = backend data plus the 'ไทย' switch label); title flips (e.g. 'กิจกรรม & ข่าวสาร · MCCMU' → 'Activities & news · MCCMU'); html lang flips; toggling back restores the identical body innerText and title; choice persists to the next page (loads in EN with the switch on EN); album dialog strings translate (count, controls, filmstrip).",
+    "Preview mode: /?preview without a token shows .pv-bar--warn without JS errors; 'ออกจากโหมดตัวอย่าง' clears sessionStorage and reloads to the clean URL; preview data is never written to mccmu_all_v1 (key absent after a preview load, and _fetchAll/getAlbums skip writes when PREVIEW). Code: MCCMU.get sends Authorization: Bearer <token> with &preview=1 and cache:'no-store'.",
+    "Admin mock: login state machine checking('กำลังตรวจสอบบัญชี…') → checking('กำลังตรวจสิทธิ์ผู้ดูแล…') → checking('กำลังเตรียมข้อมูล…') → entering → app; logged out → signin; logout → veil, button disabled, back to signin with the session cleared; real /admin logged out → signin, no console errors.",
+    "Admin navigation: all 9 views render with the correct title, active nav and aria-current. Form: required validation toast plus focus; status segmented control updates the hint, save label ('บันทึกร่าง'/'บันทึกและเผยแพร่') and dirty state; dirty guard confirm on Escape and scrim; clean close needs no confirm; edit prefills and updates in place; double-click on save is guarded; popup allowed → about:blank opened synchronously, opener nulled, navigated to /activities.html?preview; popup blocked → toast--link with '/activities.html?preview' target=_blank and the form stays open; on failure the popup is closed, the error is toasted and the buttons re-enabled.",
+    "Admin list filters: status segments with counts, search, empty-filter state, pinned toggle; XSS fixture title rendered as text (no injected img).",
+    "Album photo manager: paste add (2 of 3 deduped), junk paste toast, duplicate paste toast, set cover badge plus toast, Escape closes and returns to the albums list.",
+    "Settings dirty bar: appears with 'แก้ไข N ช่อง ยังไม่ได้บันทึก', reset restores the values and hides the bar, save upserts and hides the bar with a toast.",
+    "Admins: add with role, invalid email blocked by native validation, role change, last-owner protection (toast plus select reverted), no delete button for self, remove with confirm.",
+    "Audit: table filter segments with counts, day grouping ('วันนี้', full date), field chips.",
+    "mock_fail=1: list, settings, admins and audit views show 'โหลดข้อมูลไม่สำเร็จ: …'; form save shows a toast; boot shows 'ตรวจสอบสิทธิ์ไม่สำเร็จ' and returns to signin; nothing is left stuck in a loading state except the overview issue logged.",
+    "Console: no errors on normal loads of /, /activities, /gallery, /halal-map, /knowledge, /about, /admin. All logged errors came from deliberate failure simulation."
+  ],
+  "not_tested": [
+    "Preview with a fake unexpired Supabase token in localStorage: the auto-mode classifier denied planting a fabricated auth token. The Authorization header, &preview=1 and no-cache-write behaviour were verified by code reading and the server-side curl checks (401/502 no-store) instead.",
+    "Album photo reorder and remove persistence: the mock's upsert stores rows without ids, so move() duplicated rows and remove() deleted nothing. This is a mock artifact. The real schema (0005_album_photos.sql: uuid PK, unique (album_id,file_id)) makes the code path correct.",
+    "Smooth-scroll carousels and the auto-advance timers: other auditors kept the pane fronted, so the tab was in the background (visibilityState hidden) and rAF and smooth scroll were throttled. Button handlers were verified to fire. A rAF shim was used for the i18n toggle.",
+    "Real Google sign-in and real admin writes (forbidden by the brief).",
+    "Browser Back on Android (CloseWatcher) closing the album dialog: no mobile device available."
+  ],
+  "issues": [
+    {
+      "title": "Ctrl/Cmd+S and 'บันทึกและดูตัวอย่าง' bypass the save busy-guard, so new items get inserted twice",
+      "category": "functionality",
+      "severity": "HIGH",
+      "page": "/admin (form)",
+      "file": "assets/admin.js:1451-1453, 1459-1477, 1543-1544",
+      "description": "submit() disables only the button that was clicked. The Ctrl/Cmd+S handler calls submit(false) without checking any in-flight state, and the other footer button stays enabled. For a new record, isNew stays true until the first insert resolves, so a second trigger sends a second INSERT. A double-click on the same button is safe, because it is disabled synchronously.",
+      "reproduction_steps": [
+        "Open /.claude/audit/admin-mock with localStorage.mock_session='1'",
+        "กิจกรรม → เพิ่มกิจกรรม, type a title",
+        "Press Ctrl+S twice quickly (or hold it so the key repeats)",
+        "Alternative: click 'บันทึกร่าง' and then immediately 'บันทึกและดูตัวอย่าง'"
+      ],
+      "user_impact": "Duplicate activities/docs/albums/places/members appear on the live site, and the admin has to find and delete them by hand.",
+      "recommended_fix": "Keep one `saving` flag per form. Return early from submit() while it is set, and disable both footer buttons, Ctrl+S included, until the request settles. Ignore e.repeat in the keydown handler.",
+      "evidence": "Mock run: two synthetic ctrl+s keydowns gave rows 4→6 with 2 rows titled 'AUDIT double save test'. Save-then-preview click gave 2 rows 'AUDIT save+preview'. A double-click on save gave 1 row (guarded).",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "When /data fails, the site silently falls back to stale Google Sheets data and caches it",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "global (all public pages)",
+      "file": "assets/api.js:89-93, 120-125, 149-152",
+      "description": "MCCMU.get catches any /data failure and refetches from the Apps Script URL. Production moved to Supabase, and the Sheets copy is out of date. _fetchAll then writes that response into localStorage 'mccmu_all_v1', where it is served as fresh for 3 minutes and as stale-while-revalidate for up to 7 days. Users get no message.",
+      "reproduction_steps": [
+        "On any public page, make fetch reject for '/data' only (or take the edge function down)",
+        "Clear localStorage.mccmu_all_v1 and call MCCMU._loadAll()",
+        "Compare the counts with /data?sheet=all"
+      ],
+      "user_impact": "During an outage, visitors see old content without any notice: about a third of activities and places are missing, including today's 11 new halal restaurants, and items that were unpublished in the admin may reappear.",
+      "recommended_fix": "Remove the Apps Script fallback now that DATA_SOURCE=supabase, or at least don't cache fallback data under the normal key and show a 'data may be out of date' notice. Prefer the existing stale localStorage copy over Sheets.",
+      "evidence": "In the browser: fallback result {acts:13, docs:14, places:18, members:18} was written to mccmu_all_v1, versus /data?sheet=all with activities 19, docs 18, places 29, members 23. curl to the Apps Script ?sheet=all returned 200 with the same stale counts.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Activities page: featured card stays on 'กำลังโหลดกิจกรรม…' forever when data fails",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "/activities",
+      "file": "assets/api.js:484-488, 525-528; activities.html:41-53",
+      "description": "On error, renderFeatured calls _setFeatHeading('none'), which looks for [data-feat-heading]. Only index.html has that attribute, so on /activities nothing is hidden or replaced, and the placeholder card keeps its loading copy and '—' fields.",
+      "reproduction_steps": [
+        "Load /activities with /data and the Apps Script fallback both failing (fetch override before page scripts)",
+        "Wait for all requests to settle"
+      ],
+      "user_impact": "The page looks like it is still loading indefinitely, with no error and no retry.",
+      "recommended_fix": "Add data-feat-heading to the activities h2, or have renderFeatured hide `box.closest('section')` on error and on an empty list.",
+      "evidence": "Harness run: #featuredEvt innerText 'กิจกรรมเด่นเร็ว ๆ นี้ / กำลังโหลดกิจกรรม… / รอสักครู่ กำลังดึงข้อมูลกิจกรรมล่าสุด / — — —', section.hidden=false, while #pastTrack showed 'ไม่สามารถโหลดกิจกรรมได้ในขณะนี้' and #gal showed an error with a retry button.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Activities page labels a past event as 'กิจกรรมเด่นเร็ว ๆ นี้' (coming soon)",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "/activities",
+      "file": "activities.html:41, 53; assets/api.js:484-492, 506-510",
+      "description": "The only featured activity is dated 2026-10-11, two days before today. On the home page the heading correctly switches to 'กิจกรรมล่าสุดที่ผ่านมา' and the chip says 'จัดไปแล้ว'. On /activities the h2 has no data-feat-heading and the card has a static <p class='feat-upcoming'>กิจกรรมเด่นเร็ว ๆ นี้</p> and no countdown chip, so the page says 'coming soon' twice for a finished event.",
+      "reproduction_steps": [
+        "Open /activities today (13 Oct 2026)",
+        "Read the Featured section"
+      ],
+      "user_impact": "Visitors may think the event is still upcoming and plan to attend.",
+      "recommended_fix": "Mirror the home behaviour: add data-feat-heading to the h2, and hide or relabel .feat-upcoming when the shown event is in the past.",
+      "evidence": "DOM: section h2 'กิจกรรมเด่นเร็ว ๆ นี้', .feat-upcoming 'กิจกรรมเด่นเร็ว ๆ นี้', card date '11 ต.ค. 2569'. Cached data: featured=[['2026-10-11', true, 'บทเรียนจากบรรพชน…']]. On / the heading reads 'กิจกรรมล่าสุดที่ผ่านมา' and the chip 'จัดไปแล้ว'.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "About page: committee skeletons never resolve when data fails or the list is empty; the contact map stays a placeholder",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "/about",
+      "file": "assets/api.js:791-803, 1086-1099",
+      "description": "renderMembers draws 4 skeleton tiles and then returns early on an empty list (line 792) or only logs in catch (line 803), so the shimmer skeletons stay forever. renderContactMap swallows errors (.catch(function(){})) instead of using MCCMU.MAP_FALLBACK, which already exists for exactly this case.",
+      "reproduction_steps": [
+        "Load /about with /data and the Apps Script fallback failing",
+        "Wait for requests to settle"
+      ],
+      "user_impact": "The 'board' section looks permanently broken or loading, and the map area stays empty.",
+      "recommended_fix": "On error or empty, replace the skeletons with a message or hide the section. In renderContactMap's catch, render MCCMU.MAP_FALLBACK.",
+      "evidence": "Harness run: #boardGrid has 4 children, all '<div class=\"member\"><div class=\"ph skel\" …>', and #contactMap still holds the static .mappin placeholder.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Knowledge page shows 'ยังไม่มีไฟล์ในหมวดนี้' (no files) when loading fails",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "/knowledge",
+      "file": "knowledge.html:395-404, 67-70",
+      "description": "loadDocs' catch clears the count and shows #docEmpty, whose only text is the empty-state copy. There is no error wording and no retry. The video section on the same page handles failure correctly.",
+      "reproduction_steps": [
+        "Load /knowledge with /data and the Apps Script fallback failing"
+      ],
+      "user_impact": "Users are told the library is empty instead of being told it failed to load, so they don't retry.",
+      "recommended_fix": "Use a distinct error message with a retry button (the gallery's message(text, retryable) pattern), and keep #docEmpty for real empty results.",
+      "evidence": "Harness run: docCount '', #docEmpty display 'block' with text 'ยังไม่มีไฟล์ในหมวดนี้', 0 cards. #videoBox correctly showed 'ตอนนี้โหลดรายการคลิปไม่ได้…' with a channel link.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "?preview without a valid admin session breaks public content and stays on for the whole tab session",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "global (any page with ?preview)",
+      "file": "assets/api.js:34-39, 83-87, 1172-1195",
+      "description": "PREVIEW is stored in sessionStorage, and MCCMU.get rejects every request when there is no token, including prayer times and settings, which are public. The warning bar appears, but the page loses its featured section and knowledge picks, and the prayer strip says 'โหลดเวลาละหมาดไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง'. Refreshing doesn't help, because the flag persists for every page in that tab until the user clicks 'ออกจากโหมดตัวอย่าง'.",
+      "reproduction_steps": [
+        "Open /?preview in a browser that is not signed in to the admin",
+        "Observe the bar and the sections, then navigate to /activities in the same tab"
+      ],
+      "user_impact": "If an admin shares a preview URL, or opens it after the session expires, visitors see a degraded page that tells them to refresh, which doesn't fix it.",
+      "recommended_fix": "When there is no valid token, fall back to the normal public fetch (still showing the warning bar), or don't persist the flag when the token is missing.",
+      "evidence": "DOM after /?preview: .pv-bar--warn 'ดูตัวอย่างไม่ได้…', featured section hidden=true, picks hidden=true, #pTimes 'โหลดเวลาละหมาดไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง', sessionStorage {mccmu_preview:'1'}. Console: 'Error: preview: no admin session' at api.js:85. The exit button restored the normal page and cleared sessionStorage (passed).",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Admin view switching race: a slower earlier view can overwrite the current one",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "/admin",
+      "file": "assets/admin.js:442-462, 998-1004",
+      "description": "go(v) clears #main and awaits the renderer, but nothing cancels or ignores a superseded render. Each renderer calls clear(main) and appends after its own await, so whichever finishes last wins, while the title and active nav reflect the last click.",
+      "reproduction_steps": [
+        "Admin mock: click 'อัลบั้มภาพ' and then, within about 100 ms, 'คลังความรู้'",
+        "Wait 1 s"
+      ],
+      "user_impact": "The admin sees the album list under the 'คลังความรู้' heading and may edit or add the wrong kind of item. This is likely on slow mobile connections.",
+      "recommended_fix": "Use a render token: `const t = ++navSeq;` before awaiting, and have renderers return early if `t !== navSeq`. Alternatively, render into a detached node and swap it in only when the token still matches.",
+      "evidence": "Mock run: topTitle 'คลังความรู้', active nav 'docs', but #main h2 'อัลบั้มภาพ' and rows 'ละศีลอด 2569 …', 'ปฐมนิเทศ …'.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Admin overview hides load failures behind 'all clear' and 'run migration 0004' messages",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "/admin (ภาพรวม)",
+      "file": "assets/admin.js:426-434, 545-585, 603-611",
+      "description": "loadContentStats, albumsWithoutPhotos, refreshCounts and the feed query ignore `error`. On failure the overview reports zero items, 'ไม่มีอะไรค้าง ทุกอย่างขึ้นเว็บเรียบร้อย' and 'ยังไม่มีใครแก้ไขอะไร', and the stats card blames a missing migration ('ต้องรัน supabase/migrations/0004_page_stats.sql ก่อน') for any error. The other views correctly show 'โหลดข้อมูลไม่สำเร็จ: …'.",
+      "reproduction_steps": [
+        "Admin mock: localStorage.mock_fail='1', then click ภาพรวม"
+      ],
+      "user_impact": "During an outage or after a session expiry, admins are falsely reassured that nothing is pending, or sent off to run a migration.",
+      "recommended_fix": "Check `error` in each loader and render an error card with retry. Show the migration hint only for the 'relation does not exist' error code (42P01).",
+      "evidence": "Mock run with mock_fail: overview text '…ยังเปิดใช้สถิติไม่ได้ — ต้องรัน …0004_page_stats.sql ก่อน / ไม่มีอะไรค้าง ทุกอย่างขึ้นเว็บเรียบร้อย / 0 กิจกรรม 0 คลังความรู้ … / ยังไม่มีใครแก้ไขอะไร'.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Unsaved admin edits are lost without warning on view switch, refresh, Back or tab close",
+      "category": "functionality",
+      "severity": "MEDIUM",
+      "page": "/admin (ตั้งค่าเว็บ, forms)",
+      "file": "assets/admin.js:442-462, 1446-1450, 1552-1631",
+      "description": "The dirty guard only covers the form's close button, scrim and Escape. The settings save bar has no guard at all: switching views discards pending changes silently. There is no beforeunload handler anywhere, and views aren't in the URL or history, so refresh or Back leaves the current view and drops any open form.",
+      "reproduction_steps": [
+        "Admin mock → ตั้งค่าเว็บ, edit 'อีเมลชมรม' (the save bar appears)",
+        "Click ภาพรวม in the sidebar: no confirmation, edits gone",
+        "Open any form, type, then dispatch or trigger beforeunload: defaultPrevented=false"
+      ],
+      "user_impact": "Admins lose work, especially on mobile, where the Back gesture is common.",
+      "recommended_fix": "Track a global `unsaved` flag (form dirty or settings changed()). Confirm in go(), and add a beforeunload handler while it is set. Optionally put the view in location.hash so refresh and Back keep state.",
+      "evidence": "Mock run: navAwayWhileDirty {confirmAsked:0, nowOn:'ภาพรวม'}. Dirty form beforeunload defaultPrevented=false. history.length unchanged (14→14) across view switches, and the URL never changes.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Closing the knowledge preview leaves #doc=… in the URL, so a refresh reopens the preview",
+      "category": "functionality",
+      "severity": "LOW",
+      "page": "/knowledge",
+      "file": "knowledge.html:415-430, 445-449",
+      "description": "openFromHash opens the lightbox from #doc=<id>, but closeLightbox doesn't clear the hash. After closing, a refresh, or a copied and shared URL, pops the preview open again, and the hashchange listener won't fire if the same doc link is clicked again.",
+      "reproduction_steps": [
+        "Click a 'หยิบมาอ่าน' card on / (→ /knowledge#doc=…)",
+        "Press Escape to close the preview",
+        "Reload"
+      ],
+      "user_impact": "The preview reappears unexpectedly.",
+      "recommended_fix": "In closeLightbox, call history.replaceState(null, '', location.pathname + location.search) when the hash contains doc=.",
+      "evidence": "After Escape: lightbox open=false, location.hash still '#doc=1qzLgYq…' (observed). Deep link from home worked: the hash survived the 308 from /knowledge.html and the lightbox opened with the matching title, iframe and download URL.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Featured countdown says 'วัน<weekday>นี้' for an event exactly 7 days away",
+      "category": "functionality",
+      "severity": "LOW",
+      "page": "/ (featured)",
+      "file": "assets/api.js:404",
+      "description": "The label uses `diff <= 7`. When diff is 7 the weekday equals today, so on Tuesday an event next Tuesday is labelled 'วันอังคารนี้' ('this Tuesday'), which reads as today.",
+      "reproduction_steps": [
+        "With a featured activity dated today + 7 days, open /"
+      ],
+      "user_impact": "The event looks like it is today.",
+      "recommended_fix": "Use `diff < 7` (or say 'สัปดาห์หน้า' when diff is 7).",
+      "evidence": "Injected local cache test on Tue 13 Oct: an event on 2026-10-20 rendered chip 'วันอังคารนี้'. The slider itself passed: 3 slides sorted by date, 3 dots, prev/next wrap-around, no duplicate ids.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Event dates are parsed as UTC and shown in device-local time (off by one day west of UTC)",
+      "category": "functionality",
+      "severity": "LOW",
+      "page": "/, /activities",
+      "file": "assets/api.js:292-298, 313-318, 367-370, 394-396, 503-504",
+      "description": "new Date('YYYY-MM-DD') is UTC midnight by spec. Cards then read local getDate()/getMonth() and compare against a local `today`. In UTC−x timezones every date displays one day early, and the past/upcoming split shifts. The prayer strip already handles Asia/Bangkok explicitly; these renderers don't.",
+      "reproduction_steps": [
+        "Set the OS timezone to America/New_York",
+        "Open /activities: a 2026-10-11 event shows as 10 ต.ค. 2569"
+      ],
+      "user_impact": "International students who keep their home timezone see wrong dates (the code comments call out this audience).",
+      "recommended_fix": "Parse date-only strings as Bangkok dates (split Y-M-D, or append 'T00:00:00+07:00') and compare against _bkkNow().",
+      "evidence": "Code inspection plus the ECMAScript date-only parsing rule. Not reproduced in-browser because the pane's timezone can't be changed.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Preview bar and some dynamic strings are not translated in EN mode",
+      "category": "functionality",
+      "severity": "LOW",
+      "page": "global",
+      "file": "assets/api.js:1178-1185; assets/gallery.js:202; assets/i18n.js MAP",
+      "description": "MAP lacks 'โหมดตัวอย่าง', 'ดูตัวอย่างไม่ได้', 'ออกจากโหมดตัวอย่าง', 'กลับหลังบ้าน', 'เข้าสู่ระบบ' and both pv-bar sentences. The album viewer's full-image alt ('<title> รูปที่ N') stays Thai because alt isn't in i18n ATTRS. Everything else passed: static UI on all six pages flips, tab titles flip, toggling back restores the exact original body text and title, and the choice persists across pages.",
+      "reproduction_steps": [
+        "Set EN, open /?preview: the bar is Thai",
+        "Set EN on /gallery, open an album photo, and inspect img.album-stage__full alt"
+      ],
+      "user_impact": "Minor: mixed language for EN users.",
+      "recommended_fix": "Add the pv-bar strings to MAP, and add 'alt' to ATTRS (or a RULE for '^(.+) รูปที่ (\\d+)$').",
+      "evidence": "grep: those strings are absent from i18n.js. DOM in EN: full.alt 'Steadfastness 2026 รูปที่ 1'. Per-page EN audit: only data text and the 'ไทย' switch label stayed Thai. restoredBody=true and restoredTitle=true on all 6 pages.",
+      "reported_by": "functionality"
+    },
+    {
+      "title": "Prayer strip doesn't roll over at midnight on a page left open",
+      "category": "functionality",
+      "severity": "LOW",
+      "page": "/",
+      "file": "assets/api.js:968-970, 994-1026",
+      "description": "The header date and the timings are fixed at render time. tick() only recomputes 'next' every 30 s, so after midnight the page keeps yesterday's date label and times until it is reloaded (the cache date check runs only on load).",
+      "reproduction_steps": [
+        "Leave / open across 00:00 Asia/Bangkok"
+      ],
+      "user_impact": "Slightly wrong date and times for users who keep the tab open overnight.",
+      "recommended_fix": "In tick(), if the Bangkok date differs from the rendered one, call MCCMU.renderPrayerStrip() again.",
+      "evidence": "Code inspection. The load-time rollover works: with Date.now stubbed to 14 Oct 00:30 BKK it requested /data?sheet=prayer&date=14-10-2026 and showed 'วันพุธที่ 14 ต.ค. 2569'.",
+      "reported_by": "functionality"
+    }
+  ],
+  "notes": [
+    {
+      "text": "INCIDENT, needs lead attention. While building a failure-simulation harness I loaded /knowledge into an about:srcdoc iframe. Its hostname is '' (not localhost), so site.js's localhost guard didn't apply and it sent one POST to production Supabase rpc/track_view with p_path='srcdoc' and p_new_visitor=true (localStorage key mccmu_seen_2026-10-13 was set on port 8903). That likely adds +1 view and +1 visitor under path 'srcdoc' in page_stats for 2026-10-13. I did not try to delete it. The owner may want to remove that row. The harness was immediately rebuilt to block all *.supabase.co and non-GET requests and to null MCCMU_SUPABASE.",
+      "lens_hint": "lead"
+    },
+    {
+      "text": "site.js visitor tracking only excludes file:, localhost, 127.0.0.1 and [::1]. Any other non-production origin (srcdoc/about:, Vercel preview deployments, LAN IPs) counts toward production stats.",
+      "lens_hint": "security"
+    },
+    {
+      "text": "All internal nav and footer links use *.html (site.js:20-25, 78-88), so every click costs an extra 308 hop on Vercel cleanUrls, and the hover prefetch fetches the redirecting URL.",
+      "lens_hint": "performance"
+    },
+    {
+      "text": "Admin greeting uses device time with h<11 → 'สวัสดีตอนเช้า', so it shows 'Good morning' at 00:35 (admin.js:497-500).",
+      "lens_hint": "userqa"
+    },
+    {
+      "text": "The /gallery page has no active nav item (data-page='gallery' is not in site.js links).",
+      "lens_hint": "design"
+    },
+    {
+      "text": "The album 'Steadfastness 2026' is dated 26 ต.ค. 2569, in the future relative to today. Possible data-entry error.",
+      "lens_hint": "userqa"
+    },
+    {
+      "text": "Album sessionStorage cache key is 'mccmu_albums_v2_sheets_published' even though the source is Supabase (api.js:191). Cosmetic, but confusing when debugging.",
+      "lens_hint": "functionality"
+    }
+  ]
+}

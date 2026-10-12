@@ -1,0 +1,177 @@
+{
+  "lens": "production",
+  "checked": [
+    "Tooling: there is NO package.json, so there is no lint, typecheck, unit/e2e tests or build step. Substitutes were run as below.",
+    "node --check (node v26.7.0) on classic scripts: assets/api.js, assets/site.js, assets/i18n.js, assets/gallery.js, assets/videos.js, .claude/audit/mock-supabase.js -> all OK",
+    "node --input-type=module --check on ES modules: assets/admin.js, admin/config.js -> OK",
+    "api/data.js copied to scratchpad as data.mjs, node --check -> OK; backend/Code.gs and backend/Setup.gs (copied as .js) -> OK",
+    "python3 -m json.tool on every .json in the repo (vercel.json, .mcp.json, .claude/launch.json, data/backup/*.json (7), data/import/*.json, data/review/*.json) -> all valid",
+    "HTML sanity pass (Python html.parser with a tag stack) on index, activities, gallery, halal-map, knowledge, about, admin/index, drive-image-test, .claude/audit/admin-mock: 0 duplicate ids, 0 unclosed or stray tags on every page",
+    "Asset references over HTTP on local server :8908 for /, /activities, /gallery, /halal-map, /knowledge, /about, /admin: every script[src], link[href], img[src], inline style url(), CSS url() in mccmu.css, gallery.css, videos.css, admin.css (incl. lattice.svg, photo/hero-*.jpg, view.jpg) and every internal .html link -> 0 non-200 (308 for .html links is expected with cleanUrls)",
+    "Console on normal load of all 7 routes on :8908 (fresh session): no console errors or warnings; no failed resource entries; content rendered (home: 5 prayer slots, 2 featured, 3 picks; activities: 7 album cards, 12 past events; gallery: 7 albums; knowledge: YouTube section rendered; halal-map: 23 food + 6 masjid cards; about: 23 board cards; admin: login screen)",
+    "Leftover grep over all tracked + untracked deployable files (excluding .claude/audit): console.log/console.debug/debugger/alert( -> none; TODO/FIXME/XXX -> none; localhost/127.0.0.1/:8899/:8900 -> only the intentional localhost guard in assets/site.js:190-191 and a doc line in ADMIN_SETUP.md:57; example.com/test emails -> none",
+    "Secrets grep (service_role, sb_secret, AIza..., sk_live, private keys, ghp_) over the whole working tree -> no secret values, only warning comments. Only the public anon key appears (by design)",
+    "admin/index.html cache-busting: admin.css and admin.js now carry ?v=20261013a (HEAD had no version at all) -> PASS for admin",
+    "Production state: production assets/api.js, site.js, i18n.js, mccmu.css, admin.js, admin.css and all 5 public pages are byte-identical to local HEAD 1a86a2a (so the working-tree diff is exactly what the next deploy changes)",
+    "Production /data?sheet=all -> ok:true, source:'supabase' (DATA_SOURCE + SUPABASE_URL + SUPABASE_ANON_KEY are set in prod); /data?sheet=folder -> ok:true count 0 (GOOGLE_API_KEY is set in prod); /data?sheet=youtube -> 400 'unknown sheet' (expected: old api/data.js is deployed)",
+    "Env vars, by running the api/data.js handler locally with ALL env vars unset: sheet=settings -> 200 served from Google Sheets (DATA_SOURCE defaults to 'sheets'); src=supabase -> 500 'ยังไม่ได้ตั้งค่า SUPABASE_URL หรือ SUPABASE_ANON_KEY' (no-store); preview=1 without token -> 401; preview=1 with token but no SUPABASE vars -> 500; sheet=folder -> 501 (GOOGLE_API_KEY missing, clear message); sheet=youtube -> 200 using the hard-coded default channel UCpi1ogZDgOqnXF6G94tRqYg. Required in prod: DATA_SOURCE=supabase, SUPABASE_URL, SUPABASE_ANON_KEY. Optional: GOOGLE_API_KEY (admin folder import), YOUTUBE_CHANNEL_ID and APPS_SCRIPT_URL (both have hard-coded fallbacks)",
+    "Routes (prod, GET): / 200, /activities 200, /halal-map 200, /knowledge 200, /about 200, /admin 200, /index.html 308, /admin/ 308 (trailingSlash:false), /api/data.js 308, /gallery 404 (not deployed yet), unknown path -> Vercel default plain-text 404",
+    "Routes (local :8908): all 7 routes 200, /x.html 308, /data?sheet=youtube 200, /data?sheet=all&preview=1 without token 401",
+    "robots.txt disallows /admin and /api/ -> PASS; /admin has <meta name=robots content='noindex, nofollow'> -> PASS",
+    "Favicons: every public page and /admin declares <link rel=icon href=assets/logo_white_bc.png> (200, 30-day cache). /favicon.ico is 404 but browsers use the declared icon -> PASS",
+    "vercel.json: /data rewrite to /api/data works; header rules verified on prod (html: max-age=0 must-revalidate; /assets css|js: max-age=600, stale-while-revalidate=604800; images 30 days)",
+    "Git state: git status shows 11 modified tracked files and untracked .claude/, assets/gallery.css, assets/gallery.js, assets/lattice.svg, assets/videos.css, assets/videos.js, data/import/, data/review/, gallery.html, supabase/seed/halal-restaurants-2026-10-13.sql; local main is 'behind 41' origin/main",
+    "Simulated deploy failure modes in my own tab (document.write of the real new page HTML with one script swapped): (a) stale-cache: new activities/gallery/index HTML + production (old) api.js/mccmu.css; (b) forgotten untracked files: new activities/knowledge HTML with gallery.* / videos.* returning 404"
+  ],
+  "not_tested": [
+    "Actual Vercel deploy / build logs: there is no preview deployment of the working tree and I may not deploy. Behaviour after deploy is inferred from production HEAD + local Vercel-like server.",
+    "Vercel project settings (env var scopes for Preview vs Production, ignored build step, framework preset) are not readable without signing in.",
+    "Logged-in admin and real preview mode with an admin JWT (sign-in is forbidden). The real /admin was only checked logged out.",
+    "Safari/Firefox handling of stale-while-revalidate: the stale-asset window analysis is based on Chromium behaviour (Chrome honours stale-while-revalidate in the HTTP cache)."
+  ],
+  "issues": [
+    {
+      "title": "New pages depend on untracked files; a commit of only the modified files ships broken pages",
+      "category": "production",
+      "severity": "BLOCKER",
+      "page": "/activities, /gallery, /knowledge, /admin",
+      "file": "activities.html:14,18,92; knowledge.html:15,20; assets/videos.css (url(lattice.svg)); assets/admin.css:59-60; assets/admin.js:911",
+      "description": "Vercel deploys from git (MIGRATION-VERCEL.md: every push to main auto-deploys), but assets/gallery.css, assets/gallery.js, assets/videos.css, assets/videos.js, assets/lattice.svg and gallery.html are untracked. Tracked, modified files already reference them: activities.html loads gallery.css/gallery.js and links to gallery.html ('อัลบั้มทั้งหมด ↗'); knowledge.html loads videos.css/videos.js; admin.css and videos.css mask with /assets/lattice.svg; admin.js preview maps albums to /gallery.html. If only tracked changes are committed (e.g. git commit -a), these return 404 in production.",
+      "reproduction_steps": [
+        "curl -sI https://mccmuclub.vercel.app/assets/gallery.js (and gallery.css, videos.js, videos.css, lattice.svg, /gallery) -> all 404 today",
+        "On local :8908, load the new /activities HTML with gallery.js/gallery.css pointed at 404 URLs (fresh window), click the first album card",
+        "Load the new /knowledge HTML with videos.js/videos.css 404"
+      ],
+      "user_impact": "Activities: albums fall back to the legacy renderer, and clicking any album throws 'Uncaught TypeError: Cannot read properties of null (reading classList)' because the legacy #lb lightbox markup was removed, so no photos can be viewed. The 'อัลบั้มทั้งหมด ↗' button goes to a 404. Knowledge: the new 'คลิปบรรยายจากชมรม' heading and subscribe button show over an empty, 0px-tall box that stays aria-busy=true. The admin login lattice pattern disappears.",
+      "recommended_fix": "Commit the six files together with the modified files: git add assets/gallery.css assets/gallery.js assets/videos.css assets/videos.js assets/lattice.svg gallery.html. After deploying, curl -I each of them on production and expect 200.",
+      "evidence": "git status: '?? assets/gallery.css ?? assets/gallery.js ?? assets/lattice.svg ?? assets/videos.css ?? assets/videos.js ?? gallery.html'. Prod GET: /assets/gallery.js 404, /assets/gallery.css 404, /assets/videos.js 404, /assets/videos.css 404, /assets/lattice.svg 404, /gallery 404. Simulation on :8908 (window.MCCMUGallery=false): #gal rendered 7 'gtile album' tiles, click -> window error 'Uncaught TypeError: Cannot read properties of null (reading 'classList')' (assets/api.js legacy renderGallery showPhoto -> lbImg.classList). Knowledge simulation: #videoBox children=0, height=0, aria-busy='true', heading visible.",
+      "reported_by": "production"
+    },
+    {
+      "title": "Changed public CSS/JS have no cache-busting, and stale-while-revalidate=7d serves old JS with new HTML",
+      "category": "production",
+      "severity": "HIGH",
+      "page": "/, /activities, /gallery (all public pages)",
+      "file": "vercel.json:17-21; index.html:15,18-20; activities.html:13,17-20; gallery.html:11,13-16; knowledge.html; halal-map.html; about.html",
+      "description": "Public pages load assets/mccmu.css, assets/api.js, assets/site.js and assets/i18n.js without ?v=, and all four changed in this deploy. HTML is max-age=0, so a returning visitor gets the new HTML at once. Assets are 'public, max-age=600, stale-while-revalidate=604800', so any copy cached in the last 7 days + 10 minutes is served stale (revalidated in the background) on the first load after deploy. That is more than the 10-minute window the brief assumes. The new HTML has dropped markup the old api.js needs (#lb lightbox, #galPrev/#galNext, the inline prayer script), and the old api.js has no 'gallery' case.",
+      "reproduction_steps": [
+        "curl -sI https://mccmuclub.vercel.app/assets/api.js -> cache-control: public, max-age=600, stale-while-revalidate=604800",
+        "In a fresh window on :8908, write the new /activities HTML but load api.js and mccmu.css from production (identical to HEAD); click an album",
+        "Same for new /gallery HTML and new / HTML"
+      ],
+      "user_impact": "For each returning visitor's first page view after deploy: on /activities, clicking an album throws a TypeError and no viewer opens. /gallery shows an empty grid with no message (0 children). On the home page the prayer strip renders as 5 unstyled stacked divs in a decimal <ol> (318px tall), with no Hijri date and no 'next prayer' line. A reload fixes it, but the user isn't told that.",
+      "recommended_fix": "Add the same ?v=YYYYMMDDx scheme used in admin/index.html to every public <link>/<script> for mccmu.css, api.js, site.js, i18n.js and the new gallery/videos files, and bump it on each deploy. Alternatively, drop stale-while-revalidate for /assets/*.css|js in vercel.json, or make it short (e.g. 60s).",
+      "evidence": "Prod header above. Stale simulation on :8908, /activities: #gal tiles class 'gtile album' (legacy), click -> 'Uncaught TypeError: Cannot read properties of null (reading 'classList')'. /gallery: #albumGrid children=0, no errors (old api.js init switch has no 'gallery' case). /: #pTimes children are DIV.ptime in an <ol> with display:block, list-style decimal, height 318.6px; #pHijri and #pNext empty. git diff --stat: assets/api.js +226, assets/mccmu.css +71, assets/i18n.js +82, assets/site.js +5.",
+      "reported_by": "production"
+    },
+    {
+      "title": "Production publicly serves internal docs, DB migrations, seed SQL, data backups, scripts and a test page",
+      "category": "production",
+      "severity": "MEDIUM",
+      "page": "global",
+      "file": "repo root (no .vercelignore); .gitignore",
+      "description": "There is no .vercelignore and the Vercel project serves the repo root, so every tracked file is public. Verified with GET on production: ADMIN_SETUP.md, AGENTS.md, CLAUDE.md, MIGRATION-VERCEL.md, .mcp.json (Supabase project ref and MCP config), .github/workflows/backup-data.yml, backend/Code.gs and *.md plans, supabase/migrations/*.sql (full schema and RLS policies), supabase/seed/*.sql, data/backup/*.json (all tables incl. members/settings), scripts/*.sh|py and drive-image-test.html (a dev test page at /drive-image-test). No secret values were found in them, but this is internal information and a map for attackers. The untracked .claude/ (agent prompts, audit brief, admin-mock.html, devserver.mjs, launch.json), data/import/, data/review/ and supabase/seed/halal-restaurants-2026-10-13.sql are not in .gitignore, so a 'git add -A' would publish them too.",
+      "reproduction_steps": [
+        "curl -s -o /dev/null -w '%{http_code}' https://mccmuclub.vercel.app/ADMIN_SETUP.md (and the paths listed in evidence)"
+      ],
+      "user_impact": "Anyone can download the DB schema and RLS rules, admin setup procedure, MCP config, internal plans and full nightly data dumps. After a careless 'git add -A', the AI-agent prompts, the audit tooling and the unverified restaurant review notes would also be public.",
+      "recommended_fix": "Add a .vercelignore that excludes *.md, .mcp.json, .github/, .claude/, backend/, data/, supabase/, scripts/, drive-image-test.html, uploads/ and screenshots/. Add .claude/ (or at least .claude/audit/), data/import/ and data/review/ to .gitignore, or commit them deliberately. Then re-check with curl -I that they return 404.",
+      "evidence": "Prod GET 200: /ADMIN_SETUP.md, /AGENTS.md, /CLAUDE.md, /MIGRATION-VERCEL.md, /.mcp.json, /.github/workflows/backup-data.yml, /backend/Code.gs, /backend/BACKEND_PLAN.md, /backend/SHEETS_SETUP.md, /supabase/migrations/0002_rls_policies.sql, /supabase/migrations/0006_admin_roles.sql, /supabase/seed/import.sql, /supabase/seed/parts/members.sql, /data/backup/members.json, /data/backup/settings.json, /data/backup/_meta.json, /scripts/backup-data.sh, /scripts/make-import-sql.py, /drive-image-test. 404 (gitignored/untracked): /.claude/*, /data/review/*, /data/import/*, /uploads/*, /assets/_src/*, /.DS_Store. 'ls .vercelignore' -> No such file.",
+      "reported_by": "production"
+    },
+    {
+      "title": "Nightly backup workflow still copies the abandoned Google Sheet and makes a no-op prod deploy daily",
+      "category": "production",
+      "severity": "MEDIUM",
+      "page": "global (CI / data safety)",
+      "file": ".github/workflows/backup-data.yml; scripts/backup-data.sh; data/backup/_meta.json",
+      "description": "Production reads Supabase (/data source:'supabase'), but the nightly 'Backup data' workflow still pulls from Google Sheets via Apps Script (_meta.json source 'google-sheets-via-apps-script'). The data no longer changes there, so the job commits only the new generated_at timestamp every night. Each push to main triggers a Vercel production deploy. Local main is now 41 commits behind origin/main because of these bot commits.",
+      "reproduction_steps": [
+        "git status -sb -> '## main...origin/main [behind 41]'",
+        "git log HEAD..origin/main --format=%an | sort | uniq -c -> 41 github-actions[bot]",
+        "git diff --stat HEAD origin/main -> only data/backup/_meta.json, 1 line",
+        "Compare counts: _meta.json places=18, members=18 vs prod /data?sheet=all places=29, members=23"
+      ],
+      "user_impact": "The 'backup' doesn't contain the live Supabase data (e.g. today's 11 restaurants, new members), so it can't restore the site. There are 41 needless production deploys, and the next 'git push' of this release is rejected until main is pulled or rebased.",
+      "recommended_fix": "Before pushing, run git pull --rebase (bot commits only touch data/backup/_meta.json, so no conflict is expected). Then point scripts/backup-data.sh at Supabase (anon REST, published rows) or retire the workflow, and make it skip committing when only generated_at changed.",
+      "evidence": "git ls-remote origin main = 8fce241 'chore(backup): สำรองข้อมูลอัตโนมัติ 2026-10-11'; local HEAD 1a86a2a; 'behind 41'; diff stat '1 file changed, 1 insertion(+), 1 deletion(-)' (data/backup/_meta.json); prod /data?sheet=all -> source 'supabase', places 29, members 23.",
+      "reported_by": "production"
+    },
+    {
+      "title": "DATA_SOURCE falls back to the retired Google Sheets backend when unset",
+      "category": "production",
+      "severity": "LOW",
+      "page": "/data",
+      "file": "api/data.js:27, 313",
+      "description": "DEFAULT_SOURCE = (process.env.DATA_SOURCE || 'sheets'). With the variable missing (e.g. a Preview-scoped env, a new Vercel project or a typo), /data serves 200 OK from the stale Google Sheet with no error, so a misconfiguration goes unnoticed. ?src=sheets also lets anyone force the stale source in production. Production currently has DATA_SOURCE=supabase set.",
+      "reproduction_steps": [
+        "Run the handler with env vars unset: node run-handler.mjs data.mjs '/data?sheet=settings' -> 200 with Sheets data",
+        "curl 'https://mccmuclub.vercel.app/data?sheet=all' -> source:'supabase' (prod is configured)"
+      ],
+      "user_impact": "On a misconfigured deployment, visitors silently see out-of-date content (e.g. 18 instead of 29 places) and admin edits seem to have no effect.",
+      "recommended_fix": "Default to 'supabase' now that the migration is done (or fail loudly with 500 when DATA_SOURCE is missing). Consider ignoring ?src= unless an explicit debug env flag is set.",
+      "evidence": "Local run with all env unset: '/data?sheet=settings -> 200 public, max-age=120, s-maxage=180 ... {\"ok\":true,\"data\":{\"logo_id\":\"\",\"club_email\":\"\"...' (Apps Script response).",
+      "reported_by": "production"
+    },
+    {
+      "title": "Admin imports supabase-js from a floating major-version CDN URL",
+      "category": "production",
+      "severity": "LOW",
+      "page": "/admin",
+      "file": "assets/admin.js:14",
+      "description": "import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm' resolves to whatever 2.x is latest at load time. A new minor release can change admin behaviour without any deploy, which makes production non-reproducible.",
+      "reproduction_steps": [
+        "grep -n '^import' assets/admin.js"
+      ],
+      "user_impact": "Admin login or CRUD could break unexpectedly after an upstream release, with no code change to roll back.",
+      "recommended_fix": "Pin an exact version, e.g. @supabase/supabase-js@2.x.y/+esm, and optionally add SRI or self-host it.",
+      "evidence": "assets/admin.js:14 import ... from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'",
+      "reported_by": "production"
+    },
+    {
+      "title": "No custom 404 page; unknown URLs show Vercel's plain-text NOT_FOUND",
+      "category": "production",
+      "severity": "LOW",
+      "page": "global",
+      "file": "(missing 404.html)",
+      "description": "There is no 404.html, so mistyped or old links (e.g. the /gallery link before it deploys, or old club.mccmu.workers.dev paths) land on Vercel's bare text page with no navigation back to the site.",
+      "reproduction_steps": [
+        "curl -s https://mccmuclub.vercel.app/nonexistent-page"
+      ],
+      "user_impact": "Visitors who follow a bad link reach a dead end.",
+      "recommended_fix": "Add a branded 404.html at the repo root, using site.js nav and a link home. Vercel serves it automatically.",
+      "evidence": "Response body: 'The page could not be found\\n\\nNOT_FOUND\\n\\nsin1::...' with text/plain, status 404.",
+      "reported_by": "production"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Preview mode is sticky per tab (sessionStorage mccmu_preview). Opening any ?preview URL without an admin session makes every later page in that tab log '[MCCMU] settings/featured/picks/prayer/past carousel: Error: preview: no admin session', and the data sections stay empty. Seen on :8908 / and on the next /activities load.",
+      "lens_hint": "functionality"
+    },
+    {
+      "text": "gallery.html has no window.MCCMU_SUPABASE inline config (the other 5 public pages have it), so assets/site.js visit tracking returns early and /gallery views are never counted, although admin.js:472 labels '/gallery' in stats.",
+      "lens_hint": "functionality"
+    },
+    {
+      "text": "gallery.html lacks the apple-touch-icon and dns-prefetch links that the other public pages have.",
+      "lens_hint": "design"
+    },
+    {
+      "text": "Internal nav links use href='x.html', so with cleanUrls every click costs an extra 308 redirect hop (e.g. activities.html -> /activities).",
+      "lens_hint": "performance"
+    },
+    {
+      "text": "vercel.json sets no security headers (CSP, X-Frame-Options/frame-ancestors, X-Content-Type-Options, Referrer-Policy). Prod only returns HSTS.",
+      "lens_hint": "security"
+    },
+    {
+      "text": "/data responses send access-control-allow-origin: * (api/data.js:49,64), which conflicts with the project rule 'Restrict CORS to trusted domains'. Preview responses are no-store, but CORS is still wildcard.",
+      "lens_hint": "security"
+    },
+    {
+      "text": "The preview tool was capped at 5 servers (held by other auditors), so I ran the same devserver command (node .claude/audit/devserver.mjs . 8908) as a background shell job on my assigned port 8908, and stopped it at the end.",
+      "lens_hint": "production"
+    }
+  ]
+}

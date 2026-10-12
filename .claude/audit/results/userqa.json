@@ -1,0 +1,265 @@
+{
+  "lens": "userqa",
+  "checked": [
+    "Setup: preview_start refused ('Maximum 5 servers per worktree'), so the same command (node .claude/audit/devserver.mjs . 8904) ran via Bash on my own port 8904, in my own tab (tab-8). Server stopped and tab closed at the end.",
+    "Student, phone 375x812, TH. Home (/): prayer card shows today's date (วันอังคารที่ 13 ต.ค. 2569), the Hijri date, all 5 times, and 'ถัดไป ฟัจร์ อีก 4 ชม. 52 นาที', which was correct at about 00:25. PASS. No console errors. /data?sheet=all returned 200, then came from cache on reload.",
+    "Student, phone: quick link 'ดูเวลาวันนี้' goes to #prayer and the id exists. Footer and knowledge tiles also link to index.html#prayer. The 5 prayer stops fit in 375px with no horizontal scroll (scrollWidth 375). PASS.",
+    "Student, phone: hamburger (#mccBurger) opens the drawer (aria-expanded=true, full height) with links to all 5 pages plus contact. PASS.",
+    "Student, phone: /halal-map. The embedded My Maps loads, the legend shows, the list has 23 restaurants and 6 mosques or prayer rooms, and all 29 'เปิดแผนที่' links are https Google Maps links opening in _blank. PASS. Finding the 'nearest' place is hard because there is no distance and no sorting (see notes).",
+    "Student, phone: nearest prayer room on campus. The list has the central library (ชั้น 1), Faculty of Science (SCB<->RB3) and the sports center (ชั้น 2), each with walking directions and a map link. PASS, but campus rooms are mixed in with city mosques.",
+    "Student, phone: /activities. Featured block, past-activities carousel (12 items) and album grid all render. /activities#gallery jumps to the album section when the tab is in front. FAIL on the featured heading: a past event (11 ต.ค.) appears under 'กิจกรรมเด่นเร็ว ๆ นี้' (see issue).",
+    "Student, phone: opened album 'Steadfastness 2026' (154 photos). The thumbnail grid loads (Drive thumbnails, naturalWidth 400). Tapping photo 1 opens the viewer with 'รูปที่ 1 / 154'. Next goes to 2 / 154. PASS. FAIL on the phone Back gesture, which leaves the page (see issue).",
+    "Student, phone: /knowledge has 18 PDF cards. 'พรีวิว' opens a lightbox with the Drive /preview iframe (12 pages render) and a 'ดาวน์โหลด' button pointing at drive uc?export=download. Escape closes it. The deep link knowledge#doc=<id> from the home 'เปิดอ่าน' cards opens the right preview. PASS. The file itself was not downloaded.",
+    "Student, phone: talk videos on /knowledge. The poster button 'เล่นคลิป …' swaps in a youtube-nocookie iframe with autoplay at 347x195. 'ดูบน YouTube' and 'ติดตามช่อง YouTube' links are correct. PASS.",
+    "Student, phone: contact. about#contact shows Instagram and Facebook. The footer has a mailto link (muslimclub@cmu.ac.th) plus FB, IG and YouTube icons, all opening in _blank. PASS.",
+    "International student, desktop 1366x900, EN: the toggle sets html lang=en and mccmu_lang=en. Home, activities, gallery, halal-map and knowledge chrome is fully English, including the prayer card ('Tuesday 13 Oct 2026', '2 Jumada al-Ula 1448 AH', 'in 4 hr 49 min'). Only backend data stays Thai. One untranslated date string on knowledge (see issue). Switching back to TH works.",
+    "Admin, logged out: the real /admin shows the login screen ('ระบบหลังบ้าน', Google button, note that only listed emails can enter). The mock logged out shows the same. Clear. PASS.",
+    "Admin mock (owner): overview shows greeting, visitor chart with 7/14/30 toggles, a 'รอจัดการ' to-do list (empty album, drafts), quick-add buttons, top pages and recent edits. Clear.",
+    "Admin mock, new activity: saving with an empty title blocks the save, shows the toast 'กรุณากรอก \"ชื่อกิจกรรม\"' and focuses the field. PASS. Pasting a full Drive /view link into รูปปก shows the thumbnail preview right away. PASS.",
+    "Admin mock: closing a dirty form with the X button asks 'ปิดโดยไม่บันทึก? การแก้ไขที่ทำไว้จะหายไป' and the form stays open on Cancel. PASS. Escape and the scrim take the same path in code (admin.js:1446-1455).",
+    "Admin mock: 'บันทึกและดูตัวอย่าง' (window.open stubbed) saves the draft, shows the toast 'บันทึกร่างแล้ว · เปิดหน้าตัวอย่างในแท็บใหม่แล้ว', points the new tab at /activities.html?preview and keeps the form open with 'บันทึกแล้ว · 00:31'. Switching status to เผยแพร่ updates the hint and the button text to 'บันทึกและเผยแพร่'. Saving closes the form with 'บันทึกแล้ว · ขึ้นเว็บภายใน ~3 นาที' and the list shows the item as เผยแพร่. PASS (but see the ~3-minute and non-featured issues).",
+    "Admin mock: a save failure (mock_fail) gives the toast 'บันทึกไม่สำเร็จ: …' and the form stays open with the edits kept. PASS.",
+    "Admin mock, albums: create album with title and folder link, then save draft. 'จัดการรูป' opens the photo manager. Pasting 2 Drive links adds 2 photos (toast 'เพิ่ม 2 รูปแล้ว'). ★ sets the cover (toast 'ตั้งเป็นรูปปกแล้ว', 'ปก' badge). Icon buttons have title and aria-label. Pasting only non-Drive links gives the toast 'ไม่พบลิงก์ Drive ในข้อความที่วาง'. PASS. 'ดึงรูปจากโฟลเดอร์ Drive' locally gives a clear toast about the missing GOOGLE_API_KEY. Production /data?sheet=folder with a bad id returns a clear Thai 404 message.",
+    "Admin mock, settings: editing shows a floating save bar 'แก้ไข 1 ช่อง ยังไม่ได้บันทึก'. Saving shows 'บันทึกแล้ว · ขึ้นเว็บภายใน ~3 นาที' and hides the bar. FAIL: there is no URL validation, and leaving through the sidebar drops edits without a prompt (see issues).",
+    "Admin mock, admins: an invalid email ('newperson') is stopped by native type=email validation. Adding newperson@example.com defaults to the safer role ผู้แก้ไข and shows the toast 'เพิ่ม newperson@example.com แล้ว'. The list updates to 3 people. PASS.",
+    "Admin mock, audit log ('who changed something yesterday'): entries are grouped by day ('วันนี้', 'วันอาทิตย์ที่ 11 ตุลาคม 2569') with actor, action, table, summary, changed fields and time, plus filter chips per table. Easy to find. PASS.",
+    "Admin mock, auth check failure (mock_fail at boot): the login screen shows 'ตรวจสอบสิทธิ์ไม่สำเร็จ: simulated network failure', the session is kept, and there is no retry action (see issue).",
+    "Public preview without an admin session (/activities?preview): the bar 'ดูตัวอย่างไม่ได้ … ต้องเข้าสู่ระบบหลังบ้าน…' appears with 'เข้าสู่ระบบ' and 'ออกจากโหมดตัวอย่าง'. The past carousel and albums show error messages, but the featured card stays 'Loading event…' forever (see issue).",
+    "Cross-check against production (GET only): /, /activities, /halal-map, /knowledge, /about and /admin return 200. /gallery, /assets/gallery.js and /assets/videos.js return 404 (new features). Production halal-map has the same 23+6 places with per-card map iframes, matching local (30 iframes). The featured-event and non-featured logic is the same at HEAD, so those issues already exist in production and are not regressions."
+  ],
+  "not_tested": [
+    "Real preview with an actual Supabase admin session ('ร่าง ·' titles, a draft showing on the public page). Signing in is not allowed, and mock writes never reach the public /data.",
+    "Drive folder sync end to end. There is no GOOGLE_API_KEY locally, and no real folder id was used against production.",
+    "Live ticking of the prayer countdown over time. Background tabs throttle timers.",
+    "Actually downloading a PDF. Downloads need user permission, so only the href was verified.",
+    "A real Android hardware Back button. Simulated with history back in the browser pane.",
+    "Admin on a phone. Not in this lens's checklist; the responsive auditor covers it.",
+    "Losing a form on reload or tab close: verified by code only (no beforeunload handler). A real reload was not triggered with a dirty form."
+  ],
+  "issues": [
+    {
+      "title": "Upcoming activities that are not pinned as 'featured' never appear on the public site",
+      "category": "userqa",
+      "severity": "HIGH",
+      "page": "/activities, /",
+      "file": "assets/api.js:496-507 (renderFeatured pool), assets/api.js:1115-1117 (renderPastCarousel only past), assets/api.js:331 (renderActivities never called); assets/admin.js featured hint",
+      "description": "renderFeatured uses `pool = feat.length ? feat : items`. While any activity has featured=true, upcoming activities without the flag are filtered out. The only other activity list on /activities and the home page is renderPastCarousel, which shows only date < today. MCCMU.renderActivities exists but no page calls it. Live /data today: 19 published activities, exactly one featured (2026-10-11). So any newly published upcoming activity with the featured switch off (the default) is invisible until its date has passed, and then it only shows as 'past'. The admin form hint ('กิจกรรมเด่นจะขึ้นเป็นการ์ดใหญ่ในหน้าแรกและหน้ากิจกรรม') suggests unpinned activities still show somewhere smaller.",
+      "reproduction_steps": [
+        "In admin (mock), add an activity dated in the future, keep 'ปักหมุดเป็นกิจกรรมเด่น' off, and publish.",
+        "Open /activities or / on the public site.",
+        "The activity is not in the featured block (pool is only featured items) or in 'กิจกรรมที่ผ่านมา' (only past dates)."
+      ],
+      "user_impact": "Students can't find upcoming events, which is the main reason to visit /activities. Admins think they published an event, but nobody can see it.",
+      "recommended_fix": "Show all upcoming published activities in a list or carousel on /activities (renderActivities or an upcoming carousel), or pick upcoming items from all activities and use 'featured' only to promote them. Update the admin hint to say where unpinned activities appear.",
+      "evidence": "Code path above, plus live data from GET /data?sheet=all: 19 activities, featured=True only on 2026-10-11. HEAD has the same logic, so this already exists in production and is not a regression.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "/activities featured block says 'upcoming' over a past event, and never leaves 'กำลังโหลด…' when loading fails",
+      "category": "userqa",
+      "severity": "MEDIUM",
+      "page": "/activities",
+      "file": "activities.html:41 (h2 has no data-feat-heading), activities.html:53 (static .feat-upcoming badge), assets/api.js:484-492 (_setFeatHeading)",
+      "description": "_setFeatHeading only rewrites `[data-feat-heading]`. index.html:73 has that attribute; activities.html:41 does not. On 13 Oct 2569 the activities page shows the 11 ต.ค. 2569 event under 'กิจกรรมเด่นเร็ว ๆ นี้', with the card badge also reading 'กิจกรรมเด่นเร็ว ๆ นี้' (EN: 'Upcoming featured events'). The home page correctly switches to 'กิจกรรมล่าสุดที่ผ่านมา' and 'จัดไปแล้ว'. On a data error (seen with ?preview and no session), _setFeatHeading('none') cannot hide the section, so the card stays on 'กำลังโหลดกิจกรรม…' / 'Loading event…' indefinitely, while the carousel and albums below show proper error messages.",
+      "reproduction_steps": [
+        "Open /activities while no featured activity is upcoming (true today).",
+        "Read the heading and badge over the 11 ต.ค. event.",
+        "Open /activities?preview in a browser with no admin session and wait more than 9 seconds. The featured card still shows 'Loading event…'."
+      ],
+      "user_impact": "Students may turn up for an event that already happened. On errors the page looks stuck.",
+      "recommended_fix": "Add data-feat-heading to the h2 at activities.html:41. When showing a past event, also switch the .feat-upcoming badge to 'จัดไปแล้ว' or hide it, and hide or replace the card with an error message on failure.",
+      "evidence": "get_page_text on /activities: 'กิจกรรมเด่นเร็ว ๆ นี้ … บทเรียนจากบรรพชน … 11 ต.ค. 2569'. On ?preview after 9 s the featuredEvt innerText was 'UPCOMING FEATURED EVENTS Loading event… Please wait — fetching the latest event.' and the console showed '[MCCMU] featured: Error: preview: no admin session'.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "Admin: unsaved settings edits are dropped without warning when leaving the page, and no admin form protects against reload or tab close",
+      "category": "userqa",
+      "severity": "MEDIUM",
+      "page": "/admin (ตั้งค่าเว็บ, all forms)",
+      "file": "assets/admin.js:442 (go() has no dirty check), assets/admin.js:1609-1614 (settings save bar), no 'beforeunload' anywhere in assets/admin.js",
+      "description": "On ตั้งค่าเว็บ I changed อีเมลชมรม, and the save bar showed 'แก้ไข 1 ช่อง ยังไม่ได้บันทึก'. Clicking 'ผู้ดูแลระบบ' in the sidebar switched pages with no confirm (a confirm spy recorded 0 calls). Going back to ตั้งค่าเว็บ showed the old value 'club@example.com'. Content forms do confirm on X, Escape and scrim, but there is no beforeunload handler, so a reload, an accidental tab close or a back-swipe throws away a long description with no prompt.",
+      "reproduction_steps": [
+        "Admin, then ตั้งค่าเว็บ: edit any field. The bar 'แก้ไข 1 ช่อง ยังไม่ได้บันทึก' appears.",
+        "Click another sidebar item, then come back to ตั้งค่าเว็บ.",
+        "The edit is gone and no prompt was shown."
+      ],
+      "user_impact": "Admins lose their changes and may believe they were saved.",
+      "recommended_fix": "In go(), if the settings page or an open form is dirty, confirm before switching. Add a beforeunload listener while any form or settings page is dirty.",
+      "evidence": "javascript_tool: window.__c=[] (confirm spy) after the sidebar click, then s_club_email.value === 'club@example.com'. grep -n beforeunload assets/admin.js finds nothing.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "'ขึ้นเว็บภายใน ~3 นาที' is optimistic: returning visitors, including the admin checking, first see the old content",
+      "category": "userqa",
+      "severity": "MEDIUM",
+      "page": "/admin toasts and every public page",
+      "file": "assets/api.js:108-109 (LS_TTL 3 min, LS_MAX 7 days), assets/api.js:127-150 (stale-while-revalidate in _loadAll), api/data.js:31-32 (max-age=120, s-maxage=180, stale-while-revalidate=60); toasts in assets/admin.js submit() and settings save",
+      "description": "After saving, admin toasts promise the change is live within ~3 minutes. But any browser that visited in the last 7 days with a localStorage cache older than 3 minutes renders the cached copy right away and only fetches new data in the background, so the change appears on the next page load. That fetch can itself hit the HTTP cache (max-age=120) and an edge copy (s-maxage=180 plus 60 s SWR). An admin who publishes, waits 3 minutes and opens the site in the same browser will usually still see the old version.",
+      "reproduction_steps": [
+        "Visit / so localStorage mccmu_all_v1 is filled.",
+        "Wait more than 3 minutes, publish a change in admin, then wait the stated ~3 minutes.",
+        "Reload /. The first render uses the cached copy (age < LS_MAX). The new data only appears on a later reload."
+      ],
+      "user_impact": "Admins think publishing failed and edit or republish again. Visitors see outdated event info.",
+      "recommended_fix": "Make the toast honest (for example 'ภายใน ~5 นาที · ถ้ายังไม่เห็นให้รีเฟรชอีกครั้ง'), or let the admin's browser bypass the cache (?fresh or clearing mccmu_all_v1) after a save. Consider a lower LS_MAX for event data.",
+      "evidence": "Code at the cited lines. The toast text 'บันทึกแล้ว · ขึ้นเว็บภายใน ~3 นาที' was seen after publishing an activity and saving settings in the mock.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "Phone Back gesture while browsing an album leaves the page instead of closing the photo viewer",
+      "category": "userqa",
+      "severity": "MEDIUM",
+      "page": "/activities#gallery, /gallery",
+      "file": "assets/gallery.js (no history.pushState or popstate handling)",
+      "description": "I opened album 'Steadfastness 2026' and moved to 'รูปที่ 2 / 154', then went Back in history. The browser left /activities and landed on '/' (navigation type back_forward), and the album viewer and scroll position were gone. On Android and iOS, swiping or pressing Back is the natural way to close a full-screen viewer.",
+      "reproduction_steps": [
+        "On a phone, open /activities and tap an album, then a photo.",
+        "Press the Back button or swipe back."
+      ],
+      "user_impact": "Students get kicked off the page and lose their place in long albums (154 photos). It feels broken.",
+      "recommended_fix": "Push a history entry (for example #album=<id>) when the dialog opens and close it on popstate. Pop the entry when it is closed with X or Escape.",
+      "evidence": "After navigate('back'): location.href = 'http://localhost:8904/', dialogOpen = false. grep for pushState or popstate in assets/gallery.js finds nothing.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "Settings accept social links without https://, which then become broken relative links on every page",
+      "category": "userqa",
+      "severity": "MEDIUM",
+      "page": "/admin ตั้งค่าเว็บ, then all public pages",
+      "file": "assets/admin.js:1615-1627 (settings save, no validation), assets/api.js:1048-1056 (setHref uses the raw value)",
+      "description": "I typed 'facebook.com/MuslimClubCMU' into Facebook and saved. Toast: 'บันทึกแล้ว · ขึ้นเว็บภายใน ~3 นาที', with no warning. applySettings does `a.href = url`, so every Facebook icon would point at /facebook.com/MuslimClubCMU on the club's own domain, which is a 404. The only guard is the hint text 'ลิงก์เพจแบบเต็ม เช่น https://facebook.com/…'.",
+      "reproduction_steps": [
+        "Admin, then ตั้งค่าเว็บ, then Facebook = 'facebook.com/MuslimClubCMU', then บันทึก.",
+        "On a public page the footer and contact Facebook links resolve relative to the site."
+      ],
+      "user_impact": "One small typo breaks the social links on every page, and the admin gets no warning.",
+      "recommended_fix": "Validate URL fields on save (require ^https?://, or prepend https:// automatically) and show an inline error. The same applies to YouTube and the halal map embed URL.",
+      "evidence": "Mock save toast seen, s_club_facebook.value = 'facebook.com/MuslimClubCMU'. The setHref code at api.js:1048-1052 has no scheme check.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "Pasting photo links silently drops lines that aren't Drive links",
+      "category": "userqa",
+      "severity": "LOW",
+      "page": "/admin อัลบั้มภาพ, then จัดการรูป",
+      "file": "assets/admin.js:1212-1223 (addPhotos filters invalid ids silently)",
+      "description": "I pasted 2 Drive links plus one line 'not a link'. The toast said 'เพิ่ม 2 รูปแล้ว' and the textarea was cleared, so nothing tells the admin that one line was skipped. When every line is invalid the toast is clear ('ไม่พบลิงก์ Drive ในข้อความที่วาง'), but the mixed case is not.",
+      "reproduction_steps": [
+        "Open จัดการรูป on an album.",
+        "Paste 2 Drive file links and one Google Photos or other link, then click เพิ่มรูปที่วางไว้."
+      ],
+      "user_impact": "Photos are quietly missing from the album, and the admin only finds out later, if at all.",
+      "recommended_fix": "Report skipped lines (for example 'เพิ่ม 2 รูป · ข้าม 1 บรรทัดที่ไม่ใช่ลิงก์ Drive') and leave the skipped lines in the textarea.",
+      "evidence": "Mock: toast 'เพิ่ม 2 รูปแล้ว', textarea value '' after pasting 3 lines.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "Album 'โฟลเดอร์รูป' field still says 'ยังไม่มีรูป · วางลิงก์…' after a valid folder link is pasted",
+      "category": "userqa",
+      "severity": "LOW",
+      "page": "/admin อัลบั้มภาพ form",
+      "file": "assets/admin.js:76 (folder_id uses type 'drive'), assets/admin.js:1395-1410 (image-preview widget)",
+      "description": "The folder field reuses the image-thumbnail preview. A folder id has no thumbnail, so after pasting https://drive.google.com/drive/folders/… the box still reads 'ยังไม่มีรูป · วางลิงก์ Google Drive ด้านล่าง'. That looks as if the link was rejected.",
+      "reproduction_steps": [
+        "Admin, then สร้างอัลบั้ม, then paste a Drive folder link into โฟลเดอร์รูป."
+      ],
+      "user_impact": "Confusing: admins may paste the link again or think the folder isn't shared.",
+      "recommended_fix": "Use a separate 'folder' field type that shows a 'linked folder ✓ · open ↗' state instead of an image preview.",
+      "evidence": "Mock: drive-prev class 'drive-prev' (no has-img) and the field text 'ยังไม่มีรูป · วางลิงก์ Google Drive ด้านล่าง' after pasting a folder URL.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "EN mode: video playlist dates stay in Thai Buddhist-era format",
+      "category": "userqa",
+      "severity": "LOW",
+      "page": "/knowledge (EN)",
+      "file": "assets/videos.js:166 (speaker and date joined into one string), assets/i18n.js:251+ (date rule only matches a bare date)",
+      "description": "With EN on, the main player shows '30 Aug 2026', but each playlist item shows 'อ.ฮุซัยฟะฮ์ วิริยาทร · 30 ส.ค. 2569'. Because the speaker and date are joined into one text node, the i18n date rule doesn't match.",
+      "reproduction_steps": [
+        "Switch to EN and open /knowledge.",
+        "Look at the 'All videos (3)' list under each title."
+      ],
+      "user_impact": "International students see Thai month names and a 2569 year next to English UI.",
+      "recommended_fix": "Render the speaker and date as separate spans (each translatable), or add an i18n rule for '<text> · d MMM yyyy'.",
+      "evidence": "EN innerText of the video section: 'Now playing\\nนักศึกษามุสลิมกับชีวิตในรั้วมหาวิทยาลัย\\nอ.ฮุซัยฟะฮ์ วิริยาทร · 30 ส.ค. 2569'.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "The new /gallery page is cut off from the site navigation",
+      "category": "userqa",
+      "severity": "LOW",
+      "page": "/gallery",
+      "file": "gallery.html:17 (data-page=\"gallery\"), assets/site.js:17-31 (nav ids have no gallery entry), activities.html:92",
+      "description": "/gallery is reachable only from 'อัลบั้มทั้งหมด ↗' on /activities. It is not in the header or drawer, and on /gallery no nav item is highlighted, so a user who lands there can't tell where they are. The '↗' arrow usually means 'opens an external site', but it is an internal link in the same tab. Home and footer album links go to activities#gallery instead, so there are two album entry points.",
+      "reproduction_steps": [
+        "Open /gallery and look at the header nav (none has class is-active).",
+        "On /activities, hover over 'อัลบั้มทั้งหมด ↗'."
+      ],
+      "user_impact": "Minor wayfinding confusion.",
+      "recommended_fix": "Mark 'กิจกรรม' as active on data-page=gallery (or add a nav entry), and drop the ↗ from the internal link.",
+      "evidence": "Header links on /gallery: all with class '' (no is-active). activities.html:92: <a href=\"gallery.html\">อัลบั้มทั้งหมด ↗</a>.",
+      "reported_by": "userqa"
+    },
+    {
+      "title": "Admin login after a failed permission check shows a raw error and only offers a full Google sign-in again",
+      "category": "userqa",
+      "severity": "LOW",
+      "page": "/admin login",
+      "file": "assets/admin.js:330-334",
+      "description": "When the admins lookup fails (network or Supabase hiccup), the login screen shows 'ตรวจสอบสิทธิ์ไม่สำเร็จ: <raw message>' (in the browser this is usually the English 'Failed to fetch') and returns to the 'เข้าสู่ระบบด้วย Google' state, even though the session is still valid (mock_session kept). There is no 'ลองใหม่' button. The admin has to do a full OAuth round trip or guess to reload.",
+      "reproduction_steps": [
+        "Set mock_fail=1 with mock_session=1 and reload the admin mock."
+      ],
+      "user_impact": "A brief network problem looks like a login or permission problem.",
+      "recommended_fix": "On error, keep the session, show a friendly Thai message with a 'ลองใหม่' button that re-runs boot(), and leave the Google button for real sign-out cases.",
+      "evidence": "Mock: loginView text 'ตรวจสอบสิทธิ์ไม่สำเร็จ: simulated network failure / เข้าสู่ระบบด้วย Google'. localStorage.mock_session still '1'.",
+      "reported_by": "userqa"
+    }
+  ],
+  "notes": [
+    {
+      "text": "gallery.html, assets/gallery.js, assets/gallery.css, assets/videos.js, assets/videos.css and assets/lattice.svg are untracked (git status '??'), but the modified tracked pages load them (activities.html:14,18; knowledge.html:15,20). Production returns 404 for /gallery, /assets/gallery.js and /assets/videos.js today. If deploys come from git, these files must be committed or the album viewer and video section break.",
+      "lens_hint": "production"
+    },
+    {
+      "text": "Album 'Steadfastness 2026' is dated 2026-10-26, which is in the future. The photos show '26 SEP 2026' and the activity is 26 ก.ย., so it sorts first with the wrong date. 'Steadfastness' (27 ก.ย.) and 'Steadfastness 2026' look like duplicates to a visitor.",
+      "lens_hint": "content"
+    },
+    {
+      "text": "Halal place descriptions contain internal or editor notes and typos visible to students: 'ตำแหน่งปัจจุบันรอยืนยัน' (Fatimah Burger House), 'Google Maps จัดหมวดเป็นร้านอาหารฮาลาล', 'ห้องนำ้' (tone mark order), 'เ ป็น' (stray space), a zero-width space after 'มัสยิดช้างเผือก', and the knowledge title 'มุสลิเข้าร่วม' (missing ม). The per-card mini-maps search by name, so unverified addresses may show the wrong spot.",
+      "lens_hint": "content"
+    },
+    {
+      "text": "UX opinion: /halal-map lists 23 restaurants in no particular order, with no distance, area filter or search. The place closest to CMU (Halal Kitchen CMU MED) is 10th. Campus prayer rooms are mixed in with city mosques. A 'ใกล้ มช.' sort or chips (ในมช. / นิมมาน / ช้างคลาน) would help newcomers.",
+      "lens_hint": "design"
+    },
+    {
+      "text": "Activities have no time field (admin form fields: title, date, location, description, featured, cover). The public featured card has a time slot that is always hidden, so students can't see when an event starts.",
+      "lens_hint": "functionality"
+    },
+    {
+      "text": "The first video's date (30 ส.ค. 2569) is the YouTube upload date, while the event was 15 ส.ค. (the second video's date comes from its description). The same calendar icon is used for both meanings.",
+      "lens_hint": "content"
+    },
+    {
+      "text": "Each video playlist item contains the 'กำลังเปิด' label hidden only with opacity:0, so screen readers announce 'now playing' on every item. activities and halal-map have no <main> element (document.querySelector('main') returned null).",
+      "lens_hint": "a11y"
+    },
+    {
+      "text": "'บันทึกและดูตัวอย่าง' opens the generic list page (/activities.html?preview), not the item just saved. For a future, non-featured activity the preview won't show it at all (see the HIGH issue), which makes the preview look broken to the admin.",
+      "lens_hint": "functionality"
+    },
+    {
+      "text": "The knowledge tile 'ถามคำถามศาสนา · ส่งคำถามมาพูดคุยกับพี่ ๆ ในชมรม' goes to about#contact, which only offers Instagram and Facebook (no email or form there; the email is only in the footer). It is a soft dead end for someone who wants to ask a question.",
+      "lens_hint": "design"
+    },
+    {
+      "text": "The preview bar on public pages ('ดูตัวอย่างไม่ได้ …', 'ออกจากโหมดตัวอย่าง') stays in Thai when EN is on. It is admin-only, so this is low priority.",
+      "lens_hint": "i18n"
+    },
+    {
+      "text": "Environment: the browser preview tool refused a 6th server ('Maximum 5 servers per worktree'), so the same devserver command ran via Bash on port 8904 and was stopped at the end.",
+      "lens_hint": "process"
+    }
+  ]
+}

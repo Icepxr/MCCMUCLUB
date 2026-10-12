@@ -1,0 +1,105 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mccmu-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8899"
+      ],
+      "port": 8899
+    },
+    {
+      "name": "mccmu-audit",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8900"
+      ],
+      "port": 8900
+    },
+    {
+      "name": "mccmu-audit-design",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8901"
+      ],
+      "port": 8901
+    },
+    {
+      "name": "mccmu-audit-responsive",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8902"
+      ],
+      "port": 8902
+    },
+    {
+      "name": "mccmu-audit-functionality",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8903"
+      ],
+      "port": 8903
+    },
+    {
+      "name": "mccmu-audit-userqa",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8904"
+      ],
+      "port": 8904
+    },
+    {
+      "name": "mccmu-audit-security",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8905"
+      ],
+      "port": 8905
+    },
+    {
+      "name": "mccmu-audit-performance",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8906"
+      ],
+      "port": 8906
+    },
+    {
+      "name": "mccmu-audit-a11y",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8907"
+      ],
+      "port": 8907
+    },
+    {
+      "name": "mccmu-audit-production",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        ".claude/audit/devserver.mjs",
+        ".",
+        "8908"
+      ],
+      "port": 8908
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "lens": "responsive",
+  "checked": [
+    "Server mccmu-audit-responsive (port 8902), own tab only. Real emulation at 360x740 (mobile UA, pointer:coarse) and 768x1024 / 1440x900; the other sizes were checked by loading each page in same-origin iframes of the exact width in a desktop-mode tab (media queries evaluate against the iframe width).",
+    "Horizontal overflow, public pages (/, /activities, /gallery, /halal-map, /knowledge, /about) at 360, 375, 390, 768, 1024, 1280 and 1440: PASS on every page. scrollWidth never exceeded the viewport, and no unclipped element extended past innerWidth.",
+    "Navbar: the burger shows at <=1024 and the full nav at >=1025. TH and EN nav links stay on one line at 1025, 1100, 1180 and 1280 (nav height 75px). Drawer opens and closes via the burger, aria-expanded toggles, drawer links are 64px tall, and the drawer fills the viewport below the nav. Drawer scroll lock: FAIL (see issues).",
+    "Language switch at 360: EN mode causes no overflow. Brand text and hero buttons fit, and the prayer names in EN (Fajr..Isha) fit their stops.",
+    "Prayer timeline at 360: all 5 stops fit (each 66px wide, track 332px, scrollWidth == clientWidth), names don't clip, and times are 16-17.5px. PASS.",
+    "Carousels (activities pastTrack, halal foodTrack/masjidTrack, knowledge docGrid, about boardGrid/members): overflow-x:auto with scroll-snap x mandatory and snap-align start. No page overflow. PASS.",
+    "Album dialog (activities and gallery) at 360: full-screen dialog (0,0,360,740), 2-column photo grid, no overflow. Photo view: prev/next sit at the bottom on mobile (y=610, 46x46), and the filmstrip is flex-start with 58x44 items. At 768, 1024 and 1440 the grid has 3/5/5 columns, the filmstrip is centred without overflow, and nothing in the dialog overflows. PASS.",
+    "Knowledge: the video player at 360 is 332x187 (16:9). The list items are 332x86, and after clicking play the iframe is 332x187. The PDF lightbox at 360 is full screen, the frame is 320x533, the close button is 44x44, and body overflow:hidden (scroll locked). PASS.",
+    "Halal map: the main Google My Maps iframe is 332x250 at 360 with no overflow, and the place cards (23 food, 6 masjid) carry 253x158 lazy map iframes inside the carousels.",
+    "Admin mock login screen at 360: no overflow, no undersized targets.",
+    "Admin mock at 360/375/390/768/1024/1280/1440, all 9 views (overview, activities, docs, albums, places, members, settings, admins, audit): no horizontal overflow except Admins at <=390 (see issues). The topbar is 64px on every view at <=860 and does not stretch (app grid rows 64px/auto), and it is hidden at >=1024. The side drawer has full viewport height. PASS.",
+    "Admin side drawer at 360: opens, scrim shows, body overflow:hidden (scroll locked), scrim click closes it, nav buttons are 49px tall. PASS.",
+    "Admin list at 360: rows 328x68, no overflow. The status segmented control (.filters .seg) fits at 319px, with overflow-x:auto as a fallback. Search input is 16px. PASS (row-title truncation reported separately).",
+    "Admin slide-over form at 360: the panel is full width (360x740), the head is 81px, and all inputs/textarea are 16px (no iOS zoom). The footer wraps (info line, then 2 full-width 44px buttons) and uses env(safe-area-inset-bottom). The status seg control fits (201px). The validation toast sits at bottom:130px, clear of the footer buttons (toast bottom 610, first button top 626). PASS apart from the footer-height note.",
+    "Admin settings at 360: long URLs in inputs (halal_map_url, club_youtube) scroll inside the input without overflowing. The savebar becomes a full-width card (12px insets) and its message wraps. With the savebar on and the page scrolled to the end, the last field (534-582) stays clear of the savebar (top 659). PASS apart from the issues below.",
+    "Admin audit timeline at 360: items are 300px wide with no overflow, and the filter seg wraps. PASS.",
+    "Admin inputs: every .field and .tools input/select/textarea is 16px. Exception: .rolesel at 14px (see issues).",
+    "Safe areas: the admin page sets viewport-fit=cover, and the topbar, side, panel head/foot, toast and main padding use env(safe-area-inset-*). The savebar does not (see issues). Public pages have no viewport-fit=cover, so env() resolves to 0 and iOS letterboxes. The preview bar and album dialog have no safe-area padding, which is acceptable as long as viewport-fit stays off.",
+    "Preview bar (/?preview) at 360: no page overflow. The bar is 140px tall (12,584,348,724) in both the warn and signed-in text variants (the signed-in variant was measured by swapping in its text in the DOM, with no token used).",
+    "Touch target sweep (pointer:coarse, 360px) on every public page and admin view: results are in the touch-target issue."
+  ],
+  "not_tested": [
+    "Real iOS Safari / Android devices: the soft keyboard, the actual safe-area insets and Google Maps iframe touch-gesture capture can't be reproduced in Chromium emulation.",
+    "Admin album photo grid (.photo / .iconbtn): the mock album form loads photos from a Drive folder and rendered 0 photos, so the photo tile action buttons (CSS min-height 30px, admin.css:472) could not be measured live.",
+    "Preview mode with a real admin session: no sign-in allowed. The bar's signed-in text was measured by DOM substitution only.",
+    "Animations and transitions in a background tab are paused, so slide-in end states were judged from CSS and the settled rects, not from live animation."
+  ],
+  "issues": [
+    {
+      "title": "Admin 'ผู้ดูแลระบบ' page overflows horizontally on phones (360-390px)",
+      "category": "responsive",
+      "severity": "MEDIUM",
+      "page": "/admin (Admins view)",
+      "file": "assets/admin.css:747 (.people{ grid-template-columns:1fr; } inside @media (max-width:860px)); assets/admin.css:715 (.person__tx span nowrap)",
+      "description": "At <=860px, .people uses grid-template-columns:1fr, which resolves to minmax(auto,1fr). The track grows to the min-content width of .person (avatar, plus the email as a nowrap span, plus .person__acts with a 116px role select or the delete button). Each person card is 390px wide, so the document is 406px wide on 360/375/390 viewports. The ellipsis on the email never kicks in. In mobile emulation the layout viewport widened to 406, and to 553 after a longer email was injected, so the whole admin UI zooms out or scrolls sideways.",
+      "reproduction_steps": [
+        "Open /.claude/audit/admin-mock with localStorage.mock_session='1' at a 360x740 mobile viewport",
+        "Open the menu and pick ผู้ดูแลระบบ",
+        "Measure document.documentElement.scrollWidth"
+      ],
+      "user_impact": "Admins managing access on a phone get a page that scrolls sideways or zooms out. The role select and delete button sit off-screen, and real Gmail or CMU addresses make it worse.",
+      "recommended_fix": "Inside the 860px media query use .people{ grid-template-columns:minmax(0,1fr); } (or minmax(min(300px,100%),1fr) for the base rule) and give .person min-width:0, so the email span truncates with its existing ellipsis.",
+      "evidence": "DOM at 360 mobile emulation: innerWidth jumped from 360 to 406 when the Admins view opened. scrollWidth=406. Wide elements: DIV.person.is-me right=406 w=390, SELECT.rolesel right=390. The iframe sweep gives admins sw=406 at 360, 375 and 390, while every other admin view equals the viewport width. Injecting 'very.long.firstname.lastname.student2569@cmu.ac.th' grew the card to 537px (innerWidth 553).",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Settings 'วิธีคำนวณเวลาละหมาด' select bleeds past its card on narrow phones",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "/admin (Settings view)",
+      "file": "assets/admin.css:743 (.set-row{ grid-template-columns:1fr; } in @media (max-width:860px))",
+      "description": "On phones the set-row grid is a single 1fr column, which is auto-minimum. The prayer-method select's min-content (its longest option, 'ISNA — อเมริกาเหนือ (ค่าเริ่มต้นของเว็บ)') forces the column to 322px inside a 296px row. The select ends 26px past its row and 10px past the white card's edge at 360. At 375 it overruns the row by 11px into the card padding. It fits at 390.",
+      "reproduction_steps": [
+        "Open admin-mock (logged in) at 360x740",
+        "Go to ตั้งค่าเว็บ and scroll to the เวลาละหมาด card",
+        "Compare the select's right edge with the .set-card's right edge"
+      ],
+      "user_impact": "The select visibly sticks out of its card, and its dropdown arrow sits on the card edge. It looks broken on small Android phones.",
+      "recommended_fix": "Use .set-row{ grid-template-columns:minmax(0,1fr); } in the 860px media query and add width:100% to .set-row__in select (min-width:0 is already set).",
+      "evidence": "At 360: row width 296, grid-template-columns '322px', select spans 32 to 354, card spans 16 to 344. Iframe sweep: set360 'row overflows by 26px, card right 344 content right 354', set375 'row overflows by 11px', set390 ok. Visible in a screenshot of the settings page.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Error toast covers the settings savebar's 'ยกเลิกการแก้ไข' button on mobile",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "/admin (Settings view)",
+      "file": "assets/admin.css:485 (.toast bottom:26px) vs assets/admin.css:685/744 (.savebar bottom:20px); assets/admin.js:1626",
+      "description": "When a settings save fails, the savebar stays visible (there are unsaved changes) and an error toast appears at bottom:26px with z-index 60, directly on top of the savebar (z-index 35). There's an offset rule for the slide-over panel (.panel ~ .toast) but none for the savebar. The toast wraps to two lines at 360 and covers the message and the cancel button for 6 seconds.",
+      "reproduction_steps": [
+        "admin-mock at 360x740, Settings view",
+        "Edit any field so the savebar appears",
+        "Set localStorage.mock_fail='1' and tap บันทึก"
+      ],
+      "user_impact": "After a failed save, the user can't read the unsaved-count message or tap 'cancel edits' until the toast disappears.",
+      "recommended_fix": "Lift the toast while the savebar is on, e.g. body:has(.savebar.is-on) .toast{ bottom:calc(100px + env(safe-area-inset-bottom)); }, or show save errors inside the savebar itself.",
+      "evidence": "With mock_fail: toast rect 90,637 to 270,726 ('บันทึกไม่สำเร็จ: simulated network failure'). Savebar 12,655 to 348,720. Reset button 140,667 to 263,708, fully under the toast. Save button 273 to 338, just clear of it.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Admin savebar ignores the bottom safe-area inset",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "/admin (Settings view)",
+      "file": "assets/admin.css:685 (.savebar bottom:20px)",
+      "description": "The admin page uses viewport-fit=cover and every other bottom element adds env(safe-area-inset-bottom): the toast, the panel footer and main padding. The savebar uses a fixed bottom:20px. On iPhones with a home indicator (34px inset), the savebar's buttons, which end 28px from the bottom at 740px tall, would sit in the home-indicator gesture zone.",
+      "reproduction_steps": [
+        "Read assets/admin.css:685 and :744",
+        "Open admin settings on an iPhone with Face ID, edit a field, and look at the savebar against the home indicator"
+      ],
+      "user_impact": "Tapping Save or Cancel near the home indicator can trigger the home gesture instead. It's a cosmetic overlap with the indicator.",
+      "recommended_fix": "Use bottom:calc(20px + env(safe-area-inset-bottom)) on .savebar.",
+      "evidence": "admin.css:685 '.savebar{ position:fixed; left:50%; bottom:20px; ...' has no env() term. Measured at 360x740: savebar 659 to 724, buttons 671 to 712. admin/index.html:5 has viewport-fit=cover.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Preview bar is taller than the space reserved for it on phones and hides the footer end and the back-to-top button",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "all public pages with ?preview",
+      "file": "assets/mccmu.css:1086-1098 (.pv-bar bottom:16px; body.is-preview{padding-bottom:110px} .to-top{bottom:110px})",
+      "description": "At 360px the preview bar wraps to text plus a buttons row and is 140px tall, ending 16px above the bottom (top at 584). The body only reserves 110px and the back-to-top button sits at bottom:110px. At the end of the page the last 46px of the footer (the Quran verse line) stays under the bar. The back-to-top button (296,598 to 342,644, z-index 60) sits inside the bar's area (z-index 120), so it's covered: elementFromPoint at its centre returns .pv-bar.",
+      "reproduction_steps": [
+        "Open /?preview at 360x740",
+        "Scroll to the bottom of the page",
+        "Compare the .pv-bar top (584) with the footer bottom (630) and the .to-top rect"
+      ],
+      "user_impact": "Admins previewing on a phone can't see the end of the footer or use back-to-top while in preview mode.",
+      "recommended_fix": "Reserve the bar's real height, e.g. set a CSS variable from JS (bar.offsetHeight + 24) for body padding-bottom and the .to-top offset. Or make the bar more compact on narrow screens (smaller copy and a single row of icon buttons).",
+      "evidence": "At 360 (warn variant, and the signed-in text swapped in via DOM): barH=140, bar 12,584 to 348,724, body padding-bottom 110px, footer bottom 630 at max scroll, to-top 296,598 to 342,644, elementFromPoint(319,621).closest = 'pv-bar'.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Public mobile drawer doesn't lock page scroll",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "global (all public pages, <=1024px)",
+      "file": "assets/site.js:111-119; assets/mccmu.css:249-255",
+      "description": "Opening the burger drawer only toggles .open. Body and html keep overflow visible, so touch scrolling on the drawer's empty area scrolls the page underneath. The drawer has no overscroll-behavior either. The admin side drawer and the knowledge lightbox both lock scroll, so the public site is inconsistent.",
+      "reproduction_steps": [
+        "Open / at 360x740 and tap the burger",
+        "Swipe up on the empty lower half of the drawer"
+      ],
+      "user_impact": "The page moves behind the menu, and on closing the user lands somewhere else on the page.",
+      "recommended_fix": "Toggle a class on <html> (e.g. html.nav-open{overflow:hidden}) when the drawer opens, and add overscroll-behavior:contain to .drawer.",
+      "evidence": "After burger.click(): aria-expanded='true', drawer rect 0,74 to 360,740, body overflow 'clip visible', html overflow 'visible'. window.scrollBy moved the page 339px while the drawer was open. site.js has no overflow handling.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Several touch targets are under 44x44px on touch layouts",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "global + /admin",
+      "file": "assets/mccmu.css:236-240 (.lang-switch button at <=400px), mccmu.css:242 (.nav__burger 42px), mccmu.css:808 (.carousel__btn), mccmu.css:117 (.btn--sm), mccmu.css:573 (.crumbs), gallery.css:160 (.album-control 40px on mobile), admin.css:287 (.seg button), admin.css:627 (.iconbtn-round 40px), admin.css:472 (.iconbtn min-height 30px)",
+      "description": "Measured at 360px with pointer:coarse. Public site: language switch TH/EN 38x25, nav burger 42x42, carousel prev/next 42x42, breadcrumb link 'หน้าแรก' 46x22, footer links 332x36, footer social icons 38x38, knowledge 'พรีวิว' 150x34 and 'โหลด' 150x38, video 'ดูบน YouTube' 104x26, album dialog top controls (grid/zoom/close) 40x40. Admin: segmented buttons (list status filter, form status ส่ง/ร่าง/เก็บเข้ากรุ, overview range toggles, audit filters, admins role filter) are 31px tall, panel close and admin delete buttons are 40x40, the role select is 116x39, the side logout is 242x39, and the 'ดูทั้งหมด' link is 52x33. The admin pointer:coarse rule bumps .btn to 44px but not .seg buttons or the icon buttons.",
+      "reproduction_steps": [
+        "Emulate 360x740 mobile (touch)",
+        "Measure getBoundingClientRect of a, button and input on each page"
+      ],
+      "user_impact": "More mis-taps, especially on the language switch (25px tall) and the admin status segmented control, which changes publish state.",
+      "recommended_fix": "Raise hit areas to 44px under @media (pointer:coarse) with padding or an ::after hit-area extension. Priorities: .lang-switch button, .seg button (min-height:40-44px), .iconbtn-round, .album-dialog__actions .album-control, .carousel__btn and .nav__burger (44px).",
+      "evidence": "Audit sweep at 360 (pointer:coarse=true): 'BUTTON.is-on:38x25 ภาษาไทย', 'BUTTON.nav__burger:42x42', 'BUTTON.carousel__btn:42x42', 'A:46x22 หน้าแรก', 'BUTTON.album-control:40x40 ปิดอัลบั้ม', 'BUTTON:69x31 เผยแพร่' (form status), 'BUTTON:77x31 ทั้งหมด4' (list filter), 'BUTTON.iconbtn-round:40x40 ปิด'.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Admin role select uses a 14px font, which triggers iOS zoom on focus",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "/admin (Admins view)",
+      "file": "assets/admin.css:424-425 (.rolesel font-size:14px)",
+      "description": "Every other admin input is forced to 16px, per the comment at admin.css:548-550, but the per-person role select (.rolesel) is 14px. Safari on iOS zooms the page when it's focused, and the Admins page already overflows horizontally on phones.",
+      "reproduction_steps": [
+        "admin-mock at 360, ผู้ดูแลระบบ",
+        "Read getComputedStyle(document.querySelector('.rolesel')).fontSize"
+      ],
+      "user_impact": "Changing an admin's role on an iPhone zooms the page in, and the user has to pinch back out.",
+      "recommended_fix": "Add .rolesel to the 16px rule (admin.css ~551) or set font-size:16px on it.",
+      "evidence": "inputs sweep: 'rolesel/select-one:14px 116x39' (two instances). All .field and .tools inputs measured 16px.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Admin list row titles shrink to a few characters when a row has a pin badge and a status pill (360px)",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "/admin (Activities list, and other lists with .pin)",
+      "file": "assets/admin.css:608-610 (.row__title nowrap + ellipsis), admin.css:731-735",
+      "description": "At 360 the row text column is 132px. On a featured row the 50px 'เด่น' pin and the 64px status tag share the line, leaving the title 73px of its 208px, so it shows as 'กิจกรรม…'. The meta line (date and location) is also cut, at 132 of 194px.",
+      "reproduction_steps": [
+        "admin-mock at 360, the กิจกรรม list",
+        "Look at the first (featured) row"
+      ],
+      "user_impact": "Admins can't tell featured items apart in the list on a phone without opening each one.",
+      "recommended_fix": "On narrow screens let the title wrap to 2 lines (-webkit-line-clamp:2), or move the pin badge onto the meta line.",
+      "evidence": "Row 1: SPAN title w=73 sw=208 'กิจกรรมปฐมนิเทศนักศึกษามุสลิม', SPAN.pin w=50, SPAN.row__meta w=132 sw=194. Visible in a screenshot of the list at 360.",
+      "reported_by": "responsive"
+    },
+    {
+      "title": "Slide-over form footer takes 140-160px (about 20% of a phone screen)",
+      "category": "responsive",
+      "severity": "LOW",
+      "page": "/admin (all edit forms)",
+      "file": "assets/admin.css:739-741 and 544-545 (.panel__foot wrap; .panel__info flex-basis:100%; .btn flex:1)",
+      "description": "At <=860px the footer wraps to the 'แก้ไขล่าสุดโดย…' line plus two full-width 44px buttons stacked: 161px for an existing activity and 141px for an album. With the 81px head, the scrollable form body is 408px of a 740px screen. On shorter phones, or with the soft keyboard up, very little of the form stays visible.",
+      "reproduction_steps": [
+        "admin-mock at 360x740, open any activity row",
+        "Measure .panel__foot and .panel__body"
+      ],
+      "user_impact": "Admins see less of the form while editing and scroll more, especially with the keyboard open.",
+      "recommended_fix": "Keep both buttons on one row at phone widths (shorter labels, or an icon plus a short label) and put the 'last edited by' line in the panel body or head.",
+      "evidence": "At 360: foot 0,579 360x161 with children info 312x20, ghost button 312x44, primary button 312x44. panel__body height 408. Album form foot 360x141.",
+      "reported_by": "responsive"
+    }
+  ],
+  "notes": [
+    { "text": "Halal map: each of the 29 place cards in the swipe carousels embeds a 253x158 interactive Google Maps iframe (pointer-events:auto). On real touch devices a horizontal swipe that starts on the map may pan the map instead of the carousel. Couldn't verify in emulation, so it's not in issues.", "lens_hint": "userqa" },
+    { "text": "29 Google Maps iframes on /halal-map (loading=lazy). Worth checking the cost when scrolling the carousels.", "lens_hint": "performance" },
+    { "text": "Public drawer: closed links stay focusable (opacity 0 + pointer-events none, no visibility:hidden or inert), there's no Escape to close and no focus move into the drawer, and the burger icon doesn't change to a close icon.", "lens_hint": "a11y" },
+    { "text": "Album photo view filmstrip shows only 4 thumbnails, even at 1440px, for a 154-photo album.", "lens_hint": "design" },
+    { "text": "/?preview without an admin session logs '[MCCMU] settings/featured/picks/prayer/members: Error: preview: no admin session' and the page sections don't render content (only the warn bar).", "lens_hint": "functionality" },
+    { "text": "In the album photo view the stage image naturalWidth was 400px, shown at 360x516 on mobile, so the photo-view image may be low resolution on larger screens.", "lens_hint": "design" }
+  ]
+}

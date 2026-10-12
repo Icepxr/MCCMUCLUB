@@ -1,0 +1,201 @@
+{
+  "lens": "security",
+  "checked": [
+    "Secrets (working tree incl. data/, supabase/, scripts/, .github/, .claude/, .mcp.json, backend/): only one JWT found (admin/config.js and inline in index/about/activities/halal-map/knowledge.html); decoded payload role=anon, ref=bzbqzohygnraqquabffg. No service_role, sk_, AIza, GOCSPX, ghp_, sb_secret values. PASS",
+    "Git history (git log --all -p): every JWT ever committed decodes to role=anon; -S service_role / sk_ / AIza / GOCSPX / password only hit comments/docs. PASS",
+    ".gitignore covers .env/*.env/.vercel; no .vercelignore. Deploy is git-based (MIGRATION-VERCEL.md: git push origin main), so untracked .claude/, data/import/, data/review/, supabase/seed/halal-restaurants-2026-10-13.sql currently 404 on production (verified). GitHub repo Icepxr/MCCMUCLUB is public (api.github.com returns 200), so committed files are public anyway",
+    "Production GET of repo files: /.mcp.json, /data/backup/*.json, /supabase/migrations/*.sql, /supabase/seed/import.sql, /ADMIN_SETUP.md, /AGENTS.md, /CLAUDE.md, /MIGRATION-VERCEL.md, /.github/workflows/backup-data.yml, /backend/Code.gs, /backend/Setup.gs, /scripts/backup-data.sh, /drive-image-test all return 200. Contents: no secrets; data/backup contains only status=published rows (verified counts); .git/, vercel.json, .gitignore return 404",
+    "RLS policies in supabase/migrations/0002,0003,0004,0005,0006 compared to live pg_policies (read-only select): identical. anon: SELECT only on status='published' rows of activities/docs/albums/places/members, settings (all), album_photos (published albums only). No anon policy on admins, audit_log, page_stats. PASS",
+    "Anon REST reads with public anon key: admins 0 rows, audit_log 0, page_stats 0 (Content-Range */0); activities 19/docs 18/albums 7/places 29/members 23 all status=published only; settings 10; album_photos 325. Drafts/archived not readable. PASS",
+    "RLS write rejection probe: PATCH /rest/v1/places?id=eq.00000000-0000-0000-0000-000000000000 {name:x} -> 200, Content-Range */0, [] (no anon UPDATE policy); PATCH /rest/v1/admins?email=eq.nobody-impossible@invalid.invalid {role:owner} -> 200 []. INSERT not probed (would succeed if misconfigured); no anon INSERT policy exists in live pg_policies. PASS",
+    "private.is_admin()/is_owner() not exposed as RPC (POST /rest/v1/rpc/is_admin -> PGRST202). Only public functions: touch_updated_at (invoker), track_view (definer). REST OpenAPI root requires service_role (401 for anon). PASS",
+    "Auth settings (GET /auth/v1/settings): email and phone providers disabled, only Google enabled, anonymous_users=false, so email-signup impersonation of an admin email is not possible. PASS",
+    "Admin role checks (assets/admin.js runBoot ~L320-356): admin status read from admins table through RLS, non-admin signed out; owner-only UI backed by owner_* RLS policies and require_one_owner trigger in 0006. PASS",
+    "Admin page: <meta name=robots content=noindex,nofollow> present; robots.txt disallows /admin and /api/. Sign-out calls db.auth.signOut() then reloads. PASS",
+    "Edge function preview mode (local server :8905): no Authorization -> 401 no-store; malformed 'Bearer abc' -> 401 no-store; well-formed but invalid JWT -> 502 no-store; valid token -> 200 'private, no-store'. Non-preview sheet=all -> public, s-maxage=180. Errors and unknown sheet -> no-store. assets/api.js sends preview with cache:'no-store' and never writes preview data to localStorage/sessionStorage (L117, L205). PASS",
+    "CORS: access-control-allow-origin:* on public read-only data is acceptable; OPTIONS preflight for Authorization header returns 401 without access-control-allow-headers, so cross-origin preview requests are blocked. PASS",
+    "places ?type= filter is encodeURIComponent-ed; injected '&status=eq.draft' produced 'supabase places: 400', no filter injection. PASS",
+    "sheet=youtube: ids filtered by /^[-\\w]{11}$/, public 30-min edge cache, errors no-store; videos.js renders via textContent and builds src/href from the validated id only. PASS",
+    "XSS sinks: no innerHTML/insertAdjacentHTML/document.write/eval/new Function in assets/*.js or pages; only site.js outerHTML for nav/footer built from static strings; api.js DOMParser only parses constant SVG. Admin mock: activity title '<img src=x onerror=alert(1)>' rendered as text on list page, 0 injected elements on list/overview/settings/audit pages. PASS",
+    "URL sinks: place map_url, halal_map_url, map_embed_url and images validated with /^https:\\/\\// in api.js (L253, L836, L889, L1092); gallery.js safeURL() allows https only; docs view/download URLs and logo_url are rebuilt server-side from Drive ids; admin folder link is prefixed with drive.google.com. PASS (except settings social links, see issues)",
+    "window.open in admin.js L1478 opens own-origin preview; no cross-origin opener exposure. External links use rel=noopener. PASS",
+    "Production headers (curl -I / and /admin): strict-transport-security max-age=63072000; includeSubDomains; preload present (Vercel default); http:// redirects 308 to https. HSTS PASS",
+    "Supabase security advisors (read-only): track_view SECURITY DEFINER executable by anon/authenticated (intentional, documented); leaked-password protection off (irrelevant: email provider disabled)"
+  ],
+  "not_tested": [
+    "Clicking a javascript: link with target=_blank to see whether the browser runs it in an opener-origin context: not clicked, to avoid opening extra tabs in the shared pane. The unsafe href was confirmed in the DOM only",
+    "Anon INSERT probes and track_view RPC calls: not sent, because they would succeed or write to production if misconfigured. Assessed from the live pg_policies and the function source instead",
+    "Real /admin signed in, and the real Google OAuth flow: signing in is not allowed. Used the admin mock instead",
+    "Whether GOOGLE_API_KEY is restricted to the Drive API in Google Cloud: not visible. Production confirms the key is set (sheet=folder with a well-formed id returns 'drive 404', not 501)",
+    "Production does not run the new api/data.js yet (sheet=youtube returns 'unknown sheet', and preview=1 is served from public cache by the old code), so preview and youtube behaviour was verified locally only",
+    "Preview server: preview_start failed (the pane allows at most 5 servers per worktree, and 5 other auditors' servers were already running). Ran the same command from .claude/launch.json (node .claude/audit/devserver.mjs . 8905) myself and used tab-11 only"
+  ],
+  "issues": [
+    {
+      "title": "Admin email addresses are public through the updated_by column (REST and /data)",
+      "category": "security",
+      "severity": "MEDIUM",
+      "page": "global (/data, Supabase REST)",
+      "file": "api/data.js:175-178,196-204 (select=*); supabase/migrations/0003_audit_and_data_quality.sql (updated_by column); 0002 public_read_published policies",
+      "description": "Content tables have an updated_by column holding the editing admin's email. The anon read policy exposes all columns of published rows, and api/data.js selects select=* and passes rows through unchanged. Every visitor's /data?sheet=all response (edge-cached, and stored in localStorage as mccmu_all_v1) therefore contains the personal Gmail addresses of club admins. These emails are also the identity checked by private.is_admin(), so publishing them hands out a target list for phishing the Google accounts that control the database.",
+      "reproduction_steps": [
+        "curl -s 'https://mccmuclub.vercel.app/data?sheet=all' | jq '[.data.activities[].updated_by] | unique'",
+        "or: curl '<SUPABASE_URL>/rest/v1/activities?select=updated_by' -H 'apikey: <anon key>'"
+      ],
+      "user_impact": "Personal emails of the student admins are public and indexable. This goes against the project's privacy rule to collect and expose only what is necessary, and gives attackers a phishing target list for admin accounts.",
+      "recommended_fix": "In api/data.js, select explicit public columns instead of select=*, or strip updated_by/created_at/updated_at in the shape* functions. Also revoke column access for anon: 'revoke select (updated_by) on activities, docs, albums, places, members, settings from anon;', or move updated_by into the audit_log table only.",
+      "evidence": "Production GET /data?sheet=all: rows with an email in updated_by: activities 8, docs 2, places 11, members 4 (2 distinct gmail.com addresses; values not recorded here). Anon REST select=* returns the same updated_by column.",
+      "reported_by": "security"
+    },
+    {
+      "title": "Settings social links are set as href without a scheme check (javascript:/data: allowed)",
+      "category": "security",
+      "severity": "MEDIUM",
+      "page": "all public pages (footer/contact social icons)",
+      "file": "assets/api.js:1046-1056 (MCCMU.applySettings setHref); assets/admin.js:1539-1541 (no validation on settings form)",
+      "description": "applySettings() copies settings.club_facebook / club_instagram / club_youtube / club_line straight into a.href on every public page. Unlike map_url, halal_map_url and map_embed_url, which are checked against ^https://, these values are not validated in the admin form or in the renderer. An admin account, including a lower-privileged 'editor' or a compromised one, can store 'javascript:...' and it ends up in a link on every page of the site's origin. The admin's Supabase session token (sb-bzbqzohygnraqquabffg-auth-token) is in localStorage on that same origin, so this is a possible path from editor to owner token theft.",
+      "reproduction_steps": [
+        "Open http://localhost:8905/about",
+        "In the console: MCCMU.getSettings=()=>Promise.resolve({club_facebook:'javascript:window.__pwn=localStorage.length'}); MCCMU.applySettings()",
+        "Inspect a[aria-label=Facebook]: href is 'javascript:window.__pwn=localStorage.length'"
+      ],
+      "user_impact": "Stored script-URL injection into every public page, triggered when someone clicks a social icon. target=_blank with rel=noopener may limit execution in some browsers (not verified).",
+      "recommended_fix": "In setHref, accept only /^https:\\/\\//i (build the LINE URL from an @id as it does now) and skip anything else. Add the same https-only check to the settings form in admin.js before saving. Optionally add a DB check constraint on settings values whose key starts with club_ (except club_email/club_line id).",
+      "evidence": "DOM after the reproduction above: 3x a[aria-label=Facebook] with href='javascript:window.__pwn=localStorage.length' target=_blank. Code: api.js setHref() has no scheme check; compare api.js:836/889/1092, which do check ^https://.",
+      "reported_by": "security"
+    },
+    {
+      "title": "No CSP, X-Frame-Options/frame-ancestors, X-Content-Type-Options or Referrer-Policy (admin can be framed)",
+      "category": "security",
+      "severity": "MEDIUM",
+      "page": "global, especially /admin",
+      "file": "vercel.json (headers block only sets Cache-Control)",
+      "description": "Production returns only HSTS (Vercel default). With no frame-ancestors or X-Frame-Options, any site can load /admin in an invisible iframe, and a signed-in admin (session persisted in localStorage) can be clickjacked into actions such as delete, publish or changing roles. Some of these have confirm() dialogs, but plain save, publish and delete buttons are single clicks. With no CSP, any future injection (see the settings-href issue) has no second line of defense and could exfiltrate the admin token anywhere.",
+      "reproduction_steps": [
+        "curl -sI https://mccmuclub.vercel.app/admin | grep -iE 'content-security|x-frame|x-content-type|referrer-policy'  (no output)",
+        "Because there is no X-Frame-Options or frame-ancestors header, a page containing <iframe src='https://mccmuclub.vercel.app/admin'> is not blocked by the browser (inferred from the headers, not tested in a browser)"
+      ],
+      "user_impact": "Clickjacking of signed-in admins, and no defense in depth against XSS that targets the stored admin token.",
+      "recommended_fix": "Add to vercel.json headers for source '/(.*)': X-Content-Type-Options: nosniff; Referrer-Policy: strict-origin-when-cross-origin; X-Frame-Options: DENY (or CSP frame-ancestors 'none') at least for /admin. Add a CSP for /admin (script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://bzbqzohygnraqquabffg.supabase.co; frame-ancestors 'none'), then a relaxed one for public pages that allows the Google Maps/Drive/YouTube frames.",
+      "evidence": "curl -I https://mccmuclub.vercel.app/ and /admin: only cache-control and strict-transport-security; no CSP/XFO/nosniff/Referrer-Policy. vercel.json headers define Cache-Control only.",
+      "reported_by": "security"
+    },
+    {
+      "title": "Admin loads supabase-js from jsdelivr at floating @2 without integrity",
+      "category": "security",
+      "severity": "MEDIUM",
+      "page": "/admin",
+      "file": "assets/admin.js:14",
+      "description": "import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm' resolves to whatever the newest 2.x is at load time and cannot be pinned with SRI (ES module import). Any malicious or broken 2.x release, or a CDN compromise, runs with full access to the admin session token, and so to every table through RLS as an owner. It can also break the admin unexpectedly on a minor release.",
+      "reproduction_steps": [
+        "grep -n jsdelivr assets/admin.js"
+      ],
+      "user_impact": "Supply-chain risk to the one page that can write to the production database. Unpredictable upgrades.",
+      "recommended_fix": "Pin an exact version (e.g. @supabase/supabase-js@2.x.y/+esm), or vendor the ESM bundle into /assets/vendor/ and serve it same-origin. Combine with a CSP script-src allowlist.",
+      "evidence": "assets/admin.js:14 imports '...supabase-js@2/+esm'; admin/index.html has no integrity attributes.",
+      "reported_by": "security"
+    },
+    {
+      "title": "track_view RPC lets anyone create unlimited page_stats rows and inflate stats",
+      "category": "security",
+      "severity": "LOW",
+      "page": "global (Supabase RPC)",
+      "file": "supabase/migrations/0004_page_stats.sql (track_view); assets/site.js:189-206",
+      "description": "track_view is SECURITY DEFINER and executable by anon. The only guard is the path regex ^/[A-Za-z0-9/_.-]*$ (max 120 chars), which accepts any made-up path, so a script can insert an unbounded number of distinct (day, path) rows and increment views/visitors at will. There is no rate limit. The Supabase advisor flags the function (anon_security_definer_function_executable). Inflation is documented as accepted in ADMIN_SETUP.md, but the unbounded new rows are not.",
+      "reproduction_steps": [
+        "Read 0004_page_stats.sql: insert ... on conflict (day, path), with no allowlist of real routes",
+        "get_advisors(security) lists public.track_view as anon-executable SECURITY DEFINER"
+      ],
+      "user_impact": "Visitor statistics in the admin can't be trusted. Possible DB bloat on the free tier. No data exposure.",
+      "recommended_fix": "Whitelist the real routes in the function (e.g. clean in ('/','/activities','/gallery','/halal-map','/knowledge','/about')), or map unknown paths to '/other'. Optionally cap views per day.",
+      "evidence": "Live DB (read-only select): page_stats 164 rows, 10 distinct paths, so not abused yet. Advisor output lists track_view.",
+      "reported_by": "security"
+    },
+    {
+      "title": "/data?sheet=folder is an unauthenticated proxy that spends the server GOOGLE_API_KEY",
+      "category": "security",
+      "severity": "LOW",
+      "page": "/data?sheet=folder",
+      "file": "api/data.js:226-259, 304",
+      "description": "The admin-only Drive folder lister is reachable by anyone. Each request can make up to 5 Drive API calls (pageSize 200, up to 1000 files) with the project's GOOGLE_API_KEY, with no auth check and no rate limit. Input is validated (/^[-\\w]{25,}$/) and only publicly shared folders are readable, so it doesn't expose data, but it allows quota exhaustion and anonymous use of the key.",
+      "reproduction_steps": [
+        "curl 'https://mccmuclub.vercel.app/data?sheet=folder&id=1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' -> 502 'drive 404' (shows the key is configured and used)"
+      ],
+      "user_impact": "An attacker could exhaust the Drive API quota and break 'import from folder' for admins.",
+      "recommended_fix": "Require an admin JWT for sheet=folder: reuse the preview Bearer check and verify the token against Supabase (e.g. a select on admins with that token returns 1 row) before calling Drive. Keep the key restricted to the Drive API with a quota cap.",
+      "evidence": "Production: sheet=folder&id=abc -> 400; well-formed fake id -> 502 'อ่านโฟลเดอร์ไม่ได้ (drive 404)'. No auth in listDriveFolder().",
+      "reported_by": "security"
+    },
+    {
+      "title": "?src=sheets forwards the raw query (including status=) to the legacy Apps Script",
+      "category": "security",
+      "severity": "LOW",
+      "page": "/data",
+      "file": "api/data.js:299,313 (fromSheets(url.search)); backend/Code.gs:118-120 (byStatus uses params.status)",
+      "description": "Anyone can bypass DATA_SOURCE=supabase with ?src=sheets, and the full query string is proxied to Apps Script, whose byStatus() returns whatever status is requested (archived, draft). The public Sheets data has no non-published rows today, so nothing leaks now, but any archived or draft row added to the legacy sheet would be readable through the site's own domain, and is edge-cached.",
+      "reproduction_steps": [
+        "curl 'https://mccmuclub.vercel.app/data?sheet=activities&src=sheets&status=archived' -> ok:true, 0 rows today"
+      ],
+      "user_impact": "Latent exposure of non-published legacy content. Lets anyone switch the backend on the public domain.",
+      "recommended_fix": "Remove the src override in production (or only honour it with preview auth), and pass only an allowlist of params (sheet, type, date) to Apps Script, never status.",
+      "evidence": "Production counts: archived 0, draft 0, default 13 published. Code paths cited.",
+      "reported_by": "security"
+    },
+    {
+      "title": "Edge function returns internal upstream error details to clients",
+      "category": "security",
+      "severity": "LOW",
+      "page": "/data",
+      "file": "api/data.js:78, 213, 315",
+      "description": "Errors return err.message verbatim, e.g. 'supabase activities: 401', 'supabase places: 400', or 'upstream fetch failed: <runtime error>'. This reveals the backend vendor, table names and upstream status codes. The impact is minor because the schema is public in the repo anyway.",
+      "reproduction_steps": [
+        "curl 'http://localhost:8905/data?sheet=all&preview=1' -H 'Authorization: Bearer aaaaaaaaaa.bbbbbbbbbb.cccccccccc' -> {\"ok\":false,\"error\":\"supabase activities: 401\"}"
+      ],
+      "user_impact": "Gives attackers information for probing. No direct data loss.",
+      "recommended_fix": "Log err.message server-side (console.error) and return a generic error code to the client. For preview, map 401 to the existing 'please sign in again' message.",
+      "evidence": "Local responses shown above (502 'supabase activities: 401', 502 'supabase places: 400').",
+      "reported_by": "security"
+    },
+    {
+      "title": "Internal docs, DB schema, Apps Script source and test page are served from the production site",
+      "category": "security",
+      "severity": "LOW",
+      "page": "/ADMIN_SETUP.md, /supabase/*, /backend/*, /scripts/*, /.mcp.json, /drive-image-test",
+      "file": "repo root (no .vercelignore)",
+      "description": "Vercel serves every committed file. Production returns 200 for setup docs, full migrations/RLS, seed SQL, Apps Script source, the backup workflow, scripts, .mcp.json (Supabase project ref) and a leftover drive-image-test page. No secrets were found in them, and the GitHub repo is already public, so the incremental risk is small. But any secret committed by mistake later, or the untracked data/review, data/import and .claude/ files if someone runs 'git add -A' for this deploy, would be served from the main domain.",
+      "reproduction_steps": [
+        "curl -s -o /dev/null -w '%{http_code}' https://mccmuclub.vercel.app/ADMIN_SETUP.md -> 200 (same for /.mcp.json, /supabase/migrations/0001_initial_schema.sql, /backend/Code.gs, /drive-image-test)"
+      ],
+      "user_impact": "Information disclosure and a bigger attack surface. No data exposure today.",
+      "recommended_fix": "Add a .vercelignore listing *.md, .mcp.json, .github/, .claude/, backend/, scripts/, supabase/, data/, drive-image-test.html, uploads/, screenshots/ (keep robots.txt). Don't commit .claude/ and data/review/ with this deploy.",
+      "evidence": "Production GET status table: 200 for /.mcp.json, /data/backup/settings.json, /data/backup/members.json, /supabase/migrations/0001_initial_schema.sql, /supabase/seed/import.sql, /ADMIN_SETUP.md, /AGENTS.md, /CLAUDE.md, /.github/workflows/backup-data.yml, /backend/Code.gs, /scripts/backup-data.sh, /drive-image-test. Untracked paths are currently 404.",
+      "reported_by": "security"
+    }
+  ],
+  "notes": [
+    {
+      "text": "anon/authenticated still have the Supabase default table grants (INSERT, UPDATE, DELETE, TRUNCATE) on public tables. RLS blocks the first three and PostgREST does not expose TRUNCATE, so this is defense-in-depth only: consider revoking write privileges from anon.",
+      "lens_hint": "security"
+    },
+    {
+      "text": "Google sign-in is open (disable_signup=false), so any Google account that clicks 'Sign in' gets an auth.users row before admin.js signs it out. Harmless to data, but auth.users fills with strangers. You could restrict this with an auth hook or by disabling signup after the admins have their accounts.",
+      "lens_hint": "security"
+    },
+    {
+      "text": "admin.js runBoot treats a missing 'role' column as owner (fallback for before migration 0006). The live DB has 0006 applied, so the fallback can be removed.",
+      "lens_hint": "functionality"
+    },
+    {
+      "text": "Production still runs the old api/data.js: /data?sheet=youtube returns 400 'unknown sheet', and /data?sheet=all&preview=1 is served from the public edge cache (HIT) by old code that ignores preview. After deploy, check that preview=1 returns 'private, no-store'. Vercel purges the CDN per deployment.",
+      "lens_hint": "production"
+    },
+    {
+      "text": "/drive-image-test (a leftover test page) is publicly reachable on production.",
+      "lens_hint": "functionality"
+    },
+    {
+      "text": "Could not start my own preview server through preview_start (the pane allows 5 servers max and the others were running), so I ran the same launch.json command via Bash on port 8905 and stopped it afterwards.",
+      "lens_hint": "lead"
+    }
+  ]
+}

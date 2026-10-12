@@ -1,0 +1,295 @@
+{
+  "lens": "a11y",
+  "checked": [
+    "Global (all 6 public pages via site.js chrome): html lang='th' present; header/nav/footer landmarks present; brand link, burger, social icons, carousel prev/next and back-to-top all have accessible names; no <img> without alt on any public page (decorative video thumbs use alt=''); every iframe has a title (30 on /halal-map, 1 on /about, YouTube player iframe gets clip title).",
+    "Global keyboard pass on / with real Tab key presses: every focused element matched :focus-visible and showed Chrome's default 'auto' focus ring (no outline:none overrides on public links/buttons). PASS for visibility. FAIL for the hidden drawer links (see issues).",
+    "/: one h1, heading order 1-2-2-2-3... no skips; prayer list is an <ol> with aria-label and aria-current='time' on the next prayer (PASS); pNext has aria-live (but over-announces, see issues). Featured slider respects prefers-reduced-motion and its nav is hidden when only 1 item.",
+    "/gallery: has <main id='main-content'> (only page that does). Album viewer (native <dialog> + showModal): opened with Enter, focus moved to 'ปิดอัลบั้ม'; Shift+Tab from the close button wrapped to the last control inside the dialog (trapped); Enter on a photo opened it, ArrowRight moved to photo 2 ('รูปที่ 2 / 154', alt 'Steadfastness 2026 รูปที่ 2'); Escape returned to overview, second Escape closed the dialog and focus returned to the opening album card. aria-labelledby=albumTitle, filter buttons and zoom use aria-pressed, count/status are live regions, gallery.css has focus-visible rings and a reduced-motion block. PASS.",
+    "/activities: album section reuses the same dialog (PASS); past-activity poster cards are non-interactive articles (prev/next buttons named). One h1.",
+    "/knowledge: video section PASS — poster button labelled 'เล่นคลิป <title>', list items use aria-current true/false, the visual 'กำลังเปิด' badge is aria-hidden, iframe gets the clip title, videos.css has focus-visible and reduced-motion rules. Doc cards: 'พรีวิว' is a real <button>, download link named. Lightbox FAILS (see issues).",
+    "/halal-map: all 29 map iframes titled 'แผนที่ <place>'; carousel buttons named; one h1, no heading skips.",
+    "/about: one h1; copy-account button is a real button; map iframe titled.",
+    "i18n toggle: switching to EN sets <html lang='en'>, translates aria-labels (burger becomes 'Menu') and document.title. PASS for page language switching; mixed-language parts FAIL (see issues).",
+    "Preview bar (/activities?preview, no token): role='status', text #EDE9FE on #1C0A3D and button #2E2100 on gold both well above AA. PASS.",
+    "Admin login (/admin real, logged out, and admin-mock): h1 'ระบบหลังบ้าน', loginStatus role=status aria-live=polite, decorative scene/emblem aria-hidden, Google button has text. violet-300 on night = 9.8:1 (login note at .85 opacity and sidebar labels at .75 opacity still > 7:1). PASS.",
+    "Admin motion: admin.css has a global prefers-reduced-motion kill switch; startScene() skips the dust canvas and removes the SMIL animateTransform under reduced motion; enterApp skips the transition. PASS.",
+    "Admin (mock, logged in as owner): sidebar navs have aria-labels and aria-current='page' on the active item; segmented controls (status, metric, range, list filters, pin filter) use role=group + aria-pressed; search input has aria-label; every input/select/textarea on the activities form, Settings (6 inputs), Admins/invite (4 inputs) has an accessible name; no unnamed buttons on overview, list, settings, admins or audit pages. Form slide-over has role=dialog, aria-modal=true, aria-labelledby=formTitle and moves focus to the first field on open. Escape closes it.",
+    "Admin contrast on overview/activities/albums lists: tags and text pass (tag--archived #6F6785 on #EFEAF8 is right at about 4.5:1); admin --muted #6F6785 on paper = 4.91:1. PASS.",
+    "Contrast computed with a DOM walker on /, /knowledge, /gallery, /activities, /halal-map, /about (text over gradient/photo backgrounds excluded as unreliable; hero/phero text checked by eye only).",
+    "Touch targets at 352px: burger and carousel buttons 42x42, footer social 38x38, lang switch 38x25 (above the 24px WCAG 2.2 minimum, so not reported)."
+  ],
+  "not_tested": [
+    "Real screen reader output (VoiceOver/NVDA) was not run; announcements are inferred from DOM roles/aria-live and the accessibility tree via read_page.",
+    "The real /admin logged in (sign-in is forbidden); the logged-in admin was tested only on the admin-mock.",
+    "Visual focus ring contrast over the hero photo and dark footer was not measured with screenshots (pane shared, background tab); Chrome's default two-tone auto ring was confirmed present.",
+    "Animations in a background tab are paused, so entrance/reveal opacity states seen in the DOM (opacity:0 on .reveal and admin entrance) were not treated as bugs.",
+    "prefers-reduced-motion was verified by reading code, not by emulating the media query.",
+    "Exact tab-stop count inside each Google Maps embed is not deterministic in a background tab, since lazy iframes may not load."
+  ],
+  "issues": [
+    {
+      "title": "Knowledge preview lightbox: focus never enters the dialog and is not trapped or returned, and the hidden dialog stays exposed as aria-modal",
+      "category": "a11y",
+      "severity": "HIGH",
+      "page": "/knowledge",
+      "file": "knowledge.html:114-125 (markup), knowledge.html:218-225 (.lb hidden only by opacity), knowledge.html:441-465 (openPreview/closeLightbox)",
+      "description": "The document preview is the main action on /knowledge. openPreview() only adds the .open class. It never moves focus into #lightbox, never traps Tab, and closeLightbox() never restores focus. While closed, #lightbox is hidden only by opacity:0/pointer-events:none, so its role='dialog' aria-modal='true' container, close button and download link stay in the accessibility tree and in the Tab order. Some screen readers treat an exposed aria-modal dialog as modal and hide the rest of the page.",
+      "reproduction_steps": [
+        "Open /knowledge and Tab to the first card's 'พรีวิว' button",
+        "Press Enter: the lightbox opens, but document.activeElement is still the 'พรีวิว' button behind the overlay",
+        "Press Tab 4 times: focus cycles 'โหลด' → 'พรีวิว' → 'โหลด' → 'พรีวิว' on the cards under the overlay (closest('#lightbox') is false for every stop)",
+        "Before opening anything, the closed lightbox's 'ปิด' button and 'ดาวน์โหลด' link are Tab stops at opacity 0"
+      ],
+      "user_impact": "Keyboard and screen-reader users open a preview but stay stuck behind it. They cannot reach the close button or the PDF iframe without tabbing through the whole page, and screen-reader users may lose the page content because an always-present aria-modal dialog is exposed.",
+      "recommended_fix": "Use a native <dialog> with showModal(), as gallery.js already does, or add the hidden attribute / visibility:hidden (or inert) while closed. On open, save document.activeElement, focus #lbClose and trap Tab. On close, restore focus to the opener.",
+      "evidence": "Keyboard run in the browser: after Enter on .doc-open, {open:true, active:'btn btn--primary doc-open', inLB:false}. Focus log after 4 Tabs: ['A.doc-dl:โหลด:inLB=false','BUTTON.doc-open:พรีวิว:inLB=false','A.doc-dl:โหลด:inLB=false','BUTTON.doc-open:พรีวิว:inLB=false']. Closed state: getComputedStyle(#lightbox) opacity '0', visibility 'visible', hidden=false, aria-hidden=null. The hidden-focusable scan lists 'BUTTON:ปิด' and 'A:ดาวน์โหลด'.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Admin photo manager panel is not a dialog: no role, no label, and focus stays on the page behind it",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "/admin (albums → จัดการรูป)",
+      "file": "assets/admin.js:1135-1203 (openPhotos)",
+      "description": "openPhotos() builds .panel without role='dialog', aria-modal or aria-labelledby, and never moves focus into it. Only Escape is handled. Tab moves through the page behind the panel, and on close the panel is removed with no focus restore.",
+      "reproduction_steps": [
+        "Open admin-mock with mock_session=1 and go to อัลบั้มภาพ",
+        "Focus the first 'จัดการรูป' button and press Enter",
+        "Check the new .panel: role=null, aria-modal=null, no label; document.activeElement is still the 'จัดการรูป' button outside the panel"
+      ],
+      "user_impact": "Screen-reader users get no announcement that a panel opened, and keyboard users must Tab blindly to reach the photo controls.",
+      "recommended_fix": "Reuse the openForm dialog setup: role='dialog', aria-modal='true', aria-labelledby on the h3, focus the first control on open, trap Tab, and return focus to the opener on close. A shared helper in closeLayer/openLayer would fix both panels.",
+      "evidence": "DOM after keyboard Enter: {role:null, modal:null, label:null, active:'BUTTON.btn btn--ghost btn--sm row__side:inPanel=false'}",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Admin edit form dialog does not trap focus or return it on close",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "/admin (any list → row)",
+      "file": "assets/admin.js:1440-1457 (shut/keys), assets/admin.js:421-424 (closeLayer), assets/admin.js:1524-1526",
+      "description": "The form panel is correctly labelled (role=dialog, aria-modal, aria-labelledby=formTitle) and focuses the first field on open. However, Tab from the last button ('บันทึกและเผยแพร่') leaves the dialog for the page behind it ('เปิดเมนู'). On close (Escape or save), the panel is removed and focus falls to <body> instead of going back to the row that opened it.",
+      "reproduction_steps": [
+        "admin-mock, logged in → กิจกรรม → focus first row → Enter",
+        "Focus the last control 'บันทึกและเผยแพร่' and press Tab: activeElement is 'เปิดเมนู', outside .panel",
+        "Reopen with Enter and press Escape: document.activeElement is BODY, and the opener row is still connected"
+      ],
+      "user_impact": "Keyboard users lose their place in the list after every edit and can tab behind an aria-modal dialog.",
+      "recommended_fix": "Store the opener before opening, trap Tab/Shift+Tab inside .panel (or make #appView inert while the panel is open), and in closeLayer focus the stored opener (or the re-rendered row with the same id).",
+      "evidence": "Tab from the last control → 'BUTTON:เปิดเมนู:inPanel=false'. After Escape: {panels:0, active:'BODY', sameAsOpener:false, openerConnected:true}. After a save: active 'BODY'.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Hidden mobile menu links (public site) and closed admin sidebar stay in the Tab order",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "global (≤1024px public) and /admin (≤860px)",
+      "file": "assets/mccmu.css:249-255 (.drawer closed = opacity:0 + pointer-events:none only), assets/mccmu.css:1024-1033 (.to-top), assets/admin.css:525-531 (.side translateX(-100%))",
+      "description": "On the public site at ≤1024px, the closed #mccDrawer is still display:block, so its 6 links are invisible Tab stops right after the burger. There is no Escape-to-close and no focus handling. The back-to-top button is likewise focusable while at opacity 0. In admin at ≤860px, the closed sidebar is moved off-screen with transform only, so its 10 nav/logout buttons remain focusable off-screen.",
+      "reproduction_steps": [
+        "Open / at 352px width and press Tab from the top",
+        "After 'เมนู', focus goes to 'หน้าแรก Home', 'กิจกรรม Activities' … 'ติดต่อเรา Contact', all with ancestor opacity 0 and the drawer closed",
+        "In admin-mock on mobile width, check #sideNav: transform matrix(...,-282,0), visibility visible, 10 focusable children, open=false"
+      ],
+      "user_impact": "Keyboard and switch users on phones and tablets hit 6 (public) or 10 (admin) invisible stops with no visible focus, which looks like focus has disappeared.",
+      "recommended_fix": "Add visibility:hidden to the closed state (with transition: visibility 0s .2s so it still fades), or toggle the inert/hidden attribute in the burger handler. Add Escape-to-close that returns focus to the burger. Apply the same treatment to .to-top when it lacks .show, and to .side when it lacks .open on mobile.",
+      "evidence": "Real-Tab focus log on /: entries 5-10 = 'A.:หน้าแรก Home' … 'A.:ติดต่อเรา Contact' with op:0. Admin: {open:false, transform:'matrix(1, 0, 0, 1, -282, 0)', vis:'visible', inert:false, focusablesInside:10, w:352}.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "No skip link on any page, and no <main> landmark on 5 of 6 public pages",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "/, /activities, /halal-map, /knowledge, /about (no main); all pages (no skip link)",
+      "file": "index.html, activities.html, halal-map.html, knowledge.html, about.html (content sections sit directly in <body>); assets/site.js:37-58 (nav injected with no skip link)",
+      "description": "Only gallery.html wraps its content in <main id='main-content'>. The other five pages have header/nav/footer landmarks but no main, and no page has a 'skip to content' link. Keyboard users must tab through the brand link, 5 nav links, the CTA, 2 language buttons and the burger (plus 6 hidden drawer links on mobile) on every page.",
+      "reproduction_steps": [
+        "On each page run document.querySelectorAll('main,[role=main]').length: 0 on 5 pages, 1 on /gallery",
+        "Press Tab once on any page: the first stop is 'MCCMU home' (no skip link)"
+      ],
+      "user_impact": "Screen-reader users can't jump to the main content by landmark, and keyboard users repeat 10-16 Tab stops on every page.",
+      "recommended_fix": "Wrap each page's content between #site-nav and #site-footer in <main id='main-content'>. Have site.js prepend <a class='skip-link' href='#main-content'>ข้ามไปเนื้อหาหลัก</a>, visually hidden until :focus.",
+      "evidence": "Audit script landmarks: {main:0, header:1, nav:1, footer:1} on /, /knowledge, /activities, /halal-map, /about; {main:1} on /gallery. grep -i 'skip' across *.html, assets/*.css and assets/*.js: no matches.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Auto-scrolling carousels have no pause control, ignore prefers-reduced-motion and keep moving while focused",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "/activities (past), /halal-map (food + masjid), /about (members), /knowledge (docs)",
+      "file": "assets/api.js:1131-1166 (_initCarousel: setInterval(tick, 3800) with no reduced-motion check), knowledge.html:330-360 (doc carousel setInterval(advance, 3500))",
+      "description": "_initCarousel and the knowledge doc carousel auto-advance every 3.5-3.8 s. They pause only on mouseenter/touch, not on focusin, offer no pause/stop button (WCAG 2.2.2), and ignore prefers-reduced-motion. The featured slider (api.js:478) does check reduced motion, so the two code paths are inconsistent.",
+      "reproduction_steps": [
+        "Open /halal-map with the keyboard and Tab into a card's 'เปิดแผนที่' link",
+        "Wait about 4 s: the track scrolls by one card, so the focused card can move out of view",
+        "With OS 'reduce motion' on, the carousels still auto-scroll (no matchMedia check in _initCarousel)"
+      ],
+      "user_impact": "Content moves under keyboard and screen-magnifier users while they read. Users with vestibular disorders get continuous motion they asked the OS to suppress.",
+      "recommended_fix": "In _initCarousel and the doc carousel, skip the interval when matchMedia('(prefers-reduced-motion: reduce)') matches, pause on focusin and resume on focusout, and add a visible pause/play toggle (aria-pressed) next to the prev/next buttons.",
+      "evidence": "Code: api.js:1165 `if (overflowing()) timer = setInterval(tick, opts.interval || 3800);` with no reduced-motion guard (grep shows the only reduced-motion check in api.js is at line 478, for the featured slider). knowledge.html startAuto(): `timer = setInterval(advance, 3500)`, listeners only for mouseenter/mouseleave/touchstart/touchend.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Prayer 'next' live region re-announces every 30 seconds",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "/",
+      "file": "index.html:61 (aria-live='polite'), assets/api.js:1015-1026 (tick clears and rebuilds #pNext, setInterval 30000)",
+      "description": "tick() runs every 30 s and always clears and re-appends the child nodes of #pNext, even when the text hasn't changed. With aria-live='polite', each rebuild is an addition, so screen readers repeat 'ถัดไป ฟัจร์ อีก 4 ชม. 51 นาที' about twice a minute for as long as the home page is open.",
+      "reproduction_steps": [
+        "Open / with a screen reader",
+        "Wait 30 s: #pNext children are removed and re-added (api.js:1016-1021), which triggers a polite announcement each time"
+      ],
+      "user_impact": "Repeated interruptions while a screen-reader user reads the rest of the home page.",
+      "recommended_fix": "Remove aria-live from #pNext (the countdown doesn't need to be pushed), or only update it when the next prayer changes and compare text before touching the DOM. If a live update is wanted, announce only the prayer change through a separate visually hidden role='status'.",
+      "evidence": "DOM: <p class='pstrip__next' id='pNext' aria-live='polite'>. Code: `_clear(next); next.appendChild(...)` inside tick(), and `MCCMU._prayerTimer = setInterval(tick, 30000)`. Observed text changing from 'อีก 4 ชม. 52 นาที' to 'อีก 4 ชม. 51 นาที' between reads.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Admin toasts (save success/failure, validation) and login errors are not announced",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "/admin",
+      "file": "assets/admin.js:122-140 (toast, toastLink), assets/admin.js:306-310 (showLoginError)",
+      "description": "toast() appends a plain <div class='toast'> to <body> with no role='status' or aria-live, and removes it after 2.6 s (6 s for errors). This covers every save confirmation, 'บันทึกไม่สำเร็จ: …' errors and required-field messages. Login errors also go into #loginMsg as a plain div. After a save the form closes and focus falls to <body>, so the toast is the only feedback.",
+      "reproduction_steps": [
+        "admin-mock, logged in → กิจกรรม → open a row → click 'บันทึกและเผยแพร่'",
+        "Inspect .toast: role=null, aria-live=null, no live ancestor; activeElement is BODY"
+      ],
+      "user_impact": "Screen-reader admins get no confirmation that content was saved or published, and no error when a save fails or a required field is empty.",
+      "recommended_fix": "Create one persistent live region at startup (<div role='status' aria-live='polite'>, plus role='alert' for bad=true) and write toast text into it. Give #loginMsg's alert role='alert'.",
+      "evidence": "{toast:'บันทึกแล้ว · ขึ้นเว็บภายใน ~3 นาที', role:null, live:null, liveAncestor:false, active:'BODY'}",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Global muted/eyebrow text colours fail AA on the paper background",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "global",
+      "file": "assets/mccmu.css:28 (--muted #7A7290), assets/mccmu.css:83-88 (.eyebrow → --grape-500), assets/mccmu.css:92 (.en), assets/mccmu.css:424 (map card coral), knowledge.html:162-163 (.count-badge, .doc-sort-hint)",
+      "description": "Small text on --paper (#F8F6FF) uses --muted #7A7290 (4.23:1) and --grape-500 #8B5CF6 for every section eyebrow (3.96:1). Both are under 4.5:1 for 12.5-14 px text. On the home 'Quick links' map card, the coral tag and CTA (#E76F51 on white) are 3.09:1. The 'EN' label in the language switch is #7A7290 on #F5F3FF at 11 px (4.13:1).",
+      "reproduction_steps": [
+        "Run the contrast walker on / and /knowledge",
+        "Failures: eyebrows 'ย้อนดู', 'หยิบมาอ่าน', 'บริการของชมรม', 'สรุปเนื้อหา · ฮาลาเกาะฮ์' 3.96:1; .en 'Recap', 'Picked for you', 'Lecture Notes' 4.23:1; '18 ไฟล์' count badge and 'เพิ่มล่าสุดก่อน' 4.23:1; svc__tag 'Halal Map' and svc__go 'ดูแผนที่' 3.09:1; lang 'EN' 4.13:1"
+      ],
+      "user_impact": "Low-vision users and anyone reading on a phone outdoors struggle with section labels, counts and the map card CTA on every page.",
+      "recommended_fix": "Darken --muted to about #6B6382 (≥4.5:1 on #F8F6FF; admin already uses #6F6785, which gives 4.91 on its paper). Use --grape-600 #7C3AED or --grape-700 for .eyebrow. Use a darker coral (for example #B8432A) for .svc__card--map text. Re-run the check on white and paper.",
+      "evidence": "Computed ratios (WCAG formula): #7A7290/#F8F6FF 4.23, #8B5CF6/#F8F6FF 3.96, #E76F51/#FFFFFF 3.09, #7A7290/#F5F3FF 4.13 (11 px). The DOM contrast walker reported the same values on live elements.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Halal map page puts about 29 Google Maps iframes in the Tab order; one loaded embed swallowed 30+ Tab presses",
+      "category": "a11y",
+      "severity": "MEDIUM",
+      "page": "/halal-map",
+      "file": "assets/api.js:848 (place card renderer: .place__map iframe, no tabindex), halal-map.html:101-102",
+      "description": "Each place card embeds an interactive Google Maps iframe before its 'เปิดแผนที่' link, and the iframes have no tabindex='-1'. Keyboard users must go through every embed, and a loaded embed contributes its own internal controls. In testing, 30 Tab presses from the food 'ถัดไป' button stayed inside the first map. A further 60 presses only reached card 19.",
+      "reproduction_steps": [
+        "Open /halal-map, focus the food carousel 'ถัดไป' button",
+        "Press Tab 30 times: document.activeElement is still the first iframe 'แผนที่ ก๋วยเตี๋ยวเนื้อตุ๋น…'",
+        "Press Tab 60 more times: activeElement is iframe 'แผนที่ ครัวคุณอา (The R Halal Kitchen)', having passed 19 'เปิดแผนที่' links"
+      ],
+      "user_impact": "Reaching the masjid list, contact link or footer by keyboard takes 100+ key presses, which makes the page impractical without a mouse.",
+      "recommended_fix": "Set tabindex='-1' on the per-card preview iframes (and optionally aria-hidden='true'), since the 'เปิดแผนที่ <name>' link already gives the same destination. Better still, use a static thumbnail with click-to-load, which also helps performance. Keep the one large overview map focusable.",
+      "evidence": "iframes: n=30, 0 with a tabindex attribute. Focus logs after the Tab runs are quoted in the reproduction steps.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "In English mode, Thai backend content is marked lang='en'; in Thai mode, English labels are not marked lang='en'",
+      "category": "a11y",
+      "severity": "LOW",
+      "page": "global",
+      "file": "assets/i18n.js:371 (sets html lang only); assets/api.js renderers; assets/mccmu.css:92 (.en spans)",
+      "description": "The toggle correctly switches <html lang> to 'en', but database text (event titles, descriptions, doc titles, places) stays Thai by design and carries no lang='th'. Screen readers then read Thai with an English voice. In Thai mode, the bilingual .en spans ('Recap', 'Picked for you', drawer 'Home') aren't marked lang='en'.",
+      "reproduction_steps": [
+        "On /, click EN",
+        "html lang='en', and 9 visible Thai leaf elements (for example 'บทเรียนจากบรรพชน…', 'สาเหตุแห่งความสุข') have no lang ancestor other than <html>"
+      ],
+      "user_impact": "Garbled or skipped pronunciation of Thai content for screen-reader users who choose English (WCAG 3.1.2).",
+      "recommended_fix": "Have the api.js render helpers add lang='th' to elements holding backend text (or to the card/list containers), and add lang='en' to the .en spans in site.js and the HTML.",
+      "evidence": "{htmlLang:'en', thaiCount:9, thaiWithLang:0, samples:['บทเรียนจากบรรพชน สร้างคนสู่ผู้', 'สาเหตุแห่งความสุข', …]}",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Toggle and current-state semantics missing: language switch, nav current page, featured dots",
+      "category": "a11y",
+      "severity": "LOW",
+      "page": "global, /",
+      "file": "assets/i18n.js:383-391 (updateSwitch toggles .is-on only), assets/site.js:31-33 (nav uses class is-active, no aria-current), assets/api.js:441-457 (feat dots use .is-active only)",
+      "description": "The TH/EN buttons show the active language only through the .is-on class and thumb position, with no aria-pressed. The header nav marks the current page with .is-active and no aria-current='page' (admin nav does this correctly). The featured-slider dots signal the current slide only visually.",
+      "reproduction_steps": [
+        "Inspect .lang-switch buttons: aria-pressed null",
+        "Inspect .nav__links a.is-active: aria-current null"
+      ],
+      "user_impact": "Screen-reader users can't tell which language is active or which page they are on.",
+      "recommended_fix": "Set aria-pressed on the language buttons in updateSwitch(), add aria-current='page' to the active nav link in site.js, and add aria-current='true' to the active dot.",
+      "evidence": "Audit script: btnLabels ['ภาษาไทย::null','English:is-on:null']; isActive ['A:หน้าแรก:null'] (aria-current null) on every page.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Heading levels skip (footer h4 after page h1/h2; about timeline/contact h4 under h2); admin app has no visible h1",
+      "category": "a11y",
+      "severity": "LOW",
+      "page": "/gallery, /activities, /about, /admin",
+      "file": "assets/site.js:77-91 (footer column titles are <h4>), about.html:53-56, 78, 134-138; admin/index.html:39 (only h1 is inside the hidden login view)",
+      "description": "The footer uses h4 for its column titles, so /gallery goes h1→h4 and /activities goes h2→h4. /about jumps h2→h4 in four places. In the logged-in admin, the only h1 sits inside the hidden login view, so the visible outline starts at h2.",
+      "reproduction_steps": [
+        "Heading sequence from the audit script: /gallery '1444', /activities '...2444', /about '124444242...'"
+      ],
+      "user_impact": "Heading navigation suggests missing sections.",
+      "recommended_fix": "Use h2 (visually styled small) for footer column titles, use h3 for about timeline/contact items, and promote the admin page title (h2) to h1.",
+      "evidence": "headingSkips: gallery ['1->4 @1'], activities ['2->4 @17'], about ['2->4 @2','2->4 @7','2->4 @9','2->4 @33']; admin h1 'ระบบหลังบ้าน' vis=false, h2 'สวัสดีตอนเช้า Owner' vis=true.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Starting a video drops keyboard focus to <body>",
+      "category": "a11y",
+      "severity": "LOW",
+      "page": "/knowledge",
+      "file": "assets/videos.js:118-126 (start() replaces the focused poster button with the iframe)",
+      "description": "Activating 'เล่นคลิป …' calls player.replaceChildren(iframe), which removes the focused button, so focus resets to the top of the document.",
+      "reproduction_steps": [
+        "Tab to the poster button 'เล่นคลิป นักศึกษามุสลิมกับชีวิต…' and press Enter",
+        "The focused element is removed, and the next Tab starts from the top of the page"
+      ],
+      "user_impact": "Keyboard users lose their place and must tab back down to the player to pause it.",
+      "recommended_fix": "After inserting the iframe, call f.focus() (or focus the player wrapper with tabindex='-1').",
+      "evidence": "Code: start(n) → player.replaceChildren(f) with no focus call; poster(n) is the focused element being replaced.",
+      "reported_by": "a11y"
+    },
+    {
+      "title": "Accessible names that hide context or contradict visible text",
+      "category": "a11y",
+      "severity": "LOW",
+      "page": "/about, /admin",
+      "file": "about.html:134,136 (aria-label='Instagram'/'Facebook' on links showing '@muslimclub.cmu'/'MuslimClubCMU'); about.html:256-262 (copy feedback via textContent only); assets/admin.js:1086-1088 ('จัดการรูป' repeated per row), assets/admin.js:1297-1301 (photo row 'เลื่อนไปก่อนหน้า'/'ตั้งเป็นรูปปก' without photo number)",
+      "description": "On /about, the contact links' aria-label replaces their visible handle, which breaks WCAG 2.5.3 label-in-name for voice-control users, and the 'คัดลอกแล้ว' confirmation isn't announced. In admin, every album row has an identical 'จัดการรูป' button, and photo rows repeat 'เลื่อนไปก่อนหน้า / ตั้งเป็นรูปปก / เอาออกจากอัลบั้ม' with no photo or album name.",
+      "reproduction_steps": [
+        "/about: read_page shows link 'Instagram' for visible text '@muslimclub.cmu'",
+        "admin-mock → อัลบั้มภาพ: button list shows 'จัดการรูป' twice with no album name"
+      ],
+      "user_impact": "Voice-control users can't say the visible text to activate the link, and screen-reader admins can't tell which album or photo a button acts on.",
+      "recommended_fix": "Drop aria-label on the about contact links (the h4 plus the handle are enough) or include the handle in it. Put the copy confirmation in a role='status' span. Set aria-label='จัดการรูป ' + album.title and add the photo index to the photo-row action labels.",
+      "evidence": "Admin albums buttons: ['ละศีลอด 2569…|row__main','จัดการรูป|row__side','ปฐมนิเทศ…|row__main','จัดการรูป|row__side']; photo panel buttons ['เลื่อนไปก่อนหน้า','เลื่อนไปถัดไป','ตั้งเป็นรูปปก','เอาออกจากอัลบั้ม'].",
+      "reported_by": "a11y"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Admin-mock activity list shows a title 'กีฬาสัมพันธ์มุสลิมภาคเหนือ <im…' rendered as literal text, which looks like an XSS probe string in the mock data; it was safely escaped.",
+      "lens_hint": "security"
+    },
+    {
+      "text": "On /activities the album card 'Steadfastness 2026' is dated 26 ต.ค. 2569, which is in the future relative to today (13 ต.ค. 2569).",
+      "lens_hint": "userqa"
+    },
+    {
+      "text": "In EN mode, the preview bar buttons ('เข้าสู่ระบบ', 'ออกจากโหมดตัวอย่าง') and its message stayed in Thai.",
+      "lens_hint": "functionality"
+    },
+    {
+      "text": "29 live Google Maps iframes on /halal-map (lazy, but each a full embed) are likely a performance cost too; a static-thumbnail approach would help both lenses.",
+      "lens_hint": "performance"
+    }
+  ]
+}
