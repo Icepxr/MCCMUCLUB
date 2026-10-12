@@ -1,0 +1,30 @@
+# ไฟล์ที่ไม่ต้อง deploy ขึ้นเว็บ — Vercel เสิร์ฟทุกไฟล์ใน repo เป็นสาธารณะถ้าไม่ระบุไว้ตรงนี้
+# (เดิมเปิดอ่านได้หมด เช่น /ADMIN_SETUP.md, /supabase/migrations/…, /data/backup/…, /.mcp.json)
+# หน้าเว็บไม่ได้โหลดอะไรจากโฟลเดอร์เหล่านี้ — ตรวจด้วย grep แล้วก่อนเพิ่ม
+
+# เอกสารภายใน / คู่มือ / คำสั่งสำหรับ AI
+*.md
+pre_deploy_audit.json
+
+# ฐานข้อมูล สคริปต์ และโค้ดฝั่ง Apps Script
+supabase/
+scripts/
+backend/
+data/
+
+# เครื่องมือและการตั้งค่าของนักพัฒนา
+.claude/
+.github/
+.mcp.json
+.vscode/
+.idea/
+
+# ไฟล์ทดสอบและไฟล์ต้นฉบับขนาดใหญ่
+drive-image-test.html
+screenshots/
+uploads/
+assets/_src/
+assets/view2.jpg
+assets/photo/*
+!assets/photo/hero-*.jpg
+.thumbnail
